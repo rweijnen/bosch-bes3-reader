@@ -438,7 +438,16 @@
     state = 'connected';
     renderStatus();
     const okCount = results.filter((r) => r.status === 'ok').length;
-    setProgress(aborted ? `cancelled — ${okCount}/${done} read` : `read ${okCount}/${readable.length} points`);
+    const noResp = results.filter((r) => r.status === 'timeout' || r.status === 'error').length;
+    const skippedCount = results.filter((r) => r.status === 'skipped').length;
+    // Report the breakdown explicitly — a bare "133/370" after the live "reading
+    // 3xx/370…" counter looked like the number had reset/regressed.
+    setProgress(
+      (aborted ? 'cancelled' : 'done') +
+        ` · ${okCount} values read` +
+        (noResp ? ` · ${noResp} no response` : '') +
+        (skippedCount ? ` · ${skippedCount} not present` : '')
+    );
     renderDashboard();
     renderRawTable();
 
