@@ -7,7 +7,10 @@
 //
 // decode "kind" values:
 //   string          - protobuf field 1, length-delimited UTF-8 string
-//   normFactor      - protobuf field 1, varint int, divide by `factor` for the real value
+//   normFactor      - protobuf field 1, varint int (zigzag if `signed: true` — confirmed per
+//                     type: Uint16NormFactor100Message/SafeUint16NormFactor10 use plain
+//                     writeUInt32; Int16NormFactor10Message uses writeSInt32, i.e. zigzag),
+//                     divide by `factor` for the real value
 //   bool            - protobuf field 1, varint bool (0/1); proto3 omits the field entirely when false
 //   uuid            - protobuf field 1 wraps a nested message whose own field 1 is 16 raw bytes
 //   enum            - protobuf field 1, varint enum ordinal; look up in `enumTable`
@@ -53,7 +56,7 @@ const FIELD_TYPES = {
   6145: { label: 'Serial Number', kind: 'string' },
   6146: { label: 'Part Number', kind: 'string' },
   6147: { label: 'Product Code', kind: 'string' },
-  6148: { label: 'Hardware Version', kind: 'string' },
+  6148: { label: 'Hardware Version', kind: 'string' }, // ShortVersion, same wrapper as 6149/6151
   6149: { label: 'HW/SW Version', kind: 'string' },
   6150: { label: 'SW Version', kind: 'string' },
   6151: { label: 'FBL Version', kind: 'string' }, // "FBL" = Bosch's own term for the bootloader
@@ -61,6 +64,7 @@ const FIELD_TYPES = {
   6166: { label: 'Maximum Gear Ratio', kind: 'normFactor', factor: 100 },
   6167: { label: 'Maximum Assistance Speed', kind: 'normFactor', factor: 100, unit: 'km/h' },
   6183: { label: 'Product Line', kind: 'string' },
+  6184: { label: 'Rear Wheel Circumference (OEM)', kind: 'normFactor', factor: 10, unit: 'mm' }, // SafeUint16NormFactor10 — has a field-2 checksum we ignore
   6186: { label: 'OEM Brand Identifier', kind: 'string' },
   6187: { label: 'Gearing System', kind: 'string' },
   6188: { label: 'eBike ID', kind: 'uuid' },
@@ -83,6 +87,7 @@ const FIELD_TYPES = {
   6252: { label: 'OEM Brand Name', kind: 'string' },
   6261: { label: 'OEM Bike Model ID', kind: 'string' },
   6269: { label: 'Regional Speed Configuration ("Speed ID")', kind: 'enum', enumTable: REGIO_SPEED_CONFIGURATION_ENUM },
+  6276: { label: 'Present PCB Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true }, // Int16NormFactor10Message — zigzag varint (writeSInt32)
   6302: { label: 'Motor Product Code', kind: 'string' },
 };
 
@@ -105,6 +110,12 @@ function readVarint(bytes, offset) {
     shift += 7;
   }
   return [result >>> 0, i];
+}
+
+// Protobuf zigzag decode (used by sint32 fields, e.g. Int16NormFactor10Message) —
+// maps the unsigned wire value back to a signed int: 0,1,2,3,4 -> 0,-1,1,-2,2 ...
+function zigzagDecode(n) {
+  return (n >>> 1) ^ -(n & 1);
 }
 
 // Parses top-level protobuf fields (tag + value) out of a message body.
@@ -154,7 +165,8 @@ function decodeTyped(addr, payload) {
     }
     case 'normFactor': {
       if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)' };
-      const real = f1.value / meta.factor;
+      const raw = meta.signed ? zigzagDecode(f1.value) : f1.value;
+      const real = raw / meta.factor;
       return { label: meta.label, display: meta.unit ? `${real} ${meta.unit}` : String(real) };
     }
     case 'bool': {
