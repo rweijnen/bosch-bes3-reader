@@ -33,6 +33,7 @@
     rawBody: $('rawBody'),
     rawRows: $('rawRows'),
     exportBtn: $('exportBtn'),
+    cancelBtn: $('cancelBtn'),
   };
 
   let state = 'disconnected'; // disconnected | connecting | connected
@@ -40,6 +41,23 @@
   let lastResults = []; // flat list of {component, name, addr, status, decoded, typed}
   let rawOpen = false;
   let transport = null;
+  let abortRequested = false;
+
+  // Fields worth painting first, so the dashboard fills in immediately instead of
+  // after a full ~2 min sweep. Ordered most-interesting-first; the rest backfill.
+  const PRIORITY = [
+    ['DriveUnit', 'SERIAL_NUMBER'], ['DriveUnit', 'PRODUCT_CODE'], ['DriveUnit', 'PRODUCT_NAME'],
+    ['DriveUnit', 'PRODUCT_LINE'], ['DriveUnit', 'SOFTWARE_VERSION'], ['DriveUnit', 'HARDWARE_VERSION'],
+    ['DriveUnit', 'BOOTLOADER_SOFTWARE_VERSION'], ['DriveUnit', 'BIKE_ID'], ['DriveUnit', 'BIKE_CATEGORY'],
+    ['DriveUnit', 'MAXIMUM_LEGAL_BIKE_SPEED'], ['DriveUnit', 'MAXIMUM_ASSISTANCE_SPEED'],
+    ['DriveUnit', 'REGIO_SPEED_CONFIGURATION'], ['DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_OEM'],
+    ['DriveUnit', 'TUNING_DETECTION'], ['DriveUnit', 'ODOMETER'], ['DriveUnit', 'POWER_ON_TIME'],
+    ['DriveUnit', 'GEARING_SYSTEM'], ['DriveUnit', 'PRESENT_PCB_TEMPERATURE'],
+    ['DriveUnit', 'OEM_BIKE_ID'], ['DriveUnit', 'OEM_BRAND_NAME'],
+    ['Battery', 'STATE_OF_CHARGE'], ['Battery', 'STATE_OF_HEALTH'], ['Battery', 'PRODUCT_CODE'],
+    ['Battery', 'PRODUCT_NAME'], ['Battery', 'NUMBER_OF_FULL_CHARGE_CYCLES'],
+    ['Battery', 'REMAINING_ENERGY'], ['Battery', 'PRESENT_PACK_TEMPERATURE'],
+  ];
 
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -86,6 +104,7 @@
       els.connectBtn.textContent = 'Connect & Read';
       els.connectBtn.disabled = false;
     }
+    els.cancelBtn.style.display = state === 'connecting' ? '' : 'none';
     els.emptyState.style.display = state === 'disconnected' ? 'flex' : 'none';
     els.dashboard.style.display = state === 'disconnected' ? 'none' : 'flex';
   }
@@ -272,6 +291,32 @@
   });
 
   // ---------- main sweep ----------
+  // Called when the bike drops off USB (unplugged, powered off, or a transfer
+  // fails mid-sweep). Resets the UI to disconnected so the user can reconnect —
+  // previously the status stayed stuck on "CONNECTED" with no way back.
+  function handleDisconnect() {
+    if (state === 'disconnected') return;
+    state = 'disconnected';
+    transport = null;
+    abortRequested = false;
+    renderStatus();
+    setProgress('bike disconnected — power it on and read again');
+  }
+
+  if ('usb' in navigator) {
+    navigator.usb.addEventListener('disconnect', (e) => {
+      // Only react to our device (or any, if we're mid-session with no handle yet).
+      if (!transport || !transport.device || e.device === transport.device) {
+        handleDisconnect();
+      }
+    });
+  }
+
+  els.cancelBtn.addEventListener('click', () => {
+    abortRequested = true;
+    setProgress('cancelling…');
+  });
+
   async function runSweep() {
     let device;
     try {
@@ -280,6 +325,7 @@
       return; // user cancelled the picker
     }
 
+    abortRequested = false;
     state = 'connecting';
     renderStatus();
 
@@ -294,17 +340,28 @@
       return;
     }
 
-    const readable = [];
+    // Build the readable set, then hoist the PRIORITY fields to the front so the
+    // dashboard paints the interesting values first and backfills the rest.
+    const all = [];
     for (const [component, entries] of Object.entries(ALL_ADDRESSES)) {
       for (const e of entries) {
-        if (e.readable === true) readable.push({ component, ...e });
+        if (e.readable === true) all.push({ component, ...e });
       }
     }
+    const priIndex = new Map(PRIORITY.map(([c, n], i) => [c + '.' + n, i]));
+    const readable = all.slice().sort((a, b) => {
+      const pa = priIndex.has(a.component + '.' + a.name) ? priIndex.get(a.component + '.' + a.name) : Infinity;
+      const pb = priIndex.has(b.component + '.' + b.name) ? priIndex.get(b.component + '.' + b.name) : Infinity;
+      return pa - pb;
+    });
 
     const results = [];
     let seq = 1;
     let done = 0;
+    let aborted = false;
     for (const entry of readable) {
+      if (state === 'disconnected') return; // bike dropped mid-sweep
+      if (abortRequested) { aborted = true; break; }
       seq = (seq + 1) & 0xff;
       let payload = null;
       let status = 'ok';
@@ -312,6 +369,11 @@
       try {
         payload = await readOne(entry.addr, seq);
       } catch (err) {
+        // A disconnect mid-sweep surfaces here — stop cleanly rather than spamming errors.
+        if (/disconnect|no device|not found|transfer/i.test(err.name + ' ' + err.message)) {
+          handleDisconnect();
+          return;
+        }
         status = 'error';
         detail = err.message;
       }
@@ -326,8 +388,8 @@
       results.push({ ...entry, status, detail, decoded, typed });
       done++;
       setProgress(`reading ${done}/${readable.length} points…`);
-      // live-update every ~20 reads so the dashboard fills in progressively
-      if (done % 20 === 0) {
+      // paint often while priority fields land, then ease off
+      if (done <= PRIORITY.length || done % 20 === 0) {
         lastResults = results;
         renderDashboard();
       }
@@ -337,11 +399,13 @@
     lastResults = results;
     state = 'connected';
     renderStatus();
-    setProgress(`read ${results.filter((r) => r.status === 'ok').length}/${readable.length} points`);
+    const okCount = results.filter((r) => r.status === 'ok').length;
+    setProgress(aborted ? `cancelled — ${okCount}/${done} read` : `read ${okCount}/${readable.length} points`);
     renderDashboard();
     renderRawTable();
 
-    await transport.close();
+    try { await transport.close(); } catch (_) {}
+    transport = null;
   }
 
   els.connectBtn.addEventListener('click', () => {

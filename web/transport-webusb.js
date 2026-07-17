@@ -30,6 +30,54 @@ class Bes3WebUsbTransport {
   async open() {
     await this.device.open();
     await this.device.claimInterface(0);
+    await this.init();
+  }
+
+  // Initialize the USB<->MCSP bridge. WITHOUT this the bridge never forwards our
+  // bulk writes to the drive unit's serial bus: writes still ACK at the USB layer
+  // (0x47 -> 02 00 00) but the inbound register (0x44) stays 0 forever, so every
+  // read times out. Captured verbatim from the stock tool's connect sequence:
+  //   1) one vendor IN  request 0x01 (reads a 1-byte bridge status)
+  //   2) five vendor OUT control transfers (0x00, 0x43, 0x23, 0x41, 0x21) that
+  //      configure the bridge; 0x43/0x23 carry a fixed 9-byte config blob.
+  //   3) the MCSP session handshake: 0x10-opcode frames that arm the drive unit
+  //      to answer 0x30 block reads. We drain their responses so they don't leak
+  //      into later read matching.
+  async init() {
+    const cfg = Uint8Array.from([0x00, 0x80, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00]);
+    const vout = (request, data) =>
+      this.device.controlTransferOut(
+        { requestType: 'vendor', recipient: 'interface', request, value: 0, index: 0 },
+        data || new Uint8Array(0)
+      );
+
+    await this.device.controlTransferIn(
+      { requestType: 'vendor', recipient: 'interface', request: 0x01, value: 0, index: 0 },
+      1
+    );
+    await vout(0x00);
+    await vout(0x43, cfg);
+    await vout(0x23, cfg);
+    await vout(0x41);
+    await vout(0x21);
+
+    const handshake = [
+      [0x10, 0x02, 0x01, 0x03],
+      [0x10, 0x03, 0x04, 0x04, 0x00],
+      [0x10, 0x06, 0x02, 0x01, 0x00, 0x10, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x02, 0x00, 0x10, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x03, 0x00, 0x10, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x04, 0x00, 0x00, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x05, 0x00, 0x00, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x06, 0x00, 0x00, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x07, 0x00, 0x00, 0x00, 0x00],
+    ];
+    for (const frame of handshake) {
+      await this.doMcspWrite(Uint8Array.from(frame));
+      for (let i = 0; i < 4; i++) {
+        if (!(await this.readNextFrame(2, 3))) break;
+      }
+    }
   }
 
   async close() {
