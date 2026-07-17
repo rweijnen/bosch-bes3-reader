@@ -1,0 +1,14 @@
+{
+  "name": "bes3-reader-cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Read-only CLI for Bosch Smart System (BES3) eBike drive units",
+  "main": "cli.js",
+  "bin": {
+    "bes3-reader": "./cli.js"
+  },
+  "dependencies": {
+    "usb": "^2.14.0"
+  },
+  "license": "MIT"
+}

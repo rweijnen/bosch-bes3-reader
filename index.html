@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bosch Smart System (BES3) Drive Unit Reader</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+  button { font-size: 1rem; padding: 0.5rem 1.2rem; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; margin-top: 1rem; font-size: 0.85rem; }
+  th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; }
+  th { background: #f0f0f0; }
+  .status { margin: 1rem 0; font-weight: bold; }
+  .status.error { color: #b00020; }
+  #progress { color: #666; margin-left: 0.5rem; }
+  #notSupported { font-size: 0.8rem; color: #666; columns: 2; }
+  .warn { background: #fff8e1; border: 1px solid #e0c46c; padding: 0.75rem 1rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<h1>Bosch Smart System (BES3) Drive Unit Reader</h1>
+<p>
+  Read-only diagnostic tool for Bosch Smart System eBikes. Connects to the
+  drive unit's system controller over USB-C and reads identification/status
+  data (serial number, product code, software versions, speed limits, etc).
+  Runs entirely in your browser via WebUSB — nothing is sent to any server.
+</p>
+<div class="warn">
+  This tool only <strong>reads</strong> data. It never writes, configures, or
+  tunes anything, and it never touches licensing/authorization systems.
+  Requires Chrome, Edge, or another Chromium-based desktop browser (WebUSB is
+  not available on iOS/Safari).
+</div>
+<button id="connectBtn">Connect &amp; Read</button>
+<span id="progress"></span>
+<div id="status" class="status"></div>
+<table>
+  <thead><tr><th>Name</th><th>Address</th><th>Value</th></tr></thead>
+  <tbody id="resultsBody"></tbody>
+</table>
+<h3>Not attempted (RPC/callable addresses, encoding not yet cracked)</h3>
+<ul id="notSupported"></ul>
+
+<script src="src/addresses.js"></script>
+<script src="src/protocol.js"></script>
+<script src="web/transport-webusb.js"></script>
+<script src="web/app.js"></script>
+</body>
+</html>
