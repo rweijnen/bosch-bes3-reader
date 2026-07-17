@@ -59,6 +59,9 @@
     ['Battery', 'REMAINING_ENERGY'], ['Battery', 'PRESENT_PACK_TEMPERATURE'],
   ];
 
+  // Always present on a Smart System bike — exempt from the absent-component skip.
+  const CORE_COMPONENTS = new Set(['DriveUnit', 'Battery', 'RemoteControl']);
+
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -119,17 +122,27 @@
   }
 
   // ---------- read plumbing ----------
+  // Reads one address. Two things make this reliable where a naive single-shot
+  // read was dropping ~half the fields at random:
+  //  1. Pre-drain: clear any late/stale frame left in the bridge buffer from a
+  //     previous read BEFORE sending, so it can't be mistaken for this response.
+  //  2. Retry: resend a couple of times; present fields almost always answer on
+  //     the first try, but the occasional miss is recovered instead of shown "—".
   async function readOne(addr, seq) {
-    const frame = buildReadRequestFrame(addr, seq);
-    await transport.doMcspWrite(frame);
-    const deadline = Date.now() + 400;
-    while (Date.now() < deadline) {
-      const raw = await transport.readNextFrame(5, 5);
-      if (!raw) continue;
-      const parsed = parseReadResponseFrame(raw);
-      if (!parsed) continue;
-      if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
-      return parsed.payload;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      for (let i = 0; i < 4; i++) {
+        if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
+      }
+      await transport.doMcspWrite(buildReadRequestFrame(addr, (seq + attempt) & 0xff));
+      const deadline = Date.now() + 300;
+      while (Date.now() < deadline) {
+        const raw = await transport.readNextFrame(4, 4);
+        if (!raw) continue;
+        const parsed = parseReadResponseFrame(raw);
+        if (!parsed) continue;
+        if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
+        return parsed.payload;
+      }
     }
     return null;
   }
@@ -337,6 +350,14 @@
       return;
     }
 
+    // Warm-up: the drive unit needs a beat after init before it answers reliably.
+    // Poke a known field (DriveUnit SERIAL) until it responds so the priority reads
+    // that follow land on the first pass instead of timing out at the start.
+    setProgress('starting…');
+    for (let i = 0; i < 8; i++) {
+      if (await readOne(6145, i + 1)) break;
+    }
+
     // Build the readable set, then hoist the PRIORITY fields to the front so the
     // dashboard paints the interesting values first and backfills the rest.
     const all = [];
@@ -353,12 +374,29 @@
     });
 
     const results = [];
+    const compStats = {}; // component -> { ok, timeouts }
     let seq = 1;
     let done = 0;
     let aborted = false;
     for (const entry of readable) {
       if (state === 'disconnected') return; // bike dropped mid-sweep
       if (abortRequested) { aborted = true; break; }
+
+      const cs = compStats[entry.component] || (compStats[entry.component] = { ok: 0, timeouts: 0 });
+      // Skip the rest of a component that isn't present: most bikes lack ABS, a
+      // 2nd battery, a connect module or a head unit, and retrying every one of
+      // their (~30-40) addresses would dominate the sweep. Once a few fields have
+      // timed out with none answering, treat the component as absent.
+      //
+      // CORE_COMPONENTS are always present on a Smart System — never skip them,
+      // otherwise a few flaky reads right after connect (the session takes a beat
+      // to settle) could wrongly drop the drive unit, i.e. all the data we came for.
+      if (!CORE_COMPONENTS.has(entry.component) && cs.ok === 0 && cs.timeouts >= 3) {
+        results.push({ ...entry, status: 'skipped', detail: 'component not detected', decoded: null, typed: null });
+        done++;
+        continue;
+      }
+
       seq = (seq + 1) & 0xff;
       let payload = null;
       let status = 'ok';
@@ -366,8 +404,9 @@
       try {
         payload = await readOne(entry.addr, seq);
       } catch (err) {
-        // A disconnect mid-sweep surfaces here — stop cleanly rather than spamming errors.
-        if (/disconnect|no device|not found|transfer/i.test(err.name + ' ' + err.message)) {
+        // A real disconnect mid-sweep surfaces here — stop cleanly. (Plain USB
+        // 'disconnect' events are also handled by the listener above.)
+        if (/disconnect|no device|not found/i.test(err.name + ' ' + err.message)) {
           handleDisconnect();
           return;
         }
@@ -375,6 +414,8 @@
         detail = err.message;
       }
       if (status === 'ok' && payload === null) status = 'timeout';
+      if (status === 'ok') cs.ok++;
+      else if (status === 'timeout') cs.timeouts++;
 
       let decoded = null;
       let typed = null;
@@ -386,11 +427,11 @@
       done++;
       setProgress(`reading ${done}/${readable.length} points…`);
       // paint often while priority fields land, then ease off
-      if (done <= PRIORITY.length || done % 20 === 0) {
+      if (done <= PRIORITY.length || done % 15 === 0) {
         lastResults = results;
         renderDashboard();
       }
-      await sleep(15);
+      await sleep(10);
     }
 
     lastResults = results;
