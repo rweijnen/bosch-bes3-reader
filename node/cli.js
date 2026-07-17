@@ -1,16 +1,18 @@
 #!/usr/bin/env node
-// Read-only Bosch Smart System drive-unit dumper.
+// Read-only Bosch Smart System component dumper.
 //
 // Connects to the bike's system controller over USB and sweeps every known
-// "readable data point" address, printing whatever comes back. Read-only:
-// never sends a write/RPC/tuning command, never touches licensing. Not all
-// ~120 known addresses will respond — many are RPCs (callable actions
-// needing an argument) or subscribable-only data points that use a request
-// shape we haven't cracked yet; those are listed separately at the end
-// rather than silently skipped.
+// "readable data point" address across every component (drive unit, both
+// battery slots, remote control, head unit, connect module, ABS, the tool's
+// own app-info block), printing whatever comes back. Read-only: never sends
+// a write/RPC/tuning command, never touches licensing. Not all addresses
+// will respond — some are callable RPCs (need an input argument) or use a
+// request shape we haven't cracked yet; those are listed separately at the
+// end rather than silently skipped.
 
-const { DRIVE_UNIT_ADDRESSES } = require('../src/addresses');
-const { isSimpleReadable, buildReadRequestFrame, parseReadResponseFrame, decodeValue } = require('../src/protocol');
+const { ALL_ADDRESSES } = require('../src/addresses');
+const { buildReadRequestFrame, parseReadResponseFrame, decodeValue } = require('../src/protocol');
+const { decodeTyped } = require('../src/messageTypes');
 const { Bes3UsbTransport, findDevice } = require('./transport-node-usb');
 
 function sleep(ms) {
@@ -26,8 +28,8 @@ async function readOne(transport, addr, seq) {
     const raw = await transport.readNextFrame(5, 5);
     if (!raw) continue;
     const parsed = parseReadResponseFrame(raw);
-    if (!parsed) continue; // unrelated frame (heartbeat, push, etc.) - ignore
-    if (parsed.addrLow !== (addr & 0xff)) continue; // reply to a different address
+    if (!parsed) continue; // unrelated frame (e.g. the bundled identify block) - ignore
+    if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue; // reply to a different address
     return parsed.payload;
   }
   return null; // timeout
@@ -42,46 +44,51 @@ async function main() {
 
   const transport = new Bes3UsbTransport(device);
   transport.open();
-  console.log('Connected. Sweeping known DriveUnit addresses...\n');
 
-  const readable = DRIVE_UNIT_ADDRESSES.filter((e) => isSimpleReadable(e.addr));
-  const notSupported = DRIVE_UNIT_ADDRESSES.filter((e) => !isSimpleReadable(e.addr));
-
-  const results = [];
+  const notSupported = [];
   let seq = 1;
-  for (const entry of readable) {
-    seq = (seq + 1) & 0xff;
-    let payload = null;
-    try {
-      payload = await readOne(transport, entry.addr, seq);
-    } catch (err) {
-      results.push({ name: entry.name, addr: entry.addr, status: 'error', detail: err.message });
-      continue;
+
+  for (const [component, entries] of Object.entries(ALL_ADDRESSES)) {
+    const readable = entries.filter((e) => e.readable === true);
+    const skipped = entries.filter((e) => e.readable !== true);
+    notSupported.push(...skipped.map((e) => ({ component, ...e })));
+
+    if (readable.length === 0) continue;
+
+    console.log(`\n=== ${component} ===`);
+    for (const entry of readable) {
+      seq = (seq + 1) & 0xff;
+      let payload = null;
+      let status = 'ok';
+      let detail = '';
+      try {
+        payload = await readOne(transport, entry.addr, seq);
+      } catch (err) {
+        status = 'error';
+        detail = err.message;
+      }
+      const addrHex = '0x' + entry.addr.toString(16).padStart(4, '0');
+
+      if (status === 'error') {
+        console.log(`  ${entry.name.padEnd(42)} ${addrHex}  (error: ${detail})`);
+      } else if (payload === null) {
+        console.log(`  ${entry.name.padEnd(42)} ${addrHex}  (no response / timeout)`);
+      } else {
+        const typed = decodeTyped(entry.addr, payload);
+        const decoded = typed || decodeValue(payload);
+        const marker = typed ? '*' : ' ';
+        const label = typed ? ` (${decoded.label})` : '';
+        console.log(`${marker} ${entry.name.padEnd(42)} ${addrHex}${label.padEnd(34)} ${decoded.display}`);
+      }
+      await sleep(15); // be gentle on the bus
     }
-    if (payload === null) {
-      results.push({ name: entry.name, addr: entry.addr, status: 'timeout' });
-      continue;
-    }
-    const decoded = decodeValue(payload);
-    results.push({ name: entry.name, addr: entry.addr, status: 'ok', decoded });
-    await sleep(15); // be gentle on the bus
   }
 
-  console.log('=== Results ===');
-  for (const r of results) {
-    const addrHex = '0x' + r.addr.toString(16).padStart(4, '0');
-    if (r.status === 'ok') {
-      console.log(`${r.name.padEnd(42)} ${addrHex}  ${r.decoded.display}`);
-    } else if (r.status === 'timeout') {
-      console.log(`${r.name.padEnd(42)} ${addrHex}  (no response / timeout)`);
-    } else {
-      console.log(`${r.name.padEnd(42)} ${addrHex}  (error: ${r.detail})`);
-    }
-  }
+  console.log(`\n(* = typed/confirmed decode; unmarked = generic best-effort guess)`);
 
-  console.log(`\n=== Not attempted (RPC/callable addresses, encoding not yet cracked) ===`);
+  console.log(`\n=== Not attempted (RPC/callable addresses, or unclassified) ===`);
   for (const entry of notSupported) {
-    console.log(`${entry.name.padEnd(42)} 0x${entry.addr.toString(16).padStart(4, '0')}`);
+    console.log(`${entry.component}.${entry.name.padEnd(42)} 0x${entry.addr.toString(16).padStart(4, '0')}`);
   }
 
   transport.close();

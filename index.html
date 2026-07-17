@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Bosch Smart System (BES3) Drive Unit Reader</title>
+<title>Bosch Smart System (BES3) Component Reader</title>
 <style>
   body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
   button { font-size: 1rem; padding: 0.5rem 1.2rem; cursor: pointer; }
@@ -14,14 +14,17 @@
   #progress { color: #666; margin-left: 0.5rem; }
   #notSupported { font-size: 0.8rem; color: #666; columns: 2; }
   .warn { background: #fff8e1; border: 1px solid #e0c46c; padding: 0.75rem 1rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem; }
+  tr.typed td:last-child { font-weight: 600; }
 </style>
 </head>
 <body>
-<h1>Bosch Smart System (BES3) Drive Unit Reader</h1>
+<h1>Bosch Smart System (BES3) Component Reader</h1>
 <p>
   Read-only diagnostic tool for Bosch Smart System eBikes. Connects to the
   drive unit's system controller over USB-C and reads identification/status
-  data (serial number, product code, software versions, speed limits, etc).
+  data across every component — drive unit, both battery slots, remote
+  control, head unit, connect module, ABS — (serial numbers, product codes,
+  software versions, speed limits, region configuration, etc).
   Runs entirely in your browser via WebUSB — nothing is sent to any server.
 </p>
 <div class="warn">
@@ -34,14 +37,15 @@
 <span id="progress"></span>
 <div id="status" class="status"></div>
 <table>
-  <thead><tr><th>Name</th><th>Address</th><th>Value</th></tr></thead>
+  <thead><tr><th>Component</th><th>Name</th><th>Address</th><th>Value</th></tr></thead>
   <tbody id="resultsBody"></tbody>
 </table>
-<h3>Not attempted (RPC/callable addresses, encoding not yet cracked)</h3>
+<h3>Not attempted (RPC/callable addresses, or unclassified)</h3>
 <ul id="notSupported"></ul>
 
 <script src="src/addresses.js"></script>
 <script src="src/protocol.js"></script>
+<script src="src/messageTypes.js"></script>
 <script src="web/transport-webusb.js"></script>
 <script src="web/app.js"></script>
 </body>

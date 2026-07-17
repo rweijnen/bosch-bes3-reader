@@ -1,19 +1,28 @@
-# Bosch Smart System (BES3) Drive Unit Reader
+# Bosch Smart System (BES3) Component Reader
 
 A **read-only** diagnostic tool for Bosch Smart System eBikes (2022+ "BES3"
 platform, USB-C direct connection to the drive unit's system controller).
-Reads identification and status data — serial number, product code, hardware
-and software versions, speed limits, assist-mode info, and more — over USB.
+Reads identification and status data across every component — drive unit,
+both battery slots, remote control, head unit, connect module, ABS — serial
+numbers, product codes, hardware/software versions, speed limits, region
+configuration, and more, over USB.
 
 Two identical implementations sharing the same protocol code:
 
 - **`web/`** — runs entirely in the browser via [WebUSB](https://developer.mozilla.org/en-US/docs/Web/API/WebUSB_API). No install, no server, nothing leaves your machine. Open `index.html` in Chrome/Edge (desktop only — WebUSB isn't available on iOS/Safari).
 - **`node/`** — a CLI using the [`usb`](https://www.npmjs.com/package/usb) package (libusb), for scripting/automation.
 
-`src/addresses.js` and `src/protocol.js` are the shared, transport-agnostic
-core (device address table, frame encoding/decoding) — the exact same files
-are loaded by both the browser page and the Node CLI. Only the USB transport
-differs per platform (`node/transport-node-usb.js` vs `web/transport-webusb.js`).
+`src/addresses.js`, `src/protocol.js`, and `src/messageTypes.js` are the
+shared, transport-agnostic core (per-component address table, frame
+encoding/decoding, typed value decoding) — the exact same files are loaded by
+both the browser page and the Node CLI. Only the USB transport differs per
+platform (`node/transport-node-usb.js` vs `web/transport-webusb.js`).
+
+Fields with a confirmed wire type (see `src/messageTypes.js`) are decoded
+precisely — e.g. `REGIO_SPEED_CONFIGURATION` resolves to a named region/speed
+class ("Europe, 45 km/h (S-Pedelec class)"), not just a raw number. Everything
+else falls back to a generic best-effort guess (clearly marked as such, never
+presented as exact).
 
 ## Scope: read-only, by design
 
