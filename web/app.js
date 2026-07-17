@@ -200,12 +200,9 @@
     kvRow(els.drivetrainGrid, 'Wheel circ. (OEM)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_OEM'));
     kvRow(els.drivetrainGrid, 'Region / speed class', displayOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'));
     const tuning = findResult('DriveUnit', 'TUNING_DETECTION');
+    const tv = tuning && tuning.status === 'ok' && tuning.typed ? tuning.typed.value : null;
     const tuningLabel =
-      tuning && tuning.status === 'ok' && tuning.typed
-        ? tuning.typed.value.flag
-          ? `FLAGGED (x${tuning.typed.value.counter})`
-          : 'CLEAN'
-        : '—';
+      tv && typeof tv === 'object' ? (tv.flag ? `FLAGGED (x${tv.counter})` : 'CLEAN') : '—';
     const tRow = document.createElement('span');
     tRow.textContent = 'Tuning detection';
     const tVal = document.createElement('span');

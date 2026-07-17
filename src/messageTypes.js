@@ -185,6 +185,10 @@ function decodeTyped(addr, payload) {
     // usually means "not present".
     if (meta.kind === 'bool') return { label: meta.label, display: 'false', value: false };
     if (meta.kind === 'uint') return { label: meta.label, display: meta.unit ? `0 ${meta.unit}` : '0', value: 0 };
+    // proto3 omits a false flag / zero counter entirely — an empty tuningDetection
+    // read means "no tuning detected", not "unknown". Return a real value object so
+    // callers can read .flag / .counter without a null guard.
+    if (meta.kind === 'tuningDetection') return { label: meta.label, display: 'flag=false, counter=0', value: { flag: false, counter: 0 } };
     return { label: meta.label, display: '(empty / default)', value: null };
   }
 
