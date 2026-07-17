@@ -12,6 +12,9 @@
 //                     writeUInt32; Int16NormFactor10Message uses writeSInt32, i.e. zigzag),
 //                     divide by `factor` for the real value
 //   bool            - protobuf field 1, varint bool (0/1); proto3 omits the field entirely when false
+//   uint            - protobuf field 1, raw varint uint, no message wrapper (bare Kotlin scalar
+//                     type — UByte/UShort/UInt); inferred from the confirmed 'bool' pattern,
+//                     see the FIELD_TYPES header note — not byte-confirmed like the above
 //   uuid            - protobuf field 1 wraps a nested message whose own field 1 is 16 raw bytes
 //   enum            - protobuf field 1, varint enum ordinal; look up in `enumTable`
 //   tuningDetection - protobuf field 1 = bool flag, field 2 = varint counter
@@ -48,11 +51,20 @@ const BIKE_CATEGORY_ENUM = {
   '-1': { name: 'UNRECOGNIZED', label: 'Unknown' },
 };
 
-// Address -> typed decode metadata. Address values match DriveUnitAddresses
-// in addresses.js. Labels for plain fields are Bosch's own DiagnosticTool 3
-// UI strings where a matching one was found (diagnostic_en.properties),
-// otherwise a plain descriptive label.
+// Address -> typed decode metadata, across all components (address ranges
+// don't overlap — see addresses.js). Labels for plain fields are Bosch's own
+// DiagnosticTool 3 UI strings where a matching one was found
+// (diagnostic_en.properties), otherwise a plain descriptive label.
+//
+// Fields marked "inferred" use kind 'uint': these are bare Kotlin scalar
+// types (UByte/UShort/UInt), not one of Bosch's own protobuf message wrapper
+// classes. We haven't captured a real nonzero example of one on the wire —
+// the inference rests on the CONFIRMED behavior of 'bool' fields (also a
+// bare scalar type, verified empty-for-false against a real capture),
+// generalized to other bit-widths of the same no-wrapper pattern. Reasonable,
+// but a notch below the byte-confirmed fields above it.
 const FIELD_TYPES = {
+  // --- DriveUnit ---
   6145: { label: 'Serial Number', kind: 'string' },
   6146: { label: 'Part Number', kind: 'string' },
   6147: { label: 'Product Code', kind: 'string' },
@@ -89,6 +101,24 @@ const FIELD_TYPES = {
   6269: { label: 'Regional Speed Configuration ("Speed ID")', kind: 'enum', enumTable: REGIO_SPEED_CONFIGURATION_ENUM },
   6276: { label: 'Present PCB Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true }, // Int16NormFactor10Message — zigzag varint (writeSInt32)
   6302: { label: 'Motor Product Code', kind: 'string' },
+  6168: { label: 'Odometer', kind: 'uint', unit: 'm' }, // inferred — bare UInt, see file header
+  6169: { label: 'Power-On Time', kind: 'uint', unit: 's' }, // inferred — bare UShort
+
+  // --- Battery (slot 1) ---
+  129: { label: 'Serial Number', kind: 'string' },
+  130: { label: 'Part Number', kind: 'string' },
+  131: { label: 'Product Code', kind: 'string' },
+  132: { label: 'Hardware Version', kind: 'string' },
+  134: { label: 'SW Version', kind: 'string' },
+  135: { label: 'FBL Version', kind: 'string' },
+  136: { label: 'State of Charge', kind: 'uint', unit: '%' }, // inferred — bare UByte
+  139: { label: 'Present Pack Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true },
+  145: { label: 'Remaining Energy (Rider)', kind: 'normFactor', factor: 10, unit: 'Wh' },
+  146: { label: 'Remaining Energy', kind: 'normFactor', factor: 10, unit: 'Wh' },
+  150: { label: 'Full Charge Cycles', kind: 'normFactor', factor: 10 },
+  155: { label: 'Product Name', kind: 'string' },
+  156: { label: 'Delivered Wh (Lifetime)', kind: 'uint', unit: 'Wh' }, // inferred — bare UInt
+  216: { label: 'State of Health', kind: 'uint', unit: '%' }, // inferred — bare UByte
 };
 
 function toHex(bytes) {
@@ -150,8 +180,10 @@ function decodeTyped(addr, payload) {
 
   if (!payload || payload.length === 0) {
     // proto3 omits default-value scalar fields entirely — for bool this means false;
-    // for others it usually means "not present / zero value".
+    // for a bare uint it means the value really is 0; for everything else it
+    // usually means "not present".
     if (meta.kind === 'bool') return { label: meta.label, display: 'false' };
+    if (meta.kind === 'uint') return { label: meta.label, display: meta.unit ? `0 ${meta.unit}` : '0' };
     return { label: meta.label, display: '(empty / default)' };
   }
 
@@ -172,6 +204,10 @@ function decodeTyped(addr, payload) {
     case 'bool': {
       if (!f1) return { label: meta.label, display: 'false' };
       return { label: meta.label, display: f1.value ? 'true' : 'false' };
+    }
+    case 'uint': {
+      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)' };
+      return { label: meta.label, display: meta.unit ? `${f1.value} ${meta.unit}` : String(f1.value) };
     }
     case 'enum': {
       if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)' };
