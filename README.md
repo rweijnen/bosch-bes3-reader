@@ -52,14 +52,6 @@ drive unit platform, cross-referenced against publicly observable behavior of
 existing tuning/diagnostic tools for the same platform. It is not affiliated
 with or endorsed by Bosch.
 
-## Responsible disclosure
-
-This project only publishes **read-only** protocol information. If further
-research surfaces anything that looks like an actual security
-vulnerability (e.g. weak/missing authentication on a write path), that will
-be reported to Bosch privately and only documented publicly after a fix is
-available — not published here.
-
 ## License
 
 MIT — see [LICENSE](LICENSE).
