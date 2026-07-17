@@ -26,8 +26,9 @@ nothing that isn't already exposed to the bike's owner.
 ## Usage
 
 ### Browser
-Serve or open `index.html`, plug in your bike via USB-C, click **Connect &
-Read**.
+**Live at [remkoweijnen.nl/bosch-bes3-reader](https://remkoweijnen.nl/bosch-bes3-reader/)**
+— just open it in Chrome/Edge, plug in your bike via USB-C, click **Connect &
+Read**. Or run `index.html` locally the same way.
 
 ### Node CLI
 ```bash
