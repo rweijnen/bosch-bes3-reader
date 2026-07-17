@@ -2,46 +2,191 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Bosch Smart System (BES3) Component Reader</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BES3 Reader</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23101113%22/><text x=%2250%22 y=%2266%22 font-size=%2244%22 font-family=%22sans-serif%22 font-weight=%22700%22 fill=%22%23e2c14a%22 text-anchor=%22middle%22>B3</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-  button { font-size: 1rem; padding: 0.5rem 1.2rem; cursor: pointer; }
-  table { border-collapse: collapse; width: 100%; margin-top: 1rem; font-size: 0.85rem; }
-  th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; }
-  th { background: #f0f0f0; }
-  .status { margin: 1rem 0; font-weight: bold; }
-  .status.error { color: #b00020; }
-  #progress { color: #666; margin-left: 0.5rem; }
-  #notSupported { font-size: 0.8rem; color: #666; columns: 2; }
-  .warn { background: #fff8e1; border: 1px solid #e0c46c; padding: 0.75rem 1rem; border-radius: 4px; margin: 1rem 0; font-size: 0.9rem; }
-  tr.typed td:last-child { font-weight: 600; }
+  :root {
+    --bg: #101113; --panel: #1c1f23; --panel2: #16181b; --border: #26292e; --border2: #2c3036;
+    --text: #e8eaed; --muted: #9aa0a6; --faint: #6b7178; --accent: oklch(0.8 0.15 85);
+    --accent-ink: #1c1a0a; --good: #3ddc84; --bad: #e05c5c; --chipbg: #101113;
+  }
+  html[data-theme="light"] {
+    --bg: #f2f1ee; --panel: #fdfcfa; --panel2: #f7f6f3; --border: #e2dfd8; --border2: #d8d4cb;
+    --text: #1e2022; --muted: #6d6a62; --faint: #8a867c; --accent: oklch(0.62 0.13 85);
+    --accent-ink: #fdfcfa; --good: #1f9d5c; --bad: #c23b3b; --chipbg: #f0eee8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; transition: background 0.25s, color 0.25s; }
+  a { color: var(--accent); } a:hover { opacity: 0.85; }
+  button { font-family: inherit; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .grotesk { font-family: 'Space Grotesk', sans-serif; }
+
+  header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-badge { width: 28px; height: 28px; border-radius: 6px; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent-ink); font: 700 13px 'Space Grotesk', sans-serif; }
+  .brand-name { font: 600 16px 'Space Grotesk', sans-serif; }
+  .status-chip { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--chipbg); border: 1px solid var(--border2); border-radius: 999px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .status-label { font: 500 12px 'IBM Plex Mono', monospace; color: var(--muted); letter-spacing: 0.04em; }
+  .progress-text { font: 400 12px 'IBM Plex Mono', monospace; color: var(--faint); }
+  .header-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .icon-btn { background: none; border: 1px solid var(--border2); border-radius: 6px; width: 36px; height: 36px; color: var(--muted); font-size: 16px; cursor: pointer; }
+  .primary-btn { background: var(--accent); color: var(--accent-ink); border: none; font: 600 13px 'IBM Plex Sans', sans-serif; padding: 10px 18px; border-radius: 6px; cursor: pointer; min-width: 140px; }
+  .primary-btn:disabled { opacity: 0.6; cursor: default; }
+  .ghost-btn { background: none; border: 1px solid var(--border2); color: var(--muted); font: 500 12px 'IBM Plex Sans', sans-serif; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+
+  main { flex: 1; }
+  .empty-wrap { min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
+  .empty-inner { max-width: 480px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+  .bike-icon { width: 240px; color: var(--border2); }
+  .empty-title { font: 700 24px 'Space Grotesk', sans-serif; }
+  .empty-body { font: 400 14px/1.6 'IBM Plex Sans', sans-serif; color: var(--muted); }
+  .empty-note { font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); letter-spacing: 0.06em; }
+
+  .dashboard { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px 32px; max-width: 1240px; width: 100%; margin: 0 auto; }
+  .hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; }
+  .card-label { font: 500 11px 'IBM Plex Mono', monospace; color: var(--accent); letter-spacing: 0.1em; }
+  .bike-card { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .bike-name { font: 700 26px 'Space Grotesk', sans-serif; }
+  .bike-meta-row { display: flex; gap: 20px; margin-top: 6px; flex-wrap: wrap; }
+  .meta-item { display: flex; flex-direction: column; }
+  .meta-item span:first-child { font-size: 11px; color: var(--faint); }
+  .meta-item span:last-child { font: 500 13px 'IBM Plex Mono', monospace; }
+
+  .battery-card { display: flex; flex-direction: column; gap: 12px; }
+  .soc-row { display: flex; align-items: baseline; gap: 12px; }
+  .soc-value { font: 700 40px 'Space Grotesk', sans-serif; }
+  .soc-unit { font-size: 20px; color: var(--muted); }
+  .soc-sub { font-size: 13px; color: var(--muted); }
+  .soc-bar { display: flex; gap: 5px; }
+  .soc-seg { flex: 1; height: 10px; border-radius: 2px; background: var(--border2); }
+  .soc-seg.filled { background: var(--accent); }
+  .battery-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+
+  .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .data-card { display: flex; flex-direction: column; gap: 10px; }
+  .kv-grid { display: grid; grid-template-columns: auto 1fr; gap: 7px 16px; font-size: 13px; }
+  .kv-grid span:nth-child(odd) { color: var(--faint); }
+  .kv-grid span:nth-child(even) { font-family: 'IBM Plex Mono', monospace; text-align: right; }
+  .good { color: var(--good) !important; }
+  .bad { color: var(--bad) !important; }
+
+  .raw-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .raw-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: none; border: none; color: var(--faint); font: 400 12px 'IBM Plex Mono', monospace; cursor: pointer; text-align: left; }
+  .raw-toggle .export { color: var(--accent); font-weight: 500; background: none; border: none; cursor: pointer; font: 500 12px 'IBM Plex Mono', monospace; }
+  .raw-body { border-top: 1px solid var(--border); max-height: 480px; overflow-y: auto; }
+  .raw-head { display: grid; grid-template-columns: 1.2fr 1fr 110px 1.6fr; gap: 16px; padding: 10px 20px; font: 500 11px 'IBM Plex Mono', monospace; color: var(--faint); letter-spacing: 0.08em; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--panel); }
+  .raw-row { display: grid; grid-template-columns: 1.2fr 1fr 110px 1.6fr; gap: 16px; padding: 8px 20px; font: 400 12px 'IBM Plex Mono', monospace; border-bottom: 1px solid var(--border); color: var(--muted); }
+  .raw-row span:first-child { color: var(--text); }
+  .raw-row .typed-marker { color: var(--accent); }
+
+  .footnote { font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); text-align: center; letter-spacing: 0.06em; }
+  .warn-inline { background: var(--panel2); border: 1px solid var(--border2); padding: 10px 16px; border-radius: 6px; font-size: 12.5px; color: var(--muted); }
 </style>
 </head>
 <body>
-<h1>Bosch Smart System (BES3) Component Reader</h1>
-<p>
-  Read-only diagnostic tool for Bosch Smart System eBikes. Connects to the
-  drive unit's system controller over USB-C and reads identification/status
-  data across every component — drive unit, both battery slots, remote
-  control, head unit, connect module, ABS — (serial numbers, product codes,
-  software versions, speed limits, region configuration, etc).
-  Runs entirely in your browser via WebUSB — nothing is sent to any server.
-</p>
-<div class="warn">
-  This tool only <strong>reads</strong> data. It never writes, configures, or
-  tunes anything, and it never touches licensing/authorization systems.
-  Requires Chrome, Edge, or another Chromium-based desktop browser (WebUSB is
-  not available on iOS/Safari).
+<div style="min-height: 100vh; display: flex; flex-direction: column;">
+  <header>
+    <div class="brand">
+      <div class="brand-badge">B3</div>
+      <span class="brand-name">BES3 Reader</span>
+    </div>
+    <div class="status-chip">
+      <span id="statusDot" class="status-dot"></span>
+      <span id="statusLabel" class="status-label mono">NOT CONNECTED</span>
+    </div>
+    <span id="progressText" class="progress-text" style="display:none;"></span>
+    <div class="header-actions">
+      <button id="themeToggle" class="icon-btn" title="Toggle light/dark">&#9680;</button>
+      <button id="connectBtn" class="primary-btn">Connect &amp; Read</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="emptyState" class="empty-wrap">
+      <div class="empty-inner">
+        <svg class="bike-icon" viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+          <circle cx="48" cy="85" r="28"></circle><circle cx="152" cy="85" r="28"></circle>
+          <path d="M48 85 L88 38 L138 38 L152 85 M88 38 L100 85 L138 38 M100 85 L48 85 M84 30 L98 30 M88 38 L86 30 M138 38 L142 26 M136 26 L150 28"></path>
+          <circle cx="100" cy="85" r="9" fill="var(--bg)" stroke="var(--accent)"></circle>
+        </svg>
+        <span class="empty-title">Not connected</span>
+        <span class="empty-body">Plug your eBike's drive unit into this computer via USB-C, switch the bike on, then hit <strong style="color: var(--text);">Connect &amp; Read</strong>. Requires Chrome or Edge on desktop (WebUSB).</span>
+        <span class="empty-note">READ-ONLY &middot; NOTHING IS WRITTEN TO THE BIKE</span>
+        <span id="webUsbWarning" class="warn-inline" style="display:none;"></span>
+      </div>
+    </div>
+
+    <div id="dashboard" class="dashboard" style="display:none;">
+      <div class="hero-grid">
+        <div class="card bike-card">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <span class="card-label">BIKE</span>
+            <span id="bikeName" class="bike-name">&mdash;</span>
+            <div class="bike-meta-row">
+              <div class="meta-item"><span>Bike ID</span><span id="bikeId">&mdash;</span></div>
+              <div class="meta-item"><span>Serial</span><span id="bikeSerial">&mdash;</span></div>
+              <div class="meta-item"><span>Category</span><span id="bikeCategory">&mdash;</span></div>
+            </div>
+          </div>
+          <svg viewBox="0 0 200 120" style="width: 200px; min-width: 160px; color: var(--border2);" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+            <circle cx="48" cy="85" r="28"></circle><circle cx="152" cy="85" r="28"></circle>
+            <path d="M48 85 L88 38 L138 38 L152 85 M88 38 L100 85 L138 38 M100 85 L48 85 M84 30 L98 30 M88 38 L86 30 M138 38 L142 26 M136 26 L150 28"></path>
+            <circle cx="100" cy="85" r="9" fill="var(--panel)" stroke="var(--accent)"></circle>
+          </svg>
+        </div>
+        <div class="card battery-card">
+          <span class="card-label">BATTERY</span>
+          <div class="soc-row">
+            <span class="soc-value"><span id="batterySoc">&mdash;</span><span class="soc-unit" id="batterySocUnit"></span></span>
+            <span class="soc-sub">state of charge</span>
+          </div>
+          <div id="socBar" class="soc-bar"></div>
+          <div class="battery-stats">
+            <div class="meta-item"><span>Health (SoH)</span><span id="batterySoh" class="good">&mdash;</span></div>
+            <div class="meta-item"><span>Cycles</span><span id="batteryCycles">&mdash;</span></div>
+            <div class="meta-item"><span>Remaining energy</span><span id="batteryEnergy">&mdash;</span></div>
+            <div class="meta-item"><span>Temp</span><span id="batteryTemp">&mdash;</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-grid">
+        <div class="card data-card">
+          <span class="card-label">DRIVE UNIT</span>
+          <div class="kv-grid" id="driveUnitGrid"></div>
+        </div>
+        <div class="card data-card">
+          <span class="card-label">DRIVETRAIN</span>
+          <div class="kv-grid" id="drivetrainGrid"></div>
+        </div>
+        <div class="card data-card">
+          <span class="card-label">USAGE</span>
+          <div class="kv-grid" id="usageGrid"></div>
+        </div>
+      </div>
+
+      <div class="raw-panel">
+        <button id="rawToggle" class="raw-toggle">
+          <span id="rawSummary">&#9656; RAW ADDRESS TABLE &mdash; 0 data points</span>
+          <button id="exportBtn" class="export" type="button">EXPORT REPORT &darr;</button>
+        </button>
+        <div id="rawBody" class="raw-body" style="display:none;">
+          <div class="raw-head"><span>COMPONENT.NAME</span><span>ADDRESS</span><span>&nbsp;</span><span>VALUE</span></div>
+          <div id="rawRows"></div>
+        </div>
+      </div>
+
+      <span class="footnote">READ-ONLY TOOL &middot; NOTHING IS WRITTEN TO THE BIKE &middot; RUNS ENTIRELY IN YOUR BROWSER</span>
+    </div>
+  </main>
 </div>
-<button id="connectBtn">Connect &amp; Read</button>
-<span id="progress"></span>
-<div id="status" class="status"></div>
-<table>
-  <thead><tr><th>Component</th><th>Name</th><th>Address</th><th>Value</th></tr></thead>
-  <tbody id="resultsBody"></tbody>
-</table>
-<h3>Not attempted (RPC/callable addresses, or unclassified)</h3>
-<ul id="notSupported"></ul>
 
 <script src="src/addresses.js"></script>
 <script src="src/protocol.js"></script>

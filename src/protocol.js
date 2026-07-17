@@ -19,6 +19,7 @@
 // request shape — callable RPCs (e.g. READ_UDAM_VALUES) need an argument and
 // a different invocation we have not cracked yet.
 
+(function () {
 const RESPONSE_FIXED = [0x8e, 0x10]; // constant bytes seen in every read response
 const BLOCK_OP = 0x30;               // MCSP "block read" op byte
 
@@ -112,7 +113,7 @@ function decodeValue(payload) {
   return { kind: 'raw', value: toHex(payload), display: `hex: ${toHex(payload)}` };
 }
 
-const exportsObj = {
+const protocolExports = {
   encodeVarint,
   buildReadRequestFrame,
   parseReadResponseFrame,
@@ -121,7 +122,8 @@ const exportsObj = {
 };
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = exportsObj;
+  module.exports = protocolExports;
 } else if (typeof window !== 'undefined') {
-  window.Bes3Protocol = exportsObj;
+  window.Bes3Protocol = protocolExports;
 }
+})();

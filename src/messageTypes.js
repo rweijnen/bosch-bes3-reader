@@ -19,6 +19,7 @@
 //   enum            - protobuf field 1, varint enum ordinal; look up in `enumTable`
 //   tuningDetection - protobuf field 1 = bool flag, field 2 = varint counter
 
+(function () {
 const REGIO_SPEED_CONFIGURATION_ENUM = {
   0: { name: 'UNSPECIFIED', label: 'Unspecified' },
   1: { name: 'EUROPE_AUSTRALIA25KMH', label: 'Europe / Australia, 25 km/h' },
@@ -182,9 +183,9 @@ function decodeTyped(addr, payload) {
     // proto3 omits default-value scalar fields entirely — for bool this means false;
     // for a bare uint it means the value really is 0; for everything else it
     // usually means "not present".
-    if (meta.kind === 'bool') return { label: meta.label, display: 'false' };
-    if (meta.kind === 'uint') return { label: meta.label, display: meta.unit ? `0 ${meta.unit}` : '0' };
-    return { label: meta.label, display: '(empty / default)' };
+    if (meta.kind === 'bool') return { label: meta.label, display: 'false', value: false };
+    if (meta.kind === 'uint') return { label: meta.label, display: meta.unit ? `0 ${meta.unit}` : '0', value: 0 };
+    return { label: meta.label, display: '(empty / default)', value: null };
   }
 
   const fields = parseFields(payload);
@@ -192,54 +193,57 @@ function decodeTyped(addr, payload) {
 
   switch (meta.kind) {
     case 'string': {
-      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)' };
-      return { label: meta.label, display: decodeUtf8(f1.value) };
+      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      const str = decodeUtf8(f1.value);
+      return { label: meta.label, display: str, value: str };
     }
     case 'normFactor': {
-      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)' };
+      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
       const raw = meta.signed ? zigzagDecode(f1.value) : f1.value;
       const real = raw / meta.factor;
-      return { label: meta.label, display: meta.unit ? `${real} ${meta.unit}` : String(real) };
+      return { label: meta.label, display: meta.unit ? `${real} ${meta.unit}` : String(real), value: real };
     }
     case 'bool': {
-      if (!f1) return { label: meta.label, display: 'false' };
-      return { label: meta.label, display: f1.value ? 'true' : 'false' };
+      if (!f1) return { label: meta.label, display: 'false', value: false };
+      return { label: meta.label, display: f1.value ? 'true' : 'false', value: !!f1.value };
     }
     case 'uint': {
-      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)' };
-      return { label: meta.label, display: meta.unit ? `${f1.value} ${meta.unit}` : String(f1.value) };
+      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      return { label: meta.label, display: meta.unit ? `${f1.value} ${meta.unit}` : String(f1.value), value: f1.value };
     }
     case 'enum': {
-      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)' };
+      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
       const entry = meta.enumTable[f1.value] || meta.enumTable[String(f1.value)];
       return {
         label: meta.label,
         display: entry ? `${entry.label} [${entry.name}=${f1.value}]` : `unknown enum value ${f1.value}`,
+        value: entry ? entry.name : f1.value,
       };
     }
     case 'uuid': {
-      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)' };
+      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
       // f1.value is itself a nested message: field 1, length-delimited, 16 raw bytes
       const inner = parseFields(f1.value);
       const raw = inner[1] && inner[1].wireType === 2 ? inner[1].value : null;
-      if (!raw || raw.length !== 16) return { label: meta.label, display: `hex: ${toHex(f1.value)}` };
+      if (!raw || raw.length !== 16) return { label: meta.label, display: `hex: ${toHex(f1.value)}`, value: null };
       const hex = toHex(raw).replace(/ /g, '');
       const uuid = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
-      return { label: meta.label, display: uuid };
+      return { label: meta.label, display: uuid, value: uuid };
     }
     case 'tuningDetection': {
       const flag = fields[1] ? !!fields[1].value : false;
       const counter = fields[2] ? fields[2].value : 0;
-      return { label: meta.label, display: `flag=${flag}, counter=${counter}` };
+      return { label: meta.label, display: `flag=${flag}, counter=${counter}`, value: { flag, counter } };
     }
     default:
       return null;
   }
 }
 
-const exportsObj = { FIELD_TYPES, decodeTyped, REGIO_SPEED_CONFIGURATION_ENUM, BIKE_CATEGORY_ENUM };
+const messageTypesExports = { FIELD_TYPES, decodeTyped, REGIO_SPEED_CONFIGURATION_ENUM, BIKE_CATEGORY_ENUM };
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = exportsObj;
+  module.exports = messageTypesExports;
 } else if (typeof window !== 'undefined') {
-  window.Bes3MessageTypes = exportsObj;
+  window.Bes3MessageTypes = messageTypesExports;
 }
+})();
