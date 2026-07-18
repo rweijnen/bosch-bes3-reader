@@ -36,6 +36,34 @@ const Channel = {
   LBTP_PUSH: 3,
 };
 
+// MessageType nibble values (see src/protocol.js for the full table).
+const MessageType = {
+  READ: 0, READ_RESPONSE: 1, WRITE: 2, WRITE_RESPONSE: 3, RPC: 4, RPC_RESPONSE: 5,
+};
+
+// The bike expects the phone to act as a message-bus PEER with its own
+// "MobileApp" component, not just a client issuing reads — discovered by
+// tracing the Flow app's connection-lifecycle code (DefaultBoschRemoteControl/
+// DefaultBikeInitialisationIndicator/StaticFeatureProperties). Until this
+// project's transport first surfaced this, every plain read timed out on
+// real hardware: the bike was stuck retrying these same requests against us
+// and getting no answer, exactly mirroring what our own reads were doing to
+// it. See private research notes for the full trace and the hardware
+// capture that led here.
+//
+// MobileAppAddresses (com.bosch.ebike.messagebus.constants), high byte 0x40:
+const MOBILE_APP_HIGH_BYTE = 0x40;
+const MOBILE_APP_LOW = {
+  UI_PRIORITY: 0x81,                        // 16513
+  STARTUP_STAGE: 0xa9,                      // 16553 — bike WRITEs its boot stage here (0=UNINITIALIZED .. 9=STAGE9/done)
+  MOBILE_APP_STATIC_FEATURE_PROPERTIES: 0xaa, // 16554 — bike READs this; must report stagedStartup=true or it won't proceed
+};
+const STARTUP_STAGE_DONE = 9;
+// MobileAppStaticFeatureProperties: proto3 bools, field 3 = stagedStartup.
+// Only the true field needs encoding (proto3 omits false/default fields):
+// tag=(3<<3)|0=0x18, value=1.
+const STATIC_FEATURE_PROPERTIES_RESPONSE = Uint8Array.from([0x18, 0x01]);
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -95,6 +123,7 @@ class Bes3BleMcspTransport {
     this.txChar = null;
     this._readQueue = []; // reconstructed USB-shaped frames, ready for protocol.js's parseReadResponseFrame
     this._commandsSeen = [];
+    this.startupStage = null; // last STARTUP_STAGE value the bike has written to us, or null if never seen
   }
 
   // On Windows, Web Bluetooth's gatt.connect() (and the discovery calls right
@@ -161,6 +190,7 @@ class Bes3BleMcspTransport {
     for (const frame of decodeSegmentationFrames(bytes)) {
       log && log('ble-rx', `frame: channel=${frame.channel} endOfChannel=${frame.endOfChannel} len=${frame.payload.length}`, frame.payload);
       if (frame.channel === Channel.MESSAGE_BUS && frame.endOfChannel) {
+        if (this._handleInboundMobileAppRequest(frame.payload)) continue;
         // Reconstruct as the exact bytes transport-webusb.js's readNextFrame()
         // would have returned, so the existing, unmodified
         // parseReadResponseFrame() can be reused as-is. Only correct for
@@ -179,6 +209,83 @@ class Bes3BleMcspTransport {
       }
       // LBTP_PULL/PUSH and channels 4-7 not handled — not used by any plain read/RPC.
     }
+  }
+
+  // The bike addresses US as a "MobileApp" message-bus component (see the
+  // MOBILE_APP_* constants above) — a plain READ/WRITE request, not a
+  // response to anything we sent. Recognized by: destination high byte
+  // (masked) == 0x40, and a request-shaped type (READ or WRITE, not a
+  // *_RESPONSE/RPC type). Returns true if the frame was handled as such
+  // (caller should not also treat it as a response to our own pending read).
+  _handleInboundMobileAppRequest(body) {
+    if (body.length < 5) return false;
+    const reqSrcHigh = body[0];
+    const reqSrcLow = body[1];
+    const destHigh = body[2];
+    const destLow = body[3];
+    const typeSeq = body[4];
+    const reqType = (typeSeq >> 4) & 0x0f;
+    const seq = typeSeq & 0x0f;
+    if ((destHigh & 0x7f) !== MOBILE_APP_HIGH_BYTE) return false;
+    if (reqType !== MessageType.READ && reqType !== MessageType.WRITE) return false;
+
+    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    let responseType;
+    let payload = [];
+
+    if (reqType === MessageType.READ) {
+      responseType = MessageType.READ_RESPONSE;
+      if (destLow === MOBILE_APP_LOW.MOBILE_APP_STATIC_FEATURE_PROPERTIES) {
+        payload = Array.from(STATIC_FEATURE_PROPERTIES_RESPONSE);
+        log && log('ble-mcsp', 'answered bike READ of MobileApp.MOBILE_APP_STATIC_FEATURE_PROPERTIES (stagedStartup=true)');
+      } else {
+        log && log('ble-mcsp', `answered bike READ of unrecognized MobileApp field 0x${destLow.toString(16)} (empty ack)`);
+      }
+    } else {
+      responseType = MessageType.WRITE_RESPONSE;
+      if (destLow === MOBILE_APP_LOW.STARTUP_STAGE) {
+        // StartupStageEnumMessage — single enum field, same single-field-varint
+        // shape as every other enum-wrapper message already confirmed
+        // elsewhere in this protocol. Payload here is the request's own
+        // payload (after the 5-byte envelope), e.g. [0x08, stageValue].
+        const stagePayload = body.slice(5);
+        const stage = stagePayload.length >= 2 ? stagePayload[1] : null;
+        this.startupStage = stage;
+        log && log('ble-mcsp', `bike WROTE MobileApp.STARTUP_STAGE = ${stage}${stage === STARTUP_STAGE_DONE ? ' (done)' : ''}`);
+      } else {
+        log && log('ble-mcsp', `acked bike WRITE to unrecognized MobileApp field 0x${destLow.toString(16)}`);
+      }
+    }
+
+    const responseBody = [
+      MOBILE_APP_HIGH_BYTE,          // srcHigh: us, unflagged
+      destLow,                        // srcLow: echo which field this was about
+      0x80 | (reqSrcHigh & 0x7f),    // destHigh: echo requester, implicit-success flag set
+      reqSrcLow,                      // destLow: echo requester's own low byte
+      ((responseType & 0x0f) << 4) | (seq & 0x0f),
+      ...payload,
+    ];
+    this._writeFrame(Channel.MESSAGE_BUS, Uint8Array.from(responseBody)).catch(() => {});
+    return true;
+  }
+
+  // Waits for the bike to report STARTUP_STAGE == 9 (its own boot-complete
+  // signal) before the caller proceeds with the normal read sweep — mirrors
+  // the Flow app's own behavior (DefaultBikeInitialisationIndicator), which
+  // waits the same way with the same kind of bounded timeout-then-proceed
+  // fallback rather than blocking forever if a bike/firmware never sends
+  // this handshake at all.
+  async waitForBikeReady(timeoutMs = 8000) {
+    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (this.startupStage === STARTUP_STAGE_DONE) {
+        log && log('ble-mcsp', 'bike reached STARTUP_STAGE=9 — proceeding');
+        return;
+      }
+      await sleep(100);
+    }
+    log && log('ble-mcsp', `STARTUP_STAGE never reached 9 within ${timeoutMs}ms (last seen: ${this.startupStage}) — proceeding anyway`);
   }
 
   async _writeFrame(channel, payload) {

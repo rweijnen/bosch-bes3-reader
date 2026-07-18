@@ -567,6 +567,13 @@
     }
     if (transportKind === 'ble-mcsp') {
       device.addEventListener('gattserverdisconnected', () => handleDisconnect(true));
+      // The bike won't honor plain reads until it's satisfied with its own
+      // boot-stage handshake against us (acting as its "MobileApp" peer) —
+      // see transport-webble-mcsp.js's inbound-request responder and private
+      // research notes. Bounded wait with a proceed-anyway fallback, same
+      // shape as the official Flow app's own behavior.
+      els.connectingSub.textContent = 'waiting for bike boot handshake…';
+      await transport.waitForBikeReady();
     }
 
     // Warm-up: the drive unit needs a beat after init before it answers reliably.
