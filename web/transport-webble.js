@@ -89,7 +89,12 @@ function decodeLiveData(bytes) {
 
 async function requestLiveDataDevice() {
   return navigator.bluetooth.requestDevice({
-    filters: [{ services: [LIVE_DATA_SERVICE_UUID] }],
+    // The bike advertises the 16-bit service 0xFE02; the Live Data service UUID
+    // below is only in the GATT table once connected, NOT in the advertisement.
+    // Filtering on the LDI UUID directly matched no devices (empty picker) —
+    // filter on the advertised service and request the LDI service as optional
+    // so we can reach it after connecting.
+    filters: [{ services: [0xfe02] }],
     optionalServices: [LIVE_DATA_SERVICE_UUID],
   });
 }
@@ -101,10 +106,43 @@ class Bes3LiveDataBleTransport {
     this._onData = null;
   }
 
+  // Windows Web Bluetooth flakes right after pairing — gatt.connect() (and the
+  // discovery right after) can throw "Connection attempt failed" on the first
+  // 1-2 tries then succeed. Retry with backoff, disconnecting any half-open link
+  // between attempts. "Not paired" won't self-heal (missing OS bond) — bail out
+  // early with guidance. Self-contained so it doesn't depend on helpers from the
+  // other transport files (they share global scope).
   async connect() {
-    const server = await this.device.gatt.connect();
-    const service = await server.getPrimaryService(LIVE_DATA_SERVICE_UUID);
-    this.characteristic = await service.getCharacteristic(LIVE_DATA_CHARACTERISTIC_UUID);
+    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+    log && log('ble-live', `device: ${this.device.name || '(unnamed)'} id=${this.device.id}`);
+    const backoffsMs = [0, 400, 900, 1600];
+    let lastErr;
+    for (let attempt = 0; attempt < backoffsMs.length; attempt++) {
+      if (backoffsMs[attempt]) await delay(backoffsMs[attempt]);
+      try {
+        log && log('ble-live', `gatt.connect() attempt ${attempt + 1}/${backoffsMs.length}…`);
+        const server = await this.device.gatt.connect();
+        log && log('ble-live', 'connected, discovering Live Data service', LIVE_DATA_SERVICE_UUID);
+        const service = await server.getPrimaryService(LIVE_DATA_SERVICE_UUID);
+        this.characteristic = await service.getCharacteristic(LIVE_DATA_CHARACTERISTIC_UUID);
+        log && log('ble-live', 'connect() complete');
+        return;
+      } catch (err) {
+        lastErr = err;
+        log && log('ble-live', `connect attempt ${attempt + 1}/${backoffsMs.length} failed: ${err.message}`);
+        try { this.device.gatt.disconnect(); } catch (_) {}
+        if (/not paired|encryption|not authori|authentication/i.test(err.message || '')) break;
+      }
+    }
+    const m = (lastErr && lastErr.message) || String(lastErr) || 'unknown error';
+    if (/not paired|encryption|not authori|authentication/i.test(m)) {
+      throw new Error(`Bike not paired. Pair "smart system eBike" in Windows Bluetooth settings (with the bike in pairing mode), then reconnect. [${m}]`);
+    }
+    if (/connection attempt failed|unreachable|gatt operation failed|no longer|disconnected|not connected/i.test(m)) {
+      throw new Error(`Could not reach the bike over BLE. Make sure it's awake, in range, and (first time) in pairing mode, then try again — Windows BLE often needs a couple of attempts. [${m}]`);
+    }
+    throw new Error(m);
   }
 
   disconnect() {
