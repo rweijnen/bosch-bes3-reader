@@ -79,6 +79,10 @@
   let transport = null;
   let abortRequested = false;
   let bleLiveState = {};
+  // Set when the bike drops off AFTER a read completed (its results are on
+  // screen). Lets us keep the dashboard instead of wiping back to the start
+  // screen — a post-read disconnect (usually the bike sleeping) is not a failure.
+  let disconnectedAfterRead = false;
 
   // ---------- disclaimer (first run) ----------
   const ACK_KEY = 'bes3-risk-ack';
@@ -141,10 +145,16 @@
     els.bleDashboard.style.display = phase === 'connected' && method === 'ble' ? 'flex' : 'none';
 
     els.cancelBtn.style.display = 'none'; // scanning/connecting screens have their own cancel buttons
-    els.disconnectBtn.style.display = phase === 'connected' ? '' : 'none';
+    // Nothing to disconnect once the bike has already dropped; keep "Read again".
+    els.disconnectBtn.style.display = phase === 'connected' && !disconnectedAfterRead ? '' : 'none';
     els.readAgainBtn.style.display = phase === 'connected' ? '' : 'none';
 
-    if (phase === 'connected') {
+    if (phase === 'connected' && disconnectedAfterRead) {
+      els.statusDot.style.background = 'var(--muted)';
+      els.statusDot.style.boxShadow = 'none';
+      els.statusDot.style.animation = 'none';
+      els.statusLabel.textContent = 'DISCONNECTED · SHOWING LAST READ';
+    } else if (phase === 'connected') {
       els.statusDot.style.background = 'var(--good)';
       els.statusDot.style.boxShadow = '0 0 6px var(--good)';
       els.statusDot.style.animation = 'none';
@@ -211,6 +221,7 @@
   function goIdle(message) {
     if (message && window.Bes3DebugLog) window.Bes3DebugLog.log('app', 'goIdle', message);
     abortRequested = false;
+    disconnectedAfterRead = false;
     phase = 'idle';
     transport = null;
     renderPhase();
@@ -223,6 +234,17 @@
   function handleDisconnect(auto) {
     if (phase !== 'connected' && phase !== 'connecting' && phase !== 'scanning') return;
     stopKeepAlive();
+    // A read already completed and its results are on screen (phase 'connected').
+    // A disconnect now — typically the bike sleeping right after the sweep — must
+    // NOT wipe the dashboard back to the start screen. Keep the data, mark the
+    // bike as gone, and let "Read again" re-scan when the user wants fresh data.
+    if (phase === 'connected') {
+      transport = null;
+      disconnectedAfterRead = true;
+      renderPhase();
+      if (auto) setProgress(method === 'ble' ? 'bike disconnected — showing last live values' : 'bike disconnected — showing the last read');
+      return;
+    }
     const wasMethod = method;
     goIdle(auto ? 'bike disconnected — power it on and connect again' : '');
     if (auto) setProgress(wasMethod === 'ble' ? 'bike disconnected' : 'bike disconnected — power it on and read again');
@@ -514,6 +536,7 @@
   // Both produce the exact same lastResults shape, so the rest of the
   // dashboard/raw-table code is unaware which transport was used.
   async function runSweep(transportKind) {
+    disconnectedAfterRead = false;
     let device;
     try {
       device = transportKind === 'ble-mcsp'
@@ -669,6 +692,7 @@
   async function connectBle() {
     method = 'ble';
     abortRequested = false;
+    disconnectedAfterRead = false;
     phase = 'scanning';
     renderPhase();
 
