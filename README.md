@@ -62,6 +62,19 @@ drive unit platform, cross-referenced against publicly observable behavior of
 existing tuning/diagnostic tools for the same platform. It is not affiliated
 with or endorsed by Bosch.
 
+## Development / repo hygiene
+
+This is a **public** repo — keep bike-specific and personal data out of it
+(serials, device certificates, wire captures, research notes). Those belong in a
+private repo. A pre-commit hook (`githooks/pre-commit`) enforces this: it blocks
+commits that stage a Bosch serial or research/capture-style files.
+
+After cloning, enable it once:
+```bash
+git config core.hooksPath githooks
+```
+(False positive? `ALLOW_SENSITIVE=1 git commit ...` to bypass for one commit.)
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

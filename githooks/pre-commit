@@ -1,0 +1,40 @@
+#!/bin/sh
+# Guard for this PUBLIC repo: keep bike-specific / personal data out.
+# Blocks commits that stage Bosch serials or research/capture-style files —
+# those belong in the PRIVATE research repo (bosch-ebts-research), not here.
+#
+# Bypass ONLY if you are certain it is not sensitive:
+#   ALLOW_SENSITIVE=1 git commit ...
+#
+# Wired via `git config core.hooksPath githooks` (see README). Re-run that after
+# a fresh clone so this hook is active.
+
+[ -n "$ALLOW_SENSITIVE" ] && exit 0
+
+fail=0
+
+# 1) Bosch component serial, format NNNNN-NNNN-NN-XXX-NN-NNNN
+serial='[0-9]{5}-[0-9]{4}-[0-9]{2}-[A-Z0-9]{3}-[0-9]{2}-[0-9]{4}'
+hits=$(git grep --cached -InE "$serial" -- . 2>/dev/null)
+if [ -n "$hits" ]; then
+  echo "X pre-commit blocked: looks like a Bosch serial / bike-specific data:"
+  echo "$hits" | sed 's/^/   /'
+  fail=1
+fi
+
+# 2) Research / capture / handoff files that shouldn't live in the public repo
+names=$(git diff --cached --name-only --diff-filter=AM | grep -iE 'handoff|capture|\.pcap$|-research|field-classification')
+if [ -n "$names" ]; then
+  echo "X pre-commit blocked: research/capture-style file(s) in a PUBLIC repo:"
+  echo "$names" | sed 's/^/   /'
+  fail=1
+fi
+
+if [ "$fail" = 1 ]; then
+  echo ""
+  echo "  -> Put bike serials, captures, certificates and research notes in the"
+  echo "     PRIVATE repo: bosch-ebts-research."
+  echo "  -> False positive? re-run with: ALLOW_SENSITIVE=1 git commit ..."
+  exit 1
+fi
+exit 0
