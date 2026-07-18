@@ -11,22 +11,27 @@
   :root {
     --bg: #101113; --panel: #1c1f23; --panel2: #16181b; --border: #26292e; --border2: #2c3036;
     --text: #e8eaed; --muted: #9aa0a6; --faint: #6b7178; --accent: oklch(0.8 0.15 85);
-    --accent-ink: #1c1a0a; --good: #3ddc84; --bad: #e05c5c; --chipbg: #101113;
+    --accent-ink: #1c1a0a; --good: #3ddc84; --bad: #e05c5c; --danger: #ff6b6b; --warnbg: #3a2418;
+    --chipbg: #101113; --seg: #101113; --scrim: rgba(6,7,8,0.72);
   }
   html[data-theme="light"] {
     --bg: #f2f1ee; --panel: #fdfcfa; --panel2: #f7f6f3; --border: #e2dfd8; --border2: #d8d4cb;
     --text: #1e2022; --muted: #6d6a62; --faint: #8a867c; --accent: oklch(0.62 0.13 85);
-    --accent-ink: #fdfcfa; --good: #1f9d5c; --bad: #c23b3b; --chipbg: #f0eee8;
+    --accent-ink: #fdfcfa; --good: #1f9d5c; --bad: #c23b3b; --danger: #cf3b3b; --warnbg: #fbf0e4;
+    --chipbg: #f0eee8; --seg: #ece9e2; --scrim: rgba(40,38,34,0.5);
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; transition: background 0.25s, color 0.25s; }
   a { color: var(--accent); } a:hover { opacity: 0.85; }
   button { font-family: inherit; }
+  input::placeholder { color: var(--faint); }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   .mono { font-family: 'IBM Plex Mono', monospace; }
   .grotesk { font-family: 'Space Grotesk', sans-serif; }
 
-  header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 20; }
   .brand { display: flex; align-items: center; gap: 10px; }
   .brand-badge { width: 28px; height: 28px; border-radius: 6px; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent-ink); font: 700 13px 'Space Grotesk', sans-serif; }
   .brand-name { font: 600 16px 'Space Grotesk', sans-serif; }
@@ -34,21 +39,37 @@
   .status-dot { width: 8px; height: 8px; border-radius: 50%; }
   .status-label { font: 500 12px 'IBM Plex Mono', monospace; color: var(--muted); letter-spacing: 0.04em; }
   .progress-text { font: 400 12px 'IBM Plex Mono', monospace; color: var(--faint); }
-  .header-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
   .icon-btn { background: none; border: 1px solid var(--border2); border-radius: 6px; width: 36px; height: 36px; color: var(--muted); font-size: 16px; cursor: pointer; }
-  .primary-btn { background: var(--accent); color: var(--accent-ink); border: none; font: 600 13px 'IBM Plex Sans', sans-serif; padding: 10px 18px; border-radius: 6px; cursor: pointer; min-width: 140px; }
+  .primary-btn { background: var(--accent); color: var(--accent-ink); border: none; font: 600 13px 'IBM Plex Sans', sans-serif; padding: 10px 18px; border-radius: 6px; cursor: pointer; }
   .primary-btn:disabled { opacity: 0.6; cursor: default; }
-  .ghost-btn { background: none; border: 1px solid var(--border2); color: var(--muted); font: 500 12px 'IBM Plex Sans', sans-serif; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+  .ghost-btn { background: none; border: 1px solid var(--border2); color: var(--muted); font: 600 13px 'IBM Plex Sans', sans-serif; padding: 10px 16px; border-radius: 6px; cursor: pointer; }
 
-  main { flex: 1; }
-  .empty-wrap { min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
-  .empty-inner { max-width: 480px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
-  .bike-icon { width: 240px; color: var(--border2); }
-  .empty-title { font: 700 24px 'Space Grotesk', sans-serif; }
-  .empty-body { font: 400 14px/1.6 'IBM Plex Sans', sans-serif; color: var(--muted); }
-  .empty-note { font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); letter-spacing: 0.06em; }
+  main { flex: 1; display: flex; }
+  .center-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
+  .bike-icon { width: 180px; color: var(--border2); }
 
-  .dashboard { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px 32px; max-width: 1240px; width: 100%; margin: 0 auto; }
+  .chooser { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 20px; animation: fadein 0.3s ease; }
+  .chooser-head { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+  .chooser-title { font: 700 24px 'Space Grotesk', sans-serif; }
+  .chooser-sub { font: 400 13px 'IBM Plex Sans', sans-serif; color: var(--muted); }
+  .segmented { display: flex; gap: 4px; padding: 4px; background: var(--seg); border: 1px solid var(--border); border-radius: 10px; }
+  .seg-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 11px 8px; border: none; border-radius: 7px; cursor: pointer; background: transparent; color: var(--muted); transition: background 0.15s; font: 600 14px 'IBM Plex Sans', sans-serif; }
+  .seg-btn.active { background: var(--accent); color: var(--accent-ink); }
+  .method-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .method-blurb { font: 400 13px/1.6 'IBM Plex Sans', sans-serif; color: var(--muted); }
+  .warn-box { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; background: color-mix(in oklab, var(--danger) 12%, transparent); border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent); border-radius: 8px; }
+  .warn-box span.txt { font: 400 12px/1.5 'IBM Plex Sans', sans-serif; color: var(--text); }
+  .method-req { font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); text-align: center; }
+
+  .status-card { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 32px 28px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; animation: fadein 0.3s ease; }
+  .spinner { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--border2); border-top-color: var(--accent); animation: spin 0.9s linear infinite; }
+  .status-card-title { font: 700 20px 'Space Grotesk', sans-serif; }
+  .status-card-body { font: 400 13px/1.6 'IBM Plex Sans', sans-serif; color: var(--muted); }
+  .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-bar > div { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.15s linear; }
+
+  .dashboard { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px 32px; max-width: 1240px; width: 100%; margin: 0 auto; animation: fadein 0.3s ease; }
   .hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; }
   .card-label { font: 500 11px 'IBM Plex Mono', monospace; color: var(--accent); letter-spacing: 0.1em; }
@@ -77,6 +98,16 @@
   .good { color: var(--good) !important; }
   .bad { color: var(--bad) !important; }
 
+  .section-head { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+  .section-head .line { flex: 1; height: 1px; background: var(--border); }
+  .section-label { font: 500 11px 'IBM Plex Mono', monospace; color: var(--accent); letter-spacing: 0.1em; white-space: nowrap; }
+
+  .cloud-lock-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 24px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+  .cloud-lock-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--chipbg); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
+  .cloud-lock-title { font: 600 15px 'IBM Plex Sans', sans-serif; }
+  .cloud-lock-body { font: 400 12.5px 'IBM Plex Sans', sans-serif; color: var(--muted); }
+  .soon-note { font: 500 12px 'IBM Plex Sans', sans-serif; color: var(--accent); display: none; }
+
   .raw-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
   .raw-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: none; border: none; color: var(--faint); font: 400 12px 'IBM Plex Mono', monospace; cursor: pointer; text-align: left; }
   .raw-toggle .export { color: var(--accent); font-weight: 500; background: none; border: none; cursor: pointer; font: 500 12px 'IBM Plex Mono', monospace; }
@@ -87,7 +118,18 @@
   .raw-row .typed-marker { color: var(--accent); }
 
   .footnote { font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); text-align: center; letter-spacing: 0.06em; }
-  .warn-inline { background: var(--panel2); border: 1px solid var(--border2); padding: 10px 16px; border-radius: 6px; font-size: 12.5px; color: var(--muted); }
+
+  .modal-scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 60; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .modal-card { width: 100%; max-width: 480px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; animation: fadein 0.25s ease; }
+  .modal-head { padding: 24px 28px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center; }
+  .modal-warn-icon { width: 36px; height: 36px; border-radius: 9px; background: var(--warnbg); display: flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
+  .modal-title { font: 700 20px 'Space Grotesk', sans-serif; }
+  .modal-body { padding: 20px 28px; display: flex; flex-direction: column; gap: 12px; }
+  .modal-body p, .modal-body ul { margin: 0; font: 400 13.5px/1.65 'IBM Plex Sans', sans-serif; color: var(--muted); }
+  .modal-body ul { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+  .ack-row { display: flex; gap: 10px; align-items: flex-start; margin-top: 4px; cursor: pointer; }
+  .ack-row input { width: 18px; height: 18px; margin-top: 1px; accent-color: var(--accent); cursor: pointer; }
+  .ack-row span { font: 500 13px/1.5 'IBM Plex Sans', sans-serif; color: var(--text); }
 </style>
 </head>
 <body>
@@ -105,31 +147,72 @@
     <div class="header-actions">
       <button id="themeToggle" class="icon-btn" title="Toggle light/dark">&#9680;</button>
       <button id="cancelBtn" class="ghost-btn" style="display:none;">Cancel</button>
-      <button id="connectBleBtn" class="ghost-btn" title="Bosch's official Live Data Interface (BLE, v19+ bikes) — ride telemetry only, no health/diagnostic data">Connect BLE (Live Data)</button>
-      <button id="connectBtn" class="primary-btn">Connect &amp; Read</button>
+      <button id="disconnectBtn" class="ghost-btn" style="display:none;">Disconnect</button>
+      <button id="readAgainBtn" class="primary-btn" style="display:none;">Read again</button>
     </div>
   </header>
 
-  <div id="bleLivePanel" class="card" style="display:none; margin: 16px 24px 0;">
-    <span class="card-label">OFFICIAL BLE LIVE DATA &middot; ride telemetry only, no battery health/serials</span>
-    <div class="kv-grid" id="bleLiveGrid" style="margin-top:10px;"></div>
-  </div>
-
   <main>
-    <div id="emptyState" class="empty-wrap">
-      <div class="empty-inner">
-        <svg class="bike-icon" viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
-          <circle cx="48" cy="85" r="28"></circle><circle cx="152" cy="85" r="28"></circle>
-          <path d="M48 85 L88 38 L138 38 L152 85 M88 38 L100 85 L138 38 M100 85 L48 85 M84 30 L98 30 M88 38 L86 30 M138 38 L142 26 M136 26 L150 28"></path>
-          <circle cx="100" cy="85" r="9" fill="var(--bg)" stroke="var(--accent)"></circle>
-        </svg>
-        <span class="empty-title">Not connected</span>
-        <span class="empty-body">Plug your eBike's drive unit into this computer via USB-C, switch the bike on, then hit <strong style="color: var(--text);">Connect &amp; Read</strong>. Requires Chrome or Edge on desktop (WebUSB).</span>
-        <span class="empty-note">READ-ONLY &middot; NOTHING IS WRITTEN TO THE BIKE</span>
-        <span id="webUsbWarning" class="warn-inline" style="display:none;"></span>
+    <!-- CONNECT CHOOSER -->
+    <div id="chooserScreen" class="center-wrap">
+      <div class="chooser">
+        <div class="chooser-head">
+          <svg class="bike-icon" viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+            <circle cx="48" cy="85" r="28"></circle><circle cx="152" cy="85" r="28"></circle>
+            <path d="M48 85 L88 38 L138 38 L152 85 M88 38 L100 85 L138 38 M100 85 L48 85 M84 30 L98 30 M88 38 L86 30 M138 38 L142 26 M136 26 L150 28"></path>
+            <circle cx="100" cy="85" r="9" fill="var(--bg)" stroke="var(--accent)"></circle>
+          </svg>
+          <span class="chooser-title">Connect your eBike</span>
+          <span class="chooser-sub">Choose how to reach the drive unit.</span>
+        </div>
+        <div class="segmented">
+          <button id="pickUsbBtn" class="seg-btn active">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8.5" width="18" height="7" rx="3.5"></rect><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            USB-C
+          </button>
+          <button id="pickBleBtn" class="seg-btn">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8 L17 16 L12 20 V4 L17 8 L7 16"></path></svg>
+            Bluetooth
+          </button>
+        </div>
+        <div class="method-card">
+          <span id="methodBlurb" class="method-blurb"></span>
+          <div id="bleUnsupportedWarn" class="warn-box" style="display:none;">
+            <span>&#9888;</span>
+            <span class="txt">Web Bluetooth isn't available in this browser. Safari and all iOS/iPadOS browsers have no support &mdash; use <strong>Chrome or Edge on desktop or Android</strong>, or connect over USB-C.</span>
+          </div>
+          <div id="connectErrorBox" class="warn-box" style="display:none;">
+            <span>&#9888;</span>
+            <span id="connectErrorText" class="txt"></span>
+          </div>
+          <button id="connectMainBtn" class="primary-btn" style="width:100%; padding:13px;">Connect &amp; Read</button>
+          <span id="methodReq" class="method-req"></span>
+        </div>
       </div>
     </div>
 
+    <!-- SCANNING (BLE) -->
+    <div id="scanningScreen" class="center-wrap" style="display:none;">
+      <div class="status-card">
+        <div class="spinner"></div>
+        <span class="status-card-title">Scanning for your bike&hellip;</span>
+        <span class="status-card-body">Pick your eBike in the browser's Bluetooth dialog. Make sure the bike is <strong style="color:var(--text);">switched on and awake</strong> and Bluetooth is enabled on this device.</span>
+        <button id="cancelScanBtn" class="ghost-btn">Cancel</button>
+      </div>
+    </div>
+
+    <!-- CONNECTING / READING -->
+    <div id="connectingScreen" class="center-wrap" style="display:none;">
+      <div class="status-card">
+        <div class="spinner"></div>
+        <span id="connectingTitle" class="status-card-title">Reading drive unit&hellip;</span>
+        <div class="progress-bar"><div id="connectingBar" style="width:0%;"></div></div>
+        <span id="connectingSub" class="progress-text mono"></span>
+        <button id="cancelConnectingBtn" class="ghost-btn">Cancel</button>
+      </div>
+    </div>
+
+    <!-- CONNECTED DASHBOARD (USB — full read) -->
     <div id="dashboard" class="dashboard" style="display:none;">
       <div class="hero-grid">
         <div class="card bike-card">
@@ -179,6 +262,22 @@
         </div>
       </div>
 
+      <!-- EBIKE CONNECT CLOUD LOOKUPS -->
+      <div class="section-head"><span class="section-label">EBIKE CONNECT &middot; CLOUD LOOKUPS</span><div class="line"></div></div>
+      <div class="cloud-lock-card">
+        <div style="display:flex; gap:14px; align-items:center;">
+          <div class="cloud-lock-icon">&#128274;</div>
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <span class="cloud-lock-title">Bike photo, spec sheet &amp; stolen-marker check</span>
+            <span class="cloud-lock-body">Sign in with your Bosch eBike Connect account to unlock read-only catalog &amp; registry lookups.</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <button id="loginBtn" class="primary-btn" style="white-space:nowrap;">Login with eBike Connect</button>
+          <span id="loginSoonNote" class="soon-note">Coming soon &mdash; not implemented yet.</span>
+        </div>
+      </div>
+
       <div class="raw-panel">
         <button id="rawToggle" class="raw-toggle">
           <span id="rawSummary">&#9656; RAW ADDRESS TABLE &mdash; 0 data points</span>
@@ -192,15 +291,62 @@
 
       <span class="footnote">READ-ONLY TOOL &middot; NOTHING IS WRITTEN TO THE BIKE &middot; RUNS ENTIRELY IN YOUR BROWSER</span>
     </div>
+
+    <!-- CONNECTED — BLE OFFICIAL LIVE DATA -->
+    <div id="bleDashboard" class="dashboard" style="display:none;">
+      <div class="card">
+        <span class="card-label">OFFICIAL BLE LIVE DATA &middot; ride telemetry only, no battery health/serials</span>
+        <div class="kv-grid" id="bleLiveGrid" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="section-head"><span class="section-label">EBIKE CONNECT &middot; CLOUD LOOKUPS</span><div class="line"></div></div>
+      <div class="cloud-lock-card">
+        <div style="display:flex; gap:14px; align-items:center;">
+          <div class="cloud-lock-icon">&#128274;</div>
+          <div style="display:flex; flex-direction:column; gap:3px;">
+            <span class="cloud-lock-title">Bike photo, spec sheet &amp; stolen-marker check</span>
+            <span class="cloud-lock-body">Sign in with your Bosch eBike Connect account to unlock read-only catalog &amp; registry lookups.</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <button id="loginBtnBle" class="primary-btn" style="white-space:nowrap;">Login with eBike Connect</button>
+          <span id="loginSoonNoteBle" class="soon-note">Coming soon &mdash; not implemented yet.</span>
+        </div>
+      </div>
+
+      <span class="footnote">OFFICIAL BOSCH INTERFACE &middot; READ-ONLY &middot; RUNS ENTIRELY IN YOUR BROWSER</span>
+    </div>
   </main>
+
+  <!-- MANDATORY DISCLAIMER -->
+  <div id="disclaimerModal" class="modal-scrim" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-warn-icon">&#9888;</div>
+        <span class="modal-title">Use at your own risk</span>
+      </div>
+      <div class="modal-body">
+        <p>BES3 Reader is an independent, unofficial tool and is <strong style="color:var(--text);">not affiliated with, endorsed by, or supported by Bosch</strong>. It communicates directly with your eBike's drive unit.</p>
+        <ul>
+          <li>You use this tool entirely <strong style="color:var(--text);">at your own risk</strong>. The authors accept no liability for any damage, data loss, voided warranty, or malfunction.</li>
+          <li>Connecting to your drive unit may affect your manufacturer warranty or violate local regulations. You are responsible for how you use it.</li>
+          <li>Cloud lookups (when available) run against Bosch services using your own account; respect their terms of service.</li>
+        </ul>
+        <label class="ack-row">
+          <input type="checkbox" id="ackCheckbox">
+          <span>I understand and accept these terms.</span>
+        </label>
+        <button id="acceptDisclaimerBtn" class="primary-btn" style="margin-top:4px; width:100%; padding:13px;" disabled>Continue</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="src/addresses.js"></script>
 <script src="src/protocol.js"></script>
 <script src="src/messageTypes.js"></script>
 <script src="web/transport-webusb.js"></script>
-<script src="web/app.js"></script>
 <script src="web/transport-webble.js"></script>
-<script src="web/ble-live-data.js"></script>
+<script src="web/app.js"></script>
 </body>
 </html>

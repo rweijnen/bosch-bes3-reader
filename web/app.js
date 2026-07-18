@@ -3,17 +3,38 @@
   const { buildReadRequestFrame, buildRpcCallFrame, parseReadResponseFrame, decodeValue } = window.Bes3Protocol;
   const { decodeTyped } = window.Bes3MessageTypes;
   const { Bes3WebUsbTransport, requestDevice } = window.Bes3WebUsb;
+  const { Bes3LiveDataBleTransport, requestLiveDataDevice } = window.Bes3LiveDataBle;
 
   const $ = (id) => document.getElementById(id);
   const els = {
-    connectBtn: $('connectBtn'),
     themeToggle: $('themeToggle'),
     statusDot: $('statusDot'),
     statusLabel: $('statusLabel'),
     progressText: $('progressText'),
-    emptyState: $('emptyState'),
+    cancelBtn: $('cancelBtn'),
+    disconnectBtn: $('disconnectBtn'),
+    readAgainBtn: $('readAgainBtn'),
+
+    chooserScreen: $('chooserScreen'),
+    pickUsbBtn: $('pickUsbBtn'),
+    pickBleBtn: $('pickBleBtn'),
+    methodBlurb: $('methodBlurb'),
+    methodReq: $('methodReq'),
+    bleUnsupportedWarn: $('bleUnsupportedWarn'),
+    connectErrorBox: $('connectErrorBox'),
+    connectErrorText: $('connectErrorText'),
+    connectMainBtn: $('connectMainBtn'),
+
+    scanningScreen: $('scanningScreen'),
+    cancelScanBtn: $('cancelScanBtn'),
+
+    connectingScreen: $('connectingScreen'),
+    connectingTitle: $('connectingTitle'),
+    connectingBar: $('connectingBar'),
+    connectingSub: $('connectingSub'),
+    cancelConnectingBtn: $('cancelConnectingBtn'),
+
     dashboard: $('dashboard'),
-    webUsbWarning: $('webUsbWarning'),
     bikeName: $('bikeName'),
     bikeId: $('bikeId'),
     bikeSerial: $('bikeSerial'),
@@ -33,34 +54,208 @@
     rawBody: $('rawBody'),
     rawRows: $('rawRows'),
     exportBtn: $('exportBtn'),
-    cancelBtn: $('cancelBtn'),
+    loginBtn: $('loginBtn'),
+    loginSoonNote: $('loginSoonNote'),
+
+    bleDashboard: $('bleDashboard'),
+    bleLiveGrid: $('bleLiveGrid'),
+    loginBtnBle: $('loginBtnBle'),
+    loginSoonNoteBle: $('loginSoonNoteBle'),
+
+    disclaimerModal: $('disclaimerModal'),
+    ackCheckbox: $('ackCheckbox'),
+    acceptDisclaimerBtn: $('acceptDisclaimerBtn'),
   };
 
-  let state = 'disconnected'; // disconnected | connecting | connected
+  // phase: idle | scanning (ble only) | connecting | connected
+  let phase = 'idle';
+  let method = 'usb'; // usb | ble
   let theme = null; // null = follow system
-  let lastResults = []; // flat list of {component, name, addr, status, decoded, typed}
+  let lastResults = []; // USB: flat list of {component, name, addr, status, decoded, typed}
   let rawOpen = false;
   let transport = null;
   let abortRequested = false;
+  let bleLiveState = {};
 
-  // Fields worth painting first, so the dashboard fills in immediately instead of
-  // after a full ~2 min sweep. Ordered most-interesting-first; the rest backfill.
-  const PRIORITY = [
-    ['DriveUnit', 'SERIAL_NUMBER'], ['DriveUnit', 'PRODUCT_CODE'], ['DriveUnit', 'PRODUCT_NAME'],
-    ['DriveUnit', 'PRODUCT_LINE'], ['DriveUnit', 'SOFTWARE_VERSION'], ['DriveUnit', 'HARDWARE_VERSION'],
-    ['DriveUnit', 'BOOTLOADER_SOFTWARE_VERSION'], ['DriveUnit', 'BIKE_ID'], ['DriveUnit', 'BIKE_CATEGORY'],
-    ['DriveUnit', 'MAXIMUM_LEGAL_BIKE_SPEED'], ['DriveUnit', 'MAXIMUM_ASSISTANCE_SPEED'],
-    ['DriveUnit', 'REGIO_SPEED_CONFIGURATION'], ['DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_OEM'],
-    ['DriveUnit', 'TUNING_DETECTION'], ['DriveUnit', 'ODOMETER'], ['DriveUnit', 'POWER_ON_TIME'],
-    ['DriveUnit', 'GEARING_SYSTEM'], ['DriveUnit', 'PRESENT_PCB_TEMPERATURE'],
-    ['DriveUnit', 'OEM_BIKE_ID'], ['DriveUnit', 'OEM_BRAND_NAME'],
-    ['Battery', 'STATE_OF_CHARGE'], ['Battery', 'STATE_OF_HEALTH'], ['Battery', 'PRODUCT_CODE'],
-    ['Battery', 'PRODUCT_NAME'], ['Battery', 'NUMBER_OF_FULL_CHARGE_CYCLES'],
-    ['Battery', 'REMAINING_ENERGY'], ['Battery', 'PRESENT_PACK_TEMPERATURE'],
-  ];
+  // ---------- disclaimer (first run) ----------
+  const ACK_KEY = 'bes3-risk-ack';
+  function initDisclaimer() {
+    let acked = false;
+    try { acked = localStorage.getItem(ACK_KEY) === '1'; } catch (_) {}
+    els.disclaimerModal.style.display = acked ? 'none' : 'flex';
+  }
+  els.ackCheckbox.addEventListener('change', () => {
+    els.acceptDisclaimerBtn.disabled = !els.ackCheckbox.checked;
+  });
+  els.acceptDisclaimerBtn.addEventListener('click', () => {
+    if (!els.ackCheckbox.checked) return;
+    try { localStorage.setItem(ACK_KEY, '1'); } catch (_) {}
+    els.disclaimerModal.style.display = 'none';
+  });
 
-  // Always present on a Smart System bike — exempt from the absent-component skip.
-  const CORE_COMPONENTS = new Set(['DriveUnit', 'Battery', 'RemoteControl']);
+  // ---------- theme ----------
+  function effectiveDark() {
+    if (theme) return theme === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function applyTheme() {
+    document.documentElement.dataset.theme = effectiveDark() ? 'dark' : 'light';
+  }
+  els.themeToggle.addEventListener('click', () => {
+    theme = effectiveDark() ? 'light' : 'dark';
+    applyTheme();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (!theme) applyTheme();
+  });
+  applyTheme();
+
+  // ---------- cloud lookups (not implemented yet) ----------
+  // Deliberately NOT a login form: a UI that visually collects real Bosch
+  // credentials without actually authenticating is a phishing-shaped pattern
+  // regardless of intent. Real OAuth (PKCE against Bosch's Keycloak realm) is
+  // a separate, not-yet-solved piece of work — see private research notes on
+  // the redirect-handling problem for a static client-only page.
+  function wireComingSoon(button, note) {
+    button.addEventListener('click', () => {
+      note.style.display = 'inline';
+      setTimeout(() => { note.style.display = 'none'; }, 2500);
+    });
+  }
+  wireComingSoon(els.loginBtn, els.loginSoonNote);
+  wireComingSoon(els.loginBtnBle, els.loginSoonNoteBle);
+
+  // ---------- phase / screen rendering ----------
+  function renderPhase() {
+    els.chooserScreen.style.display = phase === 'idle' ? 'flex' : 'none';
+    els.scanningScreen.style.display = phase === 'scanning' ? 'flex' : 'none';
+    els.connectingScreen.style.display = phase === 'connecting' ? 'flex' : 'none';
+    els.dashboard.style.display = phase === 'connected' && method === 'usb' ? 'flex' : 'none';
+    els.bleDashboard.style.display = phase === 'connected' && method === 'ble' ? 'flex' : 'none';
+
+    els.cancelBtn.style.display = 'none'; // scanning/connecting screens have their own cancel buttons
+    els.disconnectBtn.style.display = phase === 'connected' ? '' : 'none';
+    els.readAgainBtn.style.display = phase === 'connected' ? '' : 'none';
+
+    if (phase === 'connected') {
+      els.statusDot.style.background = 'var(--good)';
+      els.statusDot.style.boxShadow = '0 0 6px var(--good)';
+      els.statusDot.style.animation = 'none';
+      els.statusLabel.textContent = method === 'ble' ? 'BLUETOOTH · CONNECTED' : 'USB · DRIVE UNIT · CONNECTED';
+    } else if (phase === 'connecting' || phase === 'scanning') {
+      els.statusDot.style.background = 'var(--accent)';
+      els.statusDot.style.boxShadow = 'none';
+      els.statusDot.style.animation = 'pulse 1s infinite';
+      els.statusLabel.textContent = phase === 'scanning' ? 'BLUETOOTH · SCANNING…'
+        : method === 'ble' ? 'BLUETOOTH · CONNECTING…' : 'USB · READING…';
+    } else {
+      els.statusDot.style.background = 'var(--border2)';
+      els.statusDot.style.boxShadow = 'none';
+      els.statusDot.style.animation = 'none';
+      els.statusLabel.textContent = 'NOT CONNECTED';
+    }
+  }
+
+  function setProgress(text) {
+    if (!text) {
+      els.progressText.style.display = 'none';
+      return;
+    }
+    els.progressText.style.display = '';
+    els.progressText.textContent = text;
+  }
+
+  function renderChooser() {
+    const isBle = method === 'ble';
+    els.pickUsbBtn.classList.toggle('active', !isBle);
+    els.pickBleBtn.classList.toggle('active', isBle);
+    els.methodBlurb.textContent = isBle
+      ? 'Wireless link over Bluetooth (Bosch’s official Live Data Interface). Make sure Bluetooth is enabled on this device and the bike is switched on and awake.'
+      : 'Wired link to the drive unit over USB-C. The most reliable way to read the bike, and the only path to full diagnostic data (battery health, serials, tuning status).';
+    els.methodReq.textContent = isBle
+      ? 'Requires Chrome or Edge on desktop or Android (Web Bluetooth). Ride telemetry only — no battery health or serials.'
+      : 'Requires Chrome or Edge on desktop (WebUSB).';
+    const bleSupported = 'bluetooth' in navigator;
+    const locked = isBle && !bleSupported;
+    els.bleUnsupportedWarn.style.display = locked ? 'flex' : 'none';
+    els.connectMainBtn.disabled = locked;
+    els.connectMainBtn.style.cursor = locked ? 'default' : 'pointer';
+    els.connectMainBtn.style.opacity = locked ? '0.6' : '1';
+    els.connectMainBtn.textContent = isBle ? 'Scan for bike' : 'Connect & Read';
+  }
+  function showConnectError(message) {
+    if (!message) {
+      els.connectErrorBox.style.display = 'none';
+      return;
+    }
+    els.connectErrorBox.style.display = 'flex';
+    els.connectErrorText.textContent = message;
+  }
+
+  els.pickUsbBtn.addEventListener('click', () => { method = 'usb'; showConnectError(''); renderChooser(); });
+  els.pickBleBtn.addEventListener('click', () => { method = 'ble'; showConnectError(''); renderChooser(); });
+
+  function goIdle(message) {
+    abortRequested = false;
+    phase = 'idle';
+    transport = null;
+    renderPhase();
+    setProgress('');
+    showConnectError(message || '');
+    renderChooser();
+  }
+
+  // ---------- disconnect (both transports) ----------
+  function handleDisconnect(auto) {
+    if (phase !== 'connected' && phase !== 'connecting' && phase !== 'scanning') return;
+    stopKeepAlive();
+    const wasMethod = method;
+    goIdle(auto ? 'bike disconnected — power it on and connect again' : '');
+    if (auto) setProgress(wasMethod === 'ble' ? 'bike disconnected' : 'bike disconnected — power it on and read again');
+  }
+
+  if ('usb' in navigator) {
+    navigator.usb.addEventListener('disconnect', (e) => {
+      if (method === 'usb' && (!transport || !transport.device || e.device === transport.device)) {
+        handleDisconnect(true);
+      }
+    });
+  }
+
+  els.disconnectBtn.addEventListener('click', () => {
+    if (method === 'ble' && transport) transport.disconnect();
+    else if (transport) { stopKeepAlive(); try { transport.close(); } catch (_) {} }
+    goIdle('');
+  });
+  els.readAgainBtn.addEventListener('click', () => {
+    if (method === 'ble' && transport) { try { transport.disconnect(); } catch (_) {} }
+    else if (transport) { stopKeepAlive(); try { transport.close(); } catch (_) {} }
+    transport = null;
+    if (method === 'ble') connectBle(); else runSweep();
+  });
+  function cancelInFlight() {
+    abortRequested = true;
+    if (phase === 'scanning') goIdle('');
+    setProgress('cancelling…');
+  }
+  els.cancelScanBtn.addEventListener('click', cancelInFlight);
+  els.cancelConnectingBtn.addEventListener('click', cancelInFlight);
+
+  els.connectMainBtn.addEventListener('click', () => {
+    showConnectError('');
+    if (method === 'ble') {
+      if (!('bluetooth' in navigator)) return;
+      connectBle();
+    } else {
+      if (!('usb' in navigator)) {
+        showConnectError('WebUSB is not available in this browser. Use Chrome, Edge, or another Chromium-based browser on desktop.');
+        return;
+      }
+      runSweep();
+    }
+  });
+
+  // ================= USB: full MessageBus sweep =================
 
   // RemoteControlAddresses.RESET_INACTIVITY_SHUTDOWN_TIMER (8454 = 0x2106) —
   // an argument-less RPC call, not a read. The stock tool fires this
@@ -93,75 +288,30 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  // ---------- theme ----------
-  function effectiveDark() {
-    if (theme) return theme === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  function applyTheme() {
-    document.documentElement.dataset.theme = effectiveDark() ? 'dark' : 'light';
-  }
-  els.themeToggle.addEventListener('click', () => {
-    theme = effectiveDark() ? 'light' : 'dark';
-    applyTheme();
-  });
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (!theme) applyTheme();
-  });
-  applyTheme();
+  // Fields worth painting first, so the dashboard fills in immediately instead of
+  // after a full ~2 min sweep. Ordered most-interesting-first; the rest backfill.
+  const PRIORITY = [
+    ['DriveUnit', 'SERIAL_NUMBER'], ['DriveUnit', 'PRODUCT_CODE'], ['DriveUnit', 'PRODUCT_NAME'],
+    ['DriveUnit', 'PRODUCT_LINE'], ['DriveUnit', 'SOFTWARE_VERSION'], ['DriveUnit', 'HARDWARE_VERSION'],
+    ['DriveUnit', 'BOOTLOADER_SOFTWARE_VERSION'], ['DriveUnit', 'BIKE_ID'], ['DriveUnit', 'BIKE_CATEGORY'],
+    ['DriveUnit', 'MAXIMUM_LEGAL_BIKE_SPEED'], ['DriveUnit', 'MAXIMUM_ASSISTANCE_SPEED'],
+    ['DriveUnit', 'REGIO_SPEED_CONFIGURATION'], ['DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_OEM'],
+    ['DriveUnit', 'TUNING_DETECTION'], ['DriveUnit', 'ODOMETER'], ['DriveUnit', 'POWER_ON_TIME'],
+    ['DriveUnit', 'GEARING_SYSTEM'], ['DriveUnit', 'PRESENT_PCB_TEMPERATURE'],
+    ['DriveUnit', 'OEM_BIKE_ID'], ['DriveUnit', 'OEM_BRAND_NAME'],
+    ['Battery', 'STATE_OF_CHARGE'], ['Battery', 'STATE_OF_HEALTH'], ['Battery', 'PRODUCT_CODE'],
+    ['Battery', 'PRODUCT_NAME'], ['Battery', 'NUMBER_OF_FULL_CHARGE_CYCLES'],
+    ['Battery', 'REMAINING_ENERGY'], ['Battery', 'PRESENT_PACK_TEMPERATURE'],
+  ];
 
-  // ---------- status chip ----------
-  function renderStatus() {
-    if (state === 'connected') {
-      els.statusDot.style.background = 'var(--good)';
-      els.statusDot.style.boxShadow = '0 0 6px var(--good)';
-      els.statusDot.style.animation = 'none';
-      els.statusLabel.textContent = 'USB · DRIVE UNIT · CONNECTED';
-      els.connectBtn.textContent = 'Read again';
-      els.connectBtn.disabled = false;
-    } else if (state === 'connecting') {
-      els.statusDot.style.background = 'var(--accent)';
-      els.statusDot.style.boxShadow = 'none';
-      els.statusDot.style.animation = 'pulse 1s infinite';
-      els.statusLabel.textContent = 'USB · READING…';
-      els.connectBtn.textContent = 'Reading…';
-      els.connectBtn.disabled = true;
-    } else {
-      els.statusDot.style.background = 'var(--border2)';
-      els.statusDot.style.boxShadow = 'none';
-      els.statusDot.style.animation = 'none';
-      els.statusLabel.textContent = 'NOT CONNECTED';
-      els.connectBtn.textContent = 'Connect & Read';
-      els.connectBtn.disabled = false;
-    }
-    els.cancelBtn.style.display = state === 'connecting' ? '' : 'none';
-    els.emptyState.style.display = state === 'disconnected' ? 'flex' : 'none';
-    els.dashboard.style.display = state === 'disconnected' ? 'none' : 'flex';
-  }
+  // Always present on a Smart System bike — exempt from the absent-component skip.
+  const CORE_COMPONENTS = new Set(['DriveUnit', 'Battery', 'RemoteControl']);
 
-  function setProgress(text) {
-    if (!text) {
-      els.progressText.style.display = 'none';
-      return;
-    }
-    els.progressText.style.display = '';
-    els.progressText.textContent = text;
-  }
-
-  // ---------- read plumbing ----------
   // Reads one address. Two things make this reliable:
   //  1. Pre-drain: clear any late/stale frame left in the bridge buffer from a
   //     previous read BEFORE sending, so it can't be mistaken for this response.
   //  2. Retry: resend a couple of times; present fields almost always answer on
   //     the first try, but the occasional miss is recovered instead of shown "—".
-  //
-  // The trailing byte of the request is (type<<4)|seq, NOT a free-running
-  // counter — buildReadRequestFrame always forces the type nibble to READ, so
-  // any small seq value works; a previous version of this code used a
-  // full-byte counter here, which accidentally mis-typed ~15/16 of requests
-  // as WRITE/SUBSCRIBE/etc. and was the real cause of drive-unit flakiness
-  // (see private research notes). A response with a real but non-SUCCESS
-  // status (e.g. NOT_READY) is now a distinct outcome, not a bare timeout.
   let seqCounter = 0;
   function nextSeq() {
     seqCounter = (seqCounter + 1) & 0x0f;
@@ -213,13 +363,11 @@
   }
 
   function renderDashboard() {
-    // BIKE card
     els.bikeName.textContent = displayOf('DriveUnit', 'PRODUCT_NAME');
     els.bikeId.textContent = displayOf('DriveUnit', 'BIKE_ID');
     els.bikeSerial.textContent = displayOf('DriveUnit', 'SERIAL_NUMBER');
     els.bikeCategory.textContent = displayOf('DriveUnit', 'BIKE_CATEGORY');
 
-    // BATTERY card
     const soc = valueOf('Battery', 'STATE_OF_CHARGE');
     els.batterySoc.textContent = soc == null ? '—' : soc;
     els.batterySocUnit.textContent = soc == null ? '' : '%';
@@ -236,7 +384,6 @@
     els.batteryEnergy.textContent = displayOf('Battery', 'REMAINING_ENERGY');
     els.batteryTemp.textContent = displayOf('Battery', 'PRESENT_PACK_TEMPERATURE');
 
-    // DRIVE UNIT card
     els.driveUnitGrid.innerHTML = '';
     kvRow(els.driveUnitGrid, 'Product code', displayOf('DriveUnit', 'PRODUCT_CODE'));
     kvRow(els.driveUnitGrid, 'Part number', displayOf('DriveUnit', 'PART_NUMBER'));
@@ -246,7 +393,6 @@
     kvRow(els.driveUnitGrid, 'Product line', displayOf('DriveUnit', 'PRODUCT_LINE'));
     kvRow(els.driveUnitGrid, 'PCB temp', displayOf('DriveUnit', 'PRESENT_PCB_TEMPERATURE'));
 
-    // DRIVETRAIN card
     els.drivetrainGrid.innerHTML = '';
     kvRow(els.drivetrainGrid, 'Gearing', displayOf('DriveUnit', 'GEARING_SYSTEM'));
     kvRow(els.drivetrainGrid, 'Max legal speed', displayOf('DriveUnit', 'MAXIMUM_LEGAL_BIKE_SPEED'));
@@ -266,7 +412,6 @@
     els.drivetrainGrid.appendChild(tRow);
     els.drivetrainGrid.appendChild(tVal);
 
-    // USAGE card
     els.usageGrid.innerHTML = '';
     kvRow(els.usageGrid, 'Odometer', displayOf('DriveUnit', 'ODOMETER'));
     kvRow(els.usageGrid, 'Power-on time', displayOf('DriveUnit', 'POWER_ON_TIME'));
@@ -300,7 +445,7 @@
       } else if (r.status === 'timeout') {
         valCell.textContent = '(no response / timeout)';
       } else if (r.status === 'declined') {
-        valCell.textContent = `(declined: ${r.detail})`; // e.g. NOT_READY, DENIED — a real status code, not a dropped frame
+        valCell.textContent = `(declined: ${r.detail})`; // e.g. NOT_READY, DENIED — a real answer, just not data
       } else {
         valCell.textContent = `(error: ${r.detail})`;
       }
@@ -343,34 +488,6 @@
     URL.revokeObjectURL(url);
   });
 
-  // ---------- main sweep ----------
-  // Called when the bike drops off USB (unplugged, powered off, or a transfer
-  // fails mid-sweep). Resets the UI to disconnected so the user can reconnect —
-  // previously the status stayed stuck on "CONNECTED" with no way back.
-  function handleDisconnect() {
-    if (state === 'disconnected') return;
-    stopKeepAlive();
-    state = 'disconnected';
-    transport = null;
-    abortRequested = false;
-    renderStatus();
-    setProgress('bike disconnected — power it on and read again');
-  }
-
-  if ('usb' in navigator) {
-    navigator.usb.addEventListener('disconnect', (e) => {
-      // Only react to our device (or any, if we're mid-session with no handle yet).
-      if (!transport || !transport.device || e.device === transport.device) {
-        handleDisconnect();
-      }
-    });
-  }
-
-  els.cancelBtn.addEventListener('click', () => {
-    abortRequested = true;
-    setProgress('cancelling…');
-  });
-
   async function runSweep() {
     let device;
     try {
@@ -379,35 +496,30 @@
       return; // user cancelled the picker
     }
 
+    method = 'usb';
     abortRequested = false;
-    state = 'connecting';
-    renderStatus();
+    phase = 'connecting';
+    renderPhase();
+    els.connectingTitle.textContent = 'Reading drive unit…';
+    els.connectingBar.style.width = '0%';
+    els.connectingSub.textContent = '';
 
     transport = new Bes3WebUsbTransport(device);
     try {
       await transport.open();
     } catch (err) {
-      state = 'disconnected';
-      renderStatus();
-      setProgress('');
-      alert('Failed to open device: ' + err.message);
+      goIdle('Failed to open device: ' + err.message);
       return;
     }
 
     // Warm-up: the drive unit needs a beat after init before it answers reliably.
-    // Poke a known field (DriveUnit SERIAL) until it responds so the priority reads
-    // that follow land on the first pass instead of timing out at the start.
-    setProgress('starting…');
+    els.connectingSub.textContent = 'starting…';
     for (let i = 0; i < 8; i++) {
       if (await readOne(6145)) break;
     }
 
-    // Keep the diagnostic session alive for the whole sweep (and afterwards,
-    // until disconnect) — otherwise it times out mid-sweep on a longer run.
     startKeepAlive();
 
-    // Build the readable set, then hoist the PRIORITY fields to the front so the
-    // dashboard paints the interesting values first and backfills the rest.
     const all = [];
     for (const [component, entries] of Object.entries(ALL_ADDRESSES)) {
       for (const e of entries) {
@@ -422,22 +534,14 @@
     });
 
     const results = [];
-    const compStats = {}; // component -> { ok, timeouts }
+    const compStats = {};
     let done = 0;
     let aborted = false;
     for (const entry of readable) {
-      if (state === 'disconnected') return; // bike dropped mid-sweep
+      if (phase !== 'connecting') return; // disconnected mid-sweep
       if (abortRequested) { aborted = true; break; }
 
       const cs = compStats[entry.component] || (compStats[entry.component] = { ok: 0, timeouts: 0 });
-      // Skip the rest of a component that isn't present: most bikes lack ABS, a
-      // 2nd battery, a connect module or a head unit, and retrying every one of
-      // their (~30-40) addresses would dominate the sweep. Once a few fields have
-      // timed out with none answering, treat the component as absent.
-      //
-      // CORE_COMPONENTS are always present on a Smart System — never skip them,
-      // otherwise a few flaky reads right after connect (the session takes a beat
-      // to settle) could wrongly drop the drive unit, i.e. all the data we came for.
       if (!CORE_COMPONENTS.has(entry.component) && cs.ok === 0 && cs.timeouts >= 3) {
         results.push({ ...entry, status: 'skipped', detail: 'component not detected', decoded: null, typed: null });
         done++;
@@ -450,10 +554,8 @@
       try {
         result = await readOne(entry.addr);
       } catch (err) {
-        // A real disconnect mid-sweep surfaces here — stop cleanly. (Plain USB
-        // 'disconnect' events are also handled by the listener above.)
         if (/disconnect|no device|not found/i.test(err.name + ' ' + err.message)) {
-          handleDisconnect();
+          handleDisconnect(true);
           return;
         }
         status = 'error';
@@ -462,7 +564,7 @@
       if (status === 'ok' && result === null) status = 'timeout';
       if (status === 'ok' && result.declined) {
         status = 'declined';
-        detail = result.statusName; // e.g. NOT_READY, DENIED — a real answer, just not data
+        detail = result.statusName;
       }
       if (status === 'ok') cs.ok++;
       else if (status === 'timeout') cs.timeouts++;
@@ -475,23 +577,20 @@
       }
       results.push({ ...entry, status, detail, decoded, typed });
       done++;
-      setProgress(`reading ${done}/${readable.length} points…`);
-      // paint often while priority fields land, then ease off
+      els.connectingBar.style.width = Math.round((done / readable.length) * 100) + '%';
+      els.connectingSub.textContent = `${done}/${readable.length} points`;
       if (done <= PRIORITY.length || done % 15 === 0) {
         lastResults = results;
-        renderDashboard();
       }
       await sleep(10);
     }
 
     lastResults = results;
-    state = 'connected';
-    renderStatus();
+    phase = 'connected';
+    renderPhase();
     const okCount = results.filter((r) => r.status === 'ok').length;
     const noResp = results.filter((r) => r.status === 'timeout' || r.status === 'error').length;
     const skippedCount = results.filter((r) => r.status === 'skipped').length;
-    // Report the breakdown explicitly — a bare "133/370" after the live "reading
-    // 3xx/370…" counter looked like the number had reset/regressed.
     setProgress(
       (aborted ? 'cancelled' : 'done') +
         ` · ${okCount} values read` +
@@ -506,20 +605,80 @@
     transport = null;
   }
 
-  els.connectBtn.addEventListener('click', () => {
-    if (!('usb' in navigator)) {
-      els.webUsbWarning.style.display = '';
-      els.webUsbWarning.textContent =
-        'WebUSB is not available in this browser. Use Chrome, Edge, or another Chromium-based browser on desktop.';
+  // ================= BLE: official Live Data Interface =================
+
+  const BLE_FIELD_LABELS = {
+    speedKmh: ['Speed', (v) => `${v.toFixed(1)} km/h`],
+    cadenceRpm: ['Cadence', (v) => `${v} rpm`],
+    riderPowerW: ['Rider power', (v) => `${v} W`],
+    ambientBrightnessLux: ['Ambient brightness', (v) => `${v.toFixed(1)} lux`],
+    batterySocPercent: ['Battery SoC', (v) => `${v}%`],
+    timeUnixSeconds: ['Bike time (UTC)', (v) => new Date(v * 1000).toISOString()],
+    odometerMeters: ['Odometer', (v) => `${(v / 1000).toFixed(1)} km`],
+    bikeLight: ['Bike light', (v) => v],
+    systemLocked: ['System locked', (v) => (v ? 'yes' : 'no')],
+    chargerConnected: ['Charger connected', (v) => (v ? 'yes' : 'no')],
+    lightReserveState: ['Light reserve', (v) => (v ? 'yes' : 'no')],
+    diagnosisProgramActive: ['Diagnosis tool connected', (v) => (v ? 'yes' : 'no')],
+    bikeNotDriving: ['Bike not driving', (v) => (v ? 'yes' : 'no')],
+  };
+
+  function renderBleLive() {
+    els.bleLiveGrid.innerHTML = '';
+    for (const [key, [label, fmt]] of Object.entries(BLE_FIELD_LABELS)) {
+      const hasValue = Object.prototype.hasOwnProperty.call(bleLiveState, key);
+      kvRow(els.bleLiveGrid, label, hasValue ? fmt(bleLiveState[key]) : '—');
+    }
+  }
+
+  async function connectBle() {
+    method = 'ble';
+    abortRequested = false;
+    phase = 'scanning';
+    renderPhase();
+
+    let device;
+    try {
+      device = await requestLiveDataDevice();
+    } catch (err) {
+      if (err && err.name === 'NotFoundError') { goIdle(''); return; } // user cancelled the chooser
+      goIdle('BLE connection failed: ' + (err.message || err));
       return;
     }
-    runSweep().catch((err) => {
-      state = 'disconnected';
-      renderStatus();
-      setProgress('');
-      alert('Unexpected error: ' + err.message);
-    });
-  });
+    if (abortRequested) { goIdle(''); return; }
 
-  renderStatus();
+    phase = 'connecting';
+    renderPhase();
+    els.connectingTitle.textContent = 'Connecting…';
+    els.connectingBar.style.width = '100%';
+    els.connectingSub.textContent = 'establishing secure link';
+
+    try {
+      transport = new Bes3LiveDataBleTransport(device);
+      await transport.connect();
+      bleLiveState = {};
+      Object.assign(bleLiveState, await transport.readOnce());
+
+      await transport.subscribe((partial) => {
+        Object.assign(bleLiveState, partial);
+        if (phase === 'connected' && method === 'ble') renderBleLive();
+      });
+
+      device.addEventListener('gattserverdisconnected', () => handleDisconnect(true));
+    } catch (err) {
+      goIdle('BLE connection failed: ' + (err.message || err));
+      return;
+    }
+
+    phase = 'connected';
+    renderPhase();
+    setProgress('connected · live telemetry streaming');
+    renderBleLive();
+  }
+
+  // ---------- init ----------
+  initDisclaimer();
+  method = 'usb';
+  renderChooser();
+  renderPhase();
 })();
