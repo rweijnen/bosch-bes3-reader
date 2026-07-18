@@ -21,6 +21,8 @@
     methodBlurb: $('methodBlurb'),
     methodReq: $('methodReq'),
     bleUnsupportedWarn: $('bleUnsupportedWarn'),
+    fullReadToggleRow: $('fullReadToggleRow'),
+    attemptFullBleRead: $('attemptFullBleRead'),
     connectErrorBox: $('connectErrorBox'),
     connectErrorText: $('connectErrorText'),
     connectMainBtn: $('connectMainBtn'),
@@ -130,7 +132,7 @@
     els.chooserScreen.style.display = phase === 'idle' ? 'flex' : 'none';
     els.scanningScreen.style.display = phase === 'scanning' ? 'flex' : 'none';
     els.connectingScreen.style.display = phase === 'connecting' ? 'flex' : 'none';
-    els.dashboard.style.display = phase === 'connected' && method === 'usb' ? 'flex' : 'none';
+    els.dashboard.style.display = phase === 'connected' && (method === 'usb' || method === 'ble-mcsp') ? 'flex' : 'none';
     els.bleDashboard.style.display = phase === 'connected' && method === 'ble' ? 'flex' : 'none';
 
     els.cancelBtn.style.display = 'none'; // scanning/connecting screens have their own cancel buttons
@@ -141,13 +143,17 @@
       els.statusDot.style.background = 'var(--good)';
       els.statusDot.style.boxShadow = '0 0 6px var(--good)';
       els.statusDot.style.animation = 'none';
-      els.statusLabel.textContent = method === 'ble' ? 'BLUETOOTH · CONNECTED' : 'USB · DRIVE UNIT · CONNECTED';
+      els.statusLabel.textContent = method === 'ble' ? 'BLUETOOTH · CONNECTED'
+        : method === 'ble-mcsp' ? 'BLUETOOTH · FULL READ (EXPERIMENTAL) · CONNECTED'
+        : 'USB · DRIVE UNIT · CONNECTED';
     } else if (phase === 'connecting' || phase === 'scanning') {
       els.statusDot.style.background = 'var(--accent)';
       els.statusDot.style.boxShadow = 'none';
       els.statusDot.style.animation = 'pulse 1s infinite';
       els.statusLabel.textContent = phase === 'scanning' ? 'BLUETOOTH · SCANNING…'
-        : method === 'ble' ? 'BLUETOOTH · CONNECTING…' : 'USB · READING…';
+        : method === 'ble' ? 'BLUETOOTH · CONNECTING…'
+        : method === 'ble-mcsp' ? 'BLUETOOTH · READING (EXPERIMENTAL)…'
+        : 'USB · READING…';
     } else {
       els.statusDot.style.background = 'var(--border2)';
       els.statusDot.style.boxShadow = 'none';
@@ -178,11 +184,13 @@
     const bleSupported = 'bluetooth' in navigator;
     const locked = isBle && !bleSupported;
     els.bleUnsupportedWarn.style.display = locked ? 'flex' : 'none';
+    els.fullReadToggleRow.style.display = isBle ? 'flex' : 'none';
     els.connectMainBtn.disabled = locked;
     els.connectMainBtn.style.cursor = locked ? 'default' : 'pointer';
     els.connectMainBtn.style.opacity = locked ? '0.6' : '1';
-    els.connectMainBtn.textContent = isBle ? 'Scan for bike' : 'Connect & Read';
+    els.connectMainBtn.textContent = isBle && els.attemptFullBleRead.checked ? 'Scan for bike (experimental)' : isBle ? 'Scan for bike' : 'Connect & Read';
   }
+  els.attemptFullBleRead.addEventListener('change', renderChooser);
   function showConnectError(message) {
     if (!message) {
       els.connectErrorBox.style.display = 'none';
@@ -228,10 +236,13 @@
     goIdle('');
   });
   els.readAgainBtn.addEventListener('click', () => {
-    if (method === 'ble' && transport) { try { transport.disconnect(); } catch (_) {} }
+    const wasMethod = method;
+    if (wasMethod === 'ble' && transport) { try { transport.disconnect(); } catch (_) {} }
     else if (transport) { stopKeepAlive(); try { transport.close(); } catch (_) {} }
     transport = null;
-    if (method === 'ble') connectBle(); else runSweep();
+    if (wasMethod === 'ble') connectBle();
+    else if (wasMethod === 'ble-mcsp') runSweep('ble-mcsp');
+    else runSweep('usb');
   });
   function cancelInFlight() {
     abortRequested = true;
@@ -245,13 +256,14 @@
     showConnectError('');
     if (method === 'ble') {
       if (!('bluetooth' in navigator)) return;
-      connectBle();
+      if (els.attemptFullBleRead.checked) runSweep('ble-mcsp');
+      else connectBle();
     } else {
       if (!('usb' in navigator)) {
         showConnectError('WebUSB is not available in this browser. Use Chrome, Edge, or another Chromium-based browser on desktop.');
         return;
       }
-      runSweep();
+      runSweep('usb');
     }
   });
 
@@ -488,28 +500,42 @@
     URL.revokeObjectURL(url);
   });
 
-  async function runSweep() {
+  // transportKind: 'usb' (normal path) | 'ble-mcsp' (experimental full read
+  // over BLE, reusing the reverse-engineered MessageBus protocol instead of
+  // Bosch's official Live Data Interface — see transport-webble-mcsp.js).
+  // Both produce the exact same lastResults shape, so the rest of the
+  // dashboard/raw-table code is unaware which transport was used.
+  async function runSweep(transportKind) {
     let device;
     try {
-      device = await requestDevice();
+      device = transportKind === 'ble-mcsp'
+        ? await window.Bes3BleMcsp.requestMcspDevice()
+        : await requestDevice();
     } catch (err) {
       return; // user cancelled the picker
     }
 
-    method = 'usb';
+    method = transportKind === 'ble-mcsp' ? 'ble-mcsp' : 'usb';
     abortRequested = false;
     phase = 'connecting';
     renderPhase();
-    els.connectingTitle.textContent = 'Reading drive unit…';
+    els.connectingTitle.textContent = transportKind === 'ble-mcsp'
+      ? 'Reading drive unit over BLE (experimental)…'
+      : 'Reading drive unit…';
     els.connectingBar.style.width = '0%';
     els.connectingSub.textContent = '';
 
-    transport = new Bes3WebUsbTransport(device);
+    transport = transportKind === 'ble-mcsp'
+      ? new window.Bes3BleMcsp.Bes3BleMcspTransport(device)
+      : new Bes3WebUsbTransport(device);
     try {
       await transport.open();
     } catch (err) {
       goIdle('Failed to open device: ' + err.message);
       return;
+    }
+    if (transportKind === 'ble-mcsp') {
+      device.addEventListener('gattserverdisconnected', () => handleDisconnect(true));
     }
 
     // Warm-up: the drive unit needs a beat after init before it answers reliably.
