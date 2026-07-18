@@ -7,6 +7,7 @@
 
   const $ = (id) => document.getElementById(id);
   const els = {
+    debugLogBtn: $('debugLogBtn'),
     themeToggle: $('themeToggle'),
     statusDot: $('statusDot'),
     statusLabel: $('statusLabel'),
@@ -112,6 +113,10 @@
   });
   applyTheme();
 
+  els.debugLogBtn.addEventListener('click', () => {
+    if (window.Bes3DebugLog) window.Bes3DebugLog.download();
+  });
+
   // ---------- cloud lookups (not implemented yet) ----------
   // Deliberately NOT a login form: a UI that visually collects real Bosch
   // credentials without actually authenticating is a phishing-shaped pattern
@@ -204,6 +209,7 @@
   els.pickBleBtn.addEventListener('click', () => { method = 'ble'; showConnectError(''); renderChooser(); });
 
   function goIdle(message) {
+    if (message && window.Bes3DebugLog) window.Bes3DebugLog.log('app', 'goIdle', message);
     abortRequested = false;
     phase = 'idle';
     transport = null;
@@ -254,6 +260,8 @@
 
   els.connectMainBtn.addEventListener('click', () => {
     showConnectError('');
+    const picked = method === 'ble' ? (els.attemptFullBleRead.checked ? 'ble-mcsp (experimental full read)' : 'ble (official Live Data Interface)') : 'usb';
+    if (window.Bes3DebugLog) window.Bes3DebugLog.log('app', 'Connect clicked', picked);
     if (method === 'ble') {
       if (!('bluetooth' in navigator)) return;
       if (els.attemptFullBleRead.checked) runSweep('ble-mcsp');
@@ -617,12 +625,13 @@
     const okCount = results.filter((r) => r.status === 'ok').length;
     const noResp = results.filter((r) => r.status === 'timeout' || r.status === 'error').length;
     const skippedCount = results.filter((r) => r.status === 'skipped').length;
-    setProgress(
+    const sweepSummary =
       (aborted ? 'cancelled' : 'done') +
         ` · ${okCount} values read` +
         (noResp ? ` · ${noResp} no response` : '') +
-        (skippedCount ? ` · ${skippedCount} not present` : '')
-    );
+        (skippedCount ? ` · ${skippedCount} not present` : '');
+    setProgress(sweepSummary);
+    if (window.Bes3DebugLog) window.Bes3DebugLog.log('app', `sweep (${transportKind}) finished`, sweepSummary);
     renderDashboard();
     renderRawTable();
 

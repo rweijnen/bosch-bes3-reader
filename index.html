@@ -145,6 +145,7 @@
     </div>
     <span id="progressText" class="progress-text" style="display:none;"></span>
     <div class="header-actions">
+      <button id="debugLogBtn" class="icon-btn" title="Export a debug log (raw protocol bytes, phase transitions, errors) — useful when reporting a connection problem">&#128203;</button>
       <button id="themeToggle" class="icon-btn" title="Toggle light/dark">&#9680;</button>
       <button id="cancelBtn" class="ghost-btn" style="display:none;">Cancel</button>
       <button id="disconnectBtn" class="ghost-btn" style="display:none;">Disconnect</button>
@@ -346,6 +347,7 @@
   </div>
 </div>
 
+<script src="web/debug-log.js"></script>
 <script src="src/addresses.js"></script>
 <script src="src/protocol.js"></script>
 <script src="src/messageTypes.js"></script>

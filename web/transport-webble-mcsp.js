@@ -98,20 +98,29 @@ class Bes3BleMcspTransport {
   }
 
   async open() {
+    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    log && log('ble-mcsp', `device: ${this.device.name || '(unnamed)'} id=${this.device.id}`);
+    log && log('ble-mcsp', 'gatt.connect()…');
     const server = await this.device.gatt.connect();
+    log && log('ble-mcsp', 'connected, discovering MCSP service', MCSP_SERVICE_UUID);
     const service = await server.getPrimaryService(MCSP_SERVICE_UUID);
     this.rxChar = await service.getCharacteristic(RX_CHARACTERISTIC_UUID);
     this.txChar = await service.getCharacteristic(TX_CHARACTERISTIC_UUID);
+    log && log('ble-mcsp', 'found rx/tx characteristics, starting notifications');
 
     this._onNotify = (event) => this._handleNotification(new Uint8Array(event.target.value.buffer));
     this.rxChar.addEventListener('characteristicvaluechanged', this._onNotify);
     await this.rxChar.startNotifications();
 
     await this._handshake();
+    log && log('ble-mcsp', 'open() complete');
   }
 
   _handleNotification(bytes) {
+    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    log && log('ble-rx', `raw notification (${bytes.length} bytes)`, bytes);
     for (const frame of decodeSegmentationFrames(bytes)) {
+      log && log('ble-rx', `frame: channel=${frame.channel} endOfChannel=${frame.endOfChannel} len=${frame.payload.length}`, frame.payload);
       if (frame.channel === Channel.MESSAGE_BUS && frame.endOfChannel) {
         // Reconstruct as the exact bytes transport-webusb.js's readNextFrame()
         // would have returned, so the existing, unmodified
@@ -135,6 +144,8 @@ class Bes3BleMcspTransport {
 
   async _writeFrame(channel, payload) {
     const frame = encodeSegmentationFrame(channel, true, payload);
+    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    log && log('ble-tx', `write: channel=${channel} len=${payload.length}`, frame);
     if (this.txChar.writeValueWithoutResponse) {
       await this.txChar.writeValueWithoutResponse(frame);
     } else {
@@ -153,14 +164,18 @@ class Bes3BleMcspTransport {
     for (const ch of [1, 2, 3, 4, 5, 6, 7]) {
       await this._writeFrame(Channel.COMMAND, encodeCommand(CommandType.DISABLE_FLOW_CONTROL, [ch]));
     }
+    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
     const deadline = Date.now() + 3000;
     while (Date.now() < deadline) {
       const sawVersion = this._commandsSeen.some((p) => p[0] === CommandType.VERSION);
       const sawMaxPacket = this._commandsSeen.some((p) => p[0] === CommandType.MAX_SEGMENTATION_PACKET);
-      if (sawVersion && sawMaxPacket) return;
+      if (sawVersion && sawMaxPacket) {
+        log && log('ble-mcsp', 'handshake ack observed (VERSION + MAX_SEGMENTATION_PACKET from bike)');
+        return;
+      }
       await sleep(50);
     }
-    // Timed out waiting for the bike's ack — proceed anyway (best-effort, see above).
+    log && log('ble-mcsp', 'handshake ack NOT observed within 3s — proceeding anyway (best-effort)');
   }
 
   // Accepts the exact same fully-wrapped bytes buildReadRequestFrame()/
