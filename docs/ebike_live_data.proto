@@ -1,0 +1,91 @@
+// SPDX-Copyright-Text: 2026 Robert Bosch GmbH
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Verbatim copy from Bosch eBike Systems' official "The smart system —
+// Live Data Interface" specification, V1.0, 2026-05-01. Vendored here
+// under the Apache-2.0 license Bosch attached to this exact file; see
+// docs/README.md in this directory for context and where this differs
+// from the rest of this repo's reverse-engineered protocol work.
+
+syntax = "proto3";
+
+package com.bosch.ebike;
+
+enum LightState {
+  LIGHT_STATE_INVALID = 0;
+  LIGHT_STATE_OFF = 1;
+  LIGHT_STATE_ON = 2;
+}
+
+message LiveData {
+  /*
+   * The bike speed in km/h.
+   * Unit: 1/100 km/h
+   * Range: 0 to 655.35 km/h
+   */
+  optional uint32 speed = 1;
+  /*
+   * The cadence of the rider.
+   * Unit: 1 rpm
+   * Range: -32768 to 32767 rpm
+   */
+  optional int32 cadence = 2;
+  /*
+   * The present power of the rider.
+   * Unit: 1 W
+   * Range: 0 to 65535 W
+   */
+  optional uint32 rider_power = 5;
+  /*
+   * The ambient brightness in lux.
+   * Unit: 1/1000 lux
+   * Range: 0 to 4294967.295 lux
+   */
+  optional uint32 ambient_brightness = 9;
+  /*
+   * The battery state of charge.
+   * Unit: 1 %
+   * Range: 0 to 100 %
+   */
+  optional uint32 battery_soc = 10;
+  /*
+   * The current time (UTC).
+   * Unit: 1 second (since 1.1.1970)
+   * Range: -9223372036854775808 to 9223372036854775807 seconds
+   */
+  optional int64 time = 11;
+  /*
+   * The total distance in meters.
+   * Unit: 1 meter
+   * Range: 0 to 4294967295 meters
+   */
+  optional uint32 odometer = 12;
+
+  // The bike light state.
+  optional LightState bike_light = 17;
+  // True, if the system is in a locked state.
+  optional bool system_locked = 21;
+  // True, if the charger is currently connected. This doesn't necessarily mean
+  // that the bike is currently charging (e.g. when battery is already full).
+  optional bool charger_connected = 22;
+  // True, if the light reserve state is active.
+  optional bool light_reserve_state = 23;
+  // True, if the Diagnosis Tool is currently connected to the bike. This is
+  // usually the case at the bike dealer/repair center.
+  optional bool diagnosis_program_active = 24;
+  // True, if bike is standing still. The bike might still be slightly moving,
+  // depending on the sensor accuracy.
+  optional bool bike_not_driving = 25;
+}

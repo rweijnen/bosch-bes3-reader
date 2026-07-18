@@ -24,6 +24,24 @@ class ("Europe, 45 km/h (S-Pedelec class)"), not just a raw number. Everything
 else falls back to a generic best-effort guess (clearly marked as such, never
 presented as exact).
 
+## Why this exists
+
+Bosch publishes an official, freely-licensed [Live Data
+Interface](docs/ebike_live_data.proto) (smart system control unit v19+,
+Apache-2.0) — a small BLE service any accessory can read with no account or
+license required. It's a good, sanctioned way to get ride telemetry (speed,
+cadence, power, SoC, odometer, lock/light/charger state) into a bike
+computer or watch.
+
+It deliberately does **not** expose the data an owner or independent repair
+shop needs to make a repair-vs-replace call: battery **State of Health**,
+charge-cycle count, remaining Wh capacity, serials, hardware/software
+versions, tuning-detection status. That data only exists behind the fuller
+diagnostic protocol this repo implements — read-only, same as always. In an
+era where right-to-repair and reducing e-waste actually matter, being able
+to check whether *your own* battery is worth keeping shouldn't require a
+dealer visit. See [`docs/README.md`](docs/README.md) for a full comparison.
+
 ## Scope: read-only, by design
 
 This tool only issues **read** requests. It never writes configuration, never

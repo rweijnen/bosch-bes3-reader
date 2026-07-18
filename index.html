@@ -105,9 +105,15 @@
     <div class="header-actions">
       <button id="themeToggle" class="icon-btn" title="Toggle light/dark">&#9680;</button>
       <button id="cancelBtn" class="ghost-btn" style="display:none;">Cancel</button>
+      <button id="connectBleBtn" class="ghost-btn" title="Bosch's official Live Data Interface (BLE, v19+ bikes) — ride telemetry only, no health/diagnostic data">Connect BLE (Live Data)</button>
       <button id="connectBtn" class="primary-btn">Connect &amp; Read</button>
     </div>
   </header>
+
+  <div id="bleLivePanel" class="card" style="display:none; margin: 16px 24px 0;">
+    <span class="card-label">OFFICIAL BLE LIVE DATA &middot; ride telemetry only, no battery health/serials</span>
+    <div class="kv-grid" id="bleLiveGrid" style="margin-top:10px;"></div>
+  </div>
 
   <main>
     <div id="emptyState" class="empty-wrap">
@@ -194,5 +200,7 @@
 <script src="src/messageTypes.js"></script>
 <script src="web/transport-webusb.js"></script>
 <script src="web/app.js"></script>
+<script src="web/transport-webble.js"></script>
+<script src="web/ble-live-data.js"></script>
 </body>
 </html>
