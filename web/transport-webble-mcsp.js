@@ -97,10 +97,39 @@ class Bes3BleMcspTransport {
     this._commandsSeen = [];
   }
 
+  // On Windows, Web Bluetooth's gatt.connect() (and the discovery calls right
+  // after it) are flaky right after pairing — "Connection Error: Connection
+  // attempt failed" on the first 1-2 tries, then success. Retry the whole
+  // connect+discover+subscribe sequence with backoff, disconnecting any
+  // half-open link between attempts. A "Not paired" error is the exception: it
+  // won't fix itself by retrying (the OS bond is missing), so bail out early
+  // with guidance instead of hammering.
   async open() {
     const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
     log && log('ble-mcsp', `device: ${this.device.name || '(unnamed)'} id=${this.device.id}`);
-    log && log('ble-mcsp', 'gatt.connect()…');
+    const backoffsMs = [0, 400, 900, 1600];
+    let lastErr;
+    for (let attempt = 0; attempt < backoffsMs.length; attempt++) {
+      if (backoffsMs[attempt]) await sleep(backoffsMs[attempt]);
+      try {
+        await this._openOnce(log, attempt + 1, backoffsMs.length);
+        log && log('ble-mcsp', 'open() complete');
+        return;
+      } catch (err) {
+        lastErr = err;
+        log && log('ble-mcsp', `open attempt ${attempt + 1}/${backoffsMs.length} failed: ${err.message}`);
+        try { this.device.gatt.disconnect(); } catch (_) {}
+        if (this.rxChar && this._onNotify) {
+          try { this.rxChar.removeEventListener('characteristicvaluechanged', this._onNotify); } catch (_) {}
+        }
+        if (/not paired|encryption|not authori|authentication/i.test(err.message || '')) break;
+      }
+    }
+    throw new Error(this._friendlyOpenError(lastErr));
+  }
+
+  async _openOnce(log, attempt, total) {
+    log && log('ble-mcsp', `gatt.connect() attempt ${attempt}/${total}…`);
     const server = await this.device.gatt.connect();
     log && log('ble-mcsp', 'connected, discovering MCSP service', MCSP_SERVICE_UUID);
     const service = await server.getPrimaryService(MCSP_SERVICE_UUID);
@@ -113,7 +142,17 @@ class Bes3BleMcspTransport {
     await this.rxChar.startNotifications();
 
     await this._handshake();
-    log && log('ble-mcsp', 'open() complete');
+  }
+
+  _friendlyOpenError(err) {
+    const m = (err && err.message) || String(err) || 'unknown error';
+    if (/not paired|encryption|not authori|authentication/i.test(m)) {
+      return `Bike not paired. Pair "smart system eBike" in Windows Bluetooth settings (with the bike in pairing mode), then reconnect. [${m}]`;
+    }
+    if (/connection attempt failed|unreachable|gatt operation failed|no longer|disconnected|not connected/i.test(m)) {
+      return `Could not reach the bike over BLE. Make sure it's awake, in range, and (first time) in pairing mode, then try again — Windows BLE often needs a couple of attempts. [${m}]`;
+    }
+    return m;
   }
 
   _handleNotification(bytes) {
