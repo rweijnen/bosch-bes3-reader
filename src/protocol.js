@@ -1,27 +1,82 @@
-// Pure protocol logic for Bosch Smart System (BES3) "MCSP" reads. No Node/USB-
-// specific code here on purpose — this file (and addresses.js) are reusable
-// as-is from a future browser/WebUSB tool.
+// Pure protocol logic for Bosch Smart System (BES3) "MCSP"/MessageBus reads.
+// No Node/USB-specific code here on purpose — this file (and addresses.js)
+// are reusable as-is from a future browser/WebUSB tool.
 //
-// Confirmed encoding for a plain "readable data point" request, generalized
-// across every component (DriveUnit, Battery, RemoteControl, ...), not just
-// DriveUnit's own 0x18xx range as originally thought:
+// The message-bus frame layout (confirmed from the actual Bosch codec,
+// com.bosch.ebike.messagebus.message.MessageDecodingKt), carried inside an
+// MCSP `0x30` block read/write:
 //
-//   request  MCSP frame: 30 <len> 0e 10 <marker> <addrLowVarint...> <seq>
-//   response MCSP frame: 30 <len> <addrHigh> <addrLowEcho> 8e 10 <seq+0x10> <payload...>
+//   byte[0..1]  source address (16-bit, MSB-flagged, see below)
+//   byte[2..3]  destination address (16-bit, MSB-flagged)
+//   byte[4]     (type << 4) | (sequence & 0x0F)   <-- NOT a free-running byte!
+//   byte[5]     explicit ResponseMessageStatusCode  <-- present only if
+//               the destination-address MSB is CLEAR
+//   ...         payload (only for types that carry one)
 //
-// where `marker` = 0x80 | (address >> 8) and the address's low byte travels
-// as a protobuf-style LEB128 varint. Verified against the real capture for
-// two different components: DriveUnit (PRODUCT_CODE=6147=0x1803, marker 0x98)
-// and RemoteControl (PRODUCT_CODE=8293=0x2065, marker 0xa0) both decoded
-// correctly using this same rule — it isn't a DriveUnit-specific opcode.
+// Address MSB convention: only the low 15 bits of each 16-bit address field
+// are the real address (ADDRESS_MASK_BIT = 0x7FFF); the top bit is a flag.
+// For the destination field: MSB set -> implicit SUCCESS, no status byte;
+// MSB clear -> an explicit ResponseMessageStatusCode byte follows at offset 5.
+// (For the source field, MSB set flags an unsolicited NotifyMessage/push —
+// a different shape entirely, not handled here.)
 //
-// Only `readable` addresses (see addresses.js) are known to work with this
-// request shape — callable RPCs (e.g. READ_UDAM_VALUES) need an argument and
-// a different invocation we have not cracked yet.
+// Our own message-bus address (the "source" on every outgoing request) is
+// fixed: 0x0e10 (2064) — this is the literal origin of the `0e 10` bytes
+// that looked like a constant preamble in every captured request; they're
+// just our own node address, unchanging because we always send from the
+// same logical node.
+//
+// MessageType raw values (com.bosch.ebike.messagebus.constants.MessageType):
+//   READ=0  READ_RESPONSE=1  WRITE=2  WRITE_RESPONSE=3  RPC=4  RPC_RESPONSE=5
+//   SUBSCRIBE=6  SUBSCRIBE_RESPONSE=7  UNSUBSCRIBE=8  UNSUBSCRIBE_RESPONSE=9
+// Response type is always request type + 1.
+//
+// IMPORTANT BUG FIX (see private research notes for the full writeup): an
+// earlier version of this file built the trailing byte as a free-running
+// counter (1, 2, 3, ... 0xFF) with no fixed type field. Since that byte is
+// actually (type<<4)|seq, roughly 15 out of 16 requests were accidentally
+// encoded as WRITE/SUBSCRIBE/UNSUBSCRIBE/etc. instead of READ, causing
+// exactly the "same address works on one run, times out on the next"
+// flakiness previously misdiagnosed as a session-priming issue. Fixed here:
+// the type nibble is always forced to the correct value; only the low
+// nibble (0-15) is a real, wrapping sequence counter.
+//
+// ResponseMessageStatusCode raw values:
+//   SUCCESS=0  OVERLOADED=1  NO_ROUTE_FOUND=2  NOT_READY=3  UNSUPPORTED=4
+//   DENIED=6  INVALID_VALUE=7  MALFORMED=8  TIMEOUT=9  TOO_LARGE=10
 
 (function () {
-const RESPONSE_FIXED = [0x8e, 0x10]; // constant bytes seen in every read response
-const BLOCK_OP = 0x30;               // MCSP "block read" op byte
+const BLOCK_OP = 0x30; // MCSP "block read" op byte
+const HOST_ADDRESS = 0x0e10; // our own fixed message-bus node address
+
+const MessageType = {
+  READ: 0,
+  READ_RESPONSE: 1,
+  WRITE: 2,
+  WRITE_RESPONSE: 3,
+  RPC: 4,
+  RPC_RESPONSE: 5,
+  SUBSCRIBE: 6,
+  SUBSCRIBE_RESPONSE: 7,
+  UNSUBSCRIBE: 8,
+  UNSUBSCRIBE_RESPONSE: 9,
+};
+
+const STATUS_CODES = {
+  0: 'SUCCESS',
+  1: 'OVERLOADED',
+  2: 'NO_ROUTE_FOUND',
+  3: 'NOT_READY',
+  4: 'UNSUPPORTED',
+  6: 'DENIED',
+  7: 'INVALID_VALUE',
+  8: 'MALFORMED',
+  9: 'TIMEOUT',
+  10: 'TOO_LARGE',
+};
+function statusCodeName(byte) {
+  return STATUS_CODES[byte] || `UNKNOWN_ERROR(${byte})`;
+}
 
 function encodeVarint(n) {
   const bytes = [];
@@ -35,31 +90,72 @@ function encodeVarint(n) {
   return bytes;
 }
 
-// Builds the MCSP payload to hand to the transport's doMcspWrite().
-function buildReadRequestFrame(addr, seq) {
+// Builds a message-bus frame for a given address and MessageType, wrapped in
+// the MCSP 0x30 block. `seq` is masked to 4 bits (the real sequence range);
+// `payload` (a plain array of bytes) is appended for types that carry one
+// (e.g. an RPC call argument) — omit/empty for plain reads.
+function buildFrame(addr, type, seq, payload) {
   const highByte = (addr >> 8) & 0xff;
   const lowByte = addr & 0xff;
-  const marker = 0x80 | highByte;
+  const marker = 0x80 | highByte; // destination address, MSB always set on outgoing requests (confirmed convention, distinct from the response-side MSB meaning above)
   const varint = encodeVarint(lowByte);
-  const body = [0x0e, 0x10, marker, ...varint, seq & 0xff];
+  const typeSeq = ((type & 0x0f) << 4) | (seq & 0x0f);
+  const body = [0x0e, 0x10, marker, ...varint, typeSeq, ...(payload || [])];
   return Uint8Array.from([BLOCK_OP, body.length, ...body]);
 }
 
-// Parses a raw MCSP frame (as received from the reader loop) into a structured
-// result, or null if it doesn't look like a read-response frame at all (e.g.
-// the bundled multi-field identify block, which has a different shape).
+// Plain read request (MessageType.READ) — the common case, used by the
+// address sweep for every `readable: true` data point.
+function buildReadRequestFrame(addr, seq) {
+  return buildFrame(addr, MessageType.READ, seq);
+}
+
+// Argument-less RPC call (MessageType.RPC) — used for the session keep-alive
+// (RemoteControlAddresses.RESET_INACTIVITY_SHUTDOWN_TIMER) and any other
+// ArgumentLessCallableDataPoint.
+function buildRpcCallFrame(addr, seq) {
+  return buildFrame(addr, MessageType.RPC, seq);
+}
+
+// Parses a raw MCSP frame (as received from the reader loop) into a
+// structured result, or null if it doesn't look like a message-bus
+// read/RPC response at all (e.g. the bundled multi-field identify block,
+// which has a different shape, or a NotifyMessage/push).
 function parseReadResponseFrame(bytes) {
   if (!bytes || bytes.length < 2 || bytes[0] !== BLOCK_OP) return null;
   const len = bytes[1];
   const body = bytes.slice(2, 2 + len);
   if (body.length < 5) return null;
-  if (body[0] & 0x80) return null; // response always has the marker bit cleared
-  if (body[2] !== RESPONSE_FIXED[0] || body[3] !== RESPONSE_FIXED[1]) return null;
+
+  const srcHigh = body[0];
+  const srcLow = body[1];
+  const destHigh = body[2];
+  // destLow = body[3]; // unused — destination is always our own echoed address
+  const typeSeq = body[4];
+
+  if (srcHigh & 0x80) return null; // source MSB set = unsolicited NotifyMessage, different shape
+  if ((destHigh & 0x7f) !== ((HOST_ADDRESS >> 8) & 0x7f)) return null; // not addressed back to us
+
+  const destMsbSet = !!(destHigh & 0x80);
+  const type = (typeSeq >> 4) & 0x0f;
+  const seq = typeSeq & 0x0f;
+
+  let statusByte = 0; // SUCCESS, implicit
+  let payloadStart = 5;
+  if (!destMsbSet) {
+    statusByte = body[5];
+    payloadStart = 6;
+  }
+
   return {
-    addrHigh: body[0],
-    addrLow: body[1],
-    seqEcho: body[4],
-    payload: body.slice(5),
+    addrHigh: srcHigh & 0x7f,
+    addrLow: srcLow,
+    type,
+    seq,
+    status: statusByte,
+    statusName: statusCodeName(statusByte),
+    ok: statusByte === 0,
+    payload: body.slice(payloadStart),
   };
 }
 
@@ -114,9 +210,13 @@ function decodeValue(payload) {
 }
 
 const protocolExports = {
+  MessageType,
   encodeVarint,
+  buildFrame,
   buildReadRequestFrame,
+  buildRpcCallFrame,
   parseReadResponseFrame,
+  statusCodeName,
   decodeValue,
   toHex,
 };

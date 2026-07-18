@@ -1,6 +1,6 @@
 (function () {
   const { ALL_ADDRESSES } = window.Bes3Addresses;
-  const { buildReadRequestFrame, parseReadResponseFrame, decodeValue } = window.Bes3Protocol;
+  const { buildReadRequestFrame, buildRpcCallFrame, parseReadResponseFrame, decodeValue } = window.Bes3Protocol;
   const { decodeTyped } = window.Bes3MessageTypes;
   const { Bes3WebUsbTransport, requestDevice } = window.Bes3WebUsb;
 
@@ -62,6 +62,33 @@
   // Always present on a Smart System bike — exempt from the absent-component skip.
   const CORE_COMPONENTS = new Set(['DriveUnit', 'Battery', 'RemoteControl']);
 
+  // RemoteControlAddresses.RESET_INACTIVITY_SHUTDOWN_TIMER (8454 = 0x2106) —
+  // an argument-less RPC call, not a read. The stock tool fires this
+  // essentially continuously while a diagnostic session is open; without it
+  // the bike's inactivity timer eventually shuts the session down and the
+  // controller drops off USB mid-sweep. See private research notes for how
+  // this was found (it's also the source of the "0xa1 0x06" frames that
+  // looked like an unexplained heartbeat in the very first capture).
+  const KEEP_ALIVE_ADDR = 8454;
+  const KEEP_ALIVE_INTERVAL_MS = 800;
+  let keepAliveTimer = null;
+  let keepAliveSeq = 0;
+
+  function startKeepAlive() {
+    stopKeepAlive();
+    keepAliveTimer = setInterval(() => {
+      if (!transport) return;
+      keepAliveSeq = (keepAliveSeq + 1) & 0x0f;
+      transport.doMcspWrite(buildRpcCallFrame(KEEP_ALIVE_ADDR, keepAliveSeq)).catch(() => {});
+    }, KEEP_ALIVE_INTERVAL_MS);
+  }
+  function stopKeepAlive() {
+    if (keepAliveTimer) {
+      clearInterval(keepAliveTimer);
+      keepAliveTimer = null;
+    }
+  }
+
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -122,18 +149,31 @@
   }
 
   // ---------- read plumbing ----------
-  // Reads one address. Two things make this reliable where a naive single-shot
-  // read was dropping ~half the fields at random:
+  // Reads one address. Two things make this reliable:
   //  1. Pre-drain: clear any late/stale frame left in the bridge buffer from a
   //     previous read BEFORE sending, so it can't be mistaken for this response.
   //  2. Retry: resend a couple of times; present fields almost always answer on
   //     the first try, but the occasional miss is recovered instead of shown "—".
-  async function readOne(addr, seq) {
+  //
+  // The trailing byte of the request is (type<<4)|seq, NOT a free-running
+  // counter — buildReadRequestFrame always forces the type nibble to READ, so
+  // any small seq value works; a previous version of this code used a
+  // full-byte counter here, which accidentally mis-typed ~15/16 of requests
+  // as WRITE/SUBSCRIBE/etc. and was the real cause of drive-unit flakiness
+  // (see private research notes). A response with a real but non-SUCCESS
+  // status (e.g. NOT_READY) is now a distinct outcome, not a bare timeout.
+  let seqCounter = 0;
+  function nextSeq() {
+    seqCounter = (seqCounter + 1) & 0x0f;
+    return seqCounter;
+  }
+
+  async function readOne(addr) {
     for (let attempt = 0; attempt < 2; attempt++) {
       for (let i = 0; i < 4; i++) {
         if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
       }
-      await transport.doMcspWrite(buildReadRequestFrame(addr, (seq + attempt) & 0xff));
+      await transport.doMcspWrite(buildReadRequestFrame(addr, nextSeq()));
       const deadline = Date.now() + 300;
       while (Date.now() < deadline) {
         const raw = await transport.readNextFrame(4, 4);
@@ -141,7 +181,8 @@
         const parsed = parseReadResponseFrame(raw);
         if (!parsed) continue;
         if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
-        return parsed.payload;
+        if (!parsed.ok) return { declined: true, statusName: parsed.statusName };
+        return { payload: parsed.payload };
       }
     }
     return null;
@@ -258,6 +299,8 @@
         valCell.textContent = (r.typed || r.decoded).display;
       } else if (r.status === 'timeout') {
         valCell.textContent = '(no response / timeout)';
+      } else if (r.status === 'declined') {
+        valCell.textContent = `(declined: ${r.detail})`; // e.g. NOT_READY, DENIED — a real status code, not a dropped frame
       } else {
         valCell.textContent = `(error: ${r.detail})`;
       }
@@ -306,6 +349,7 @@
   // previously the status stayed stuck on "CONNECTED" with no way back.
   function handleDisconnect() {
     if (state === 'disconnected') return;
+    stopKeepAlive();
     state = 'disconnected';
     transport = null;
     abortRequested = false;
@@ -355,8 +399,12 @@
     // that follow land on the first pass instead of timing out at the start.
     setProgress('starting…');
     for (let i = 0; i < 8; i++) {
-      if (await readOne(6145, i + 1)) break;
+      if (await readOne(6145)) break;
     }
+
+    // Keep the diagnostic session alive for the whole sweep (and afterwards,
+    // until disconnect) — otherwise it times out mid-sweep on a longer run.
+    startKeepAlive();
 
     // Build the readable set, then hoist the PRIORITY fields to the front so the
     // dashboard paints the interesting values first and backfills the rest.
@@ -375,7 +423,6 @@
 
     const results = [];
     const compStats = {}; // component -> { ok, timeouts }
-    let seq = 1;
     let done = 0;
     let aborted = false;
     for (const entry of readable) {
@@ -397,12 +444,11 @@
         continue;
       }
 
-      seq = (seq + 1) & 0xff;
-      let payload = null;
+      let result = null;
       let status = 'ok';
       let detail = '';
       try {
-        payload = await readOne(entry.addr, seq);
+        result = await readOne(entry.addr);
       } catch (err) {
         // A real disconnect mid-sweep surfaces here — stop cleanly. (Plain USB
         // 'disconnect' events are also handled by the listener above.)
@@ -413,15 +459,19 @@
         status = 'error';
         detail = err.message;
       }
-      if (status === 'ok' && payload === null) status = 'timeout';
+      if (status === 'ok' && result === null) status = 'timeout';
+      if (status === 'ok' && result.declined) {
+        status = 'declined';
+        detail = result.statusName; // e.g. NOT_READY, DENIED — a real answer, just not data
+      }
       if (status === 'ok') cs.ok++;
       else if (status === 'timeout') cs.timeouts++;
 
       let decoded = null;
       let typed = null;
       if (status === 'ok') {
-        typed = decodeTyped(entry.addr, payload);
-        decoded = typed || decodeValue(payload);
+        typed = decodeTyped(entry.addr, result.payload);
+        decoded = typed || decodeValue(result.payload);
       }
       results.push({ ...entry, status, detail, decoded, typed });
       done++;
@@ -451,6 +501,7 @@
     renderDashboard();
     renderRawTable();
 
+    stopKeepAlive();
     try { await transport.close(); } catch (_) {}
     transport = null;
   }

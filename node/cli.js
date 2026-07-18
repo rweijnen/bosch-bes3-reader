@@ -11,16 +11,35 @@
 // end rather than silently skipped.
 
 const { ALL_ADDRESSES } = require('../src/addresses');
-const { buildReadRequestFrame, parseReadResponseFrame, decodeValue } = require('../src/protocol');
+const { buildReadRequestFrame, buildRpcCallFrame, parseReadResponseFrame, decodeValue } = require('../src/protocol');
 const { decodeTyped } = require('../src/messageTypes');
 const { Bes3UsbTransport, findDevice } = require('./transport-node-usb');
+
+// RemoteControlAddresses.RESET_INACTIVITY_SHUTDOWN_TIMER (8454 = 0x2106) — an
+// argument-less RPC call, not a read. The stock tool fires this continuously
+// while a diagnostic session is open; without it the bike's inactivity timer
+// eventually shuts the session down mid-sweep. See private research notes.
+const KEEP_ALIVE_ADDR = 8454;
+const KEEP_ALIVE_INTERVAL_MS = 800;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function readOne(transport, addr, seq) {
-  const frame = buildReadRequestFrame(addr, seq);
+let seqCounter = 0;
+function nextSeq() {
+  seqCounter = (seqCounter + 1) & 0x0f;
+  return seqCounter;
+}
+
+// Reads one address. The trailing request byte is (type<<4)|seq, not a free-
+// running counter — buildReadRequestFrame always forces the type nibble to
+// READ, so any small seq value works. Returns { payload } on success,
+// { declined, statusName } when the bike answers with a real but
+// non-SUCCESS status (e.g. NOT_READY, DENIED — not a dropped frame), or null
+// on timeout.
+async function readOne(transport, addr) {
+  const frame = buildReadRequestFrame(addr, nextSeq());
   await transport.doMcspWrite(frame);
 
   const deadline = Date.now() + 400; // per-address timeout
@@ -30,7 +49,8 @@ async function readOne(transport, addr, seq) {
     const parsed = parseReadResponseFrame(raw);
     if (!parsed) continue; // unrelated frame (e.g. the bundled identify block) - ignore
     if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue; // reply to a different address
-    return parsed.payload;
+    if (!parsed.ok) return { declined: true, statusName: parsed.statusName };
+    return { payload: parsed.payload };
   }
   return null; // timeout
 }
@@ -45,8 +65,13 @@ async function main() {
   const transport = new Bes3UsbTransport(device);
   transport.open();
 
+  let keepAliveSeq = 0;
+  const keepAliveTimer = setInterval(() => {
+    keepAliveSeq = (keepAliveSeq + 1) & 0x0f;
+    transport.doMcspWrite(buildRpcCallFrame(KEEP_ALIVE_ADDR, keepAliveSeq)).catch(() => {});
+  }, KEEP_ALIVE_INTERVAL_MS);
+
   const notSupported = [];
-  let seq = 1;
 
   for (const [component, entries] of Object.entries(ALL_ADDRESSES)) {
     const readable = entries.filter((e) => e.readable === true);
@@ -57,25 +82,30 @@ async function main() {
 
     console.log(`\n=== ${component} ===`);
     for (const entry of readable) {
-      seq = (seq + 1) & 0xff;
-      let payload = null;
+      let result = null;
       let status = 'ok';
       let detail = '';
       try {
-        payload = await readOne(transport, entry.addr, seq);
+        result = await readOne(transport, entry.addr);
       } catch (err) {
         status = 'error';
         detail = err.message;
+      }
+      if (status === 'ok' && result && result.declined) {
+        status = 'declined';
+        detail = result.statusName;
       }
       const addrHex = '0x' + entry.addr.toString(16).padStart(4, '0');
 
       if (status === 'error') {
         console.log(`  ${entry.name.padEnd(42)} ${addrHex}  (error: ${detail})`);
-      } else if (payload === null) {
+      } else if (status === 'declined') {
+        console.log(`  ${entry.name.padEnd(42)} ${addrHex}  (declined: ${detail})`);
+      } else if (result === null) {
         console.log(`  ${entry.name.padEnd(42)} ${addrHex}  (no response / timeout)`);
       } else {
-        const typed = decodeTyped(entry.addr, payload);
-        const decoded = typed || decodeValue(payload);
+        const typed = decodeTyped(entry.addr, result.payload);
+        const decoded = typed || decodeValue(result.payload);
         const marker = typed ? '*' : ' ';
         const label = typed ? ` (${decoded.label})` : '';
         console.log(`${marker} ${entry.name.padEnd(42)} ${addrHex}${label.padEnd(34)} ${decoded.display}`);
@@ -91,6 +121,7 @@ async function main() {
     console.log(`${entry.component}.${entry.name.padEnd(42)} 0x${entry.addr.toString(16).padStart(4, '0')}`);
   }
 
+  clearInterval(keepAliveTimer);
   transport.close();
 }
 
