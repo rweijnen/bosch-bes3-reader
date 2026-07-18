@@ -188,7 +188,7 @@
           </div>
           <label id="fullReadToggleRow" style="display:none; gap:8px; align-items:flex-start; cursor:pointer; font: 400 12px/1.5 'IBM Plex Sans', sans-serif; color: var(--muted);">
             <input type="checkbox" id="attemptFullBleRead" style="width:16px; height:16px; margin-top:1px; accent-color: var(--accent); cursor:pointer;">
-            <span><strong style="color:var(--text);">Experimental:</strong> attempt the full ~370-point diagnostic read over BLE (reverse-engineered protocol, unconfirmed on real hardware — falls back to the official Live Data Interface if unchecked).</span>
+            <span><strong style="color:var(--text);">Experimental:</strong> attempt the full ~370-point diagnostic read over BLE (reverse-engineered protocol). First hardware test connected and completed the handshake correctly, but every read/RPC came back with no response — likely not supported by the bike's firmware over BLE, still under investigation. Falls back to the official Live Data Interface if unchecked.</span>
           </label>
           <button id="connectMainBtn" class="primary-btn" style="width:100%; padding:13px;">Connect &amp; Read</button>
           <span id="methodReq" class="method-req"></span>
