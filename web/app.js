@@ -420,22 +420,31 @@
 
   async function rpcCallWithConfigId(addr, configId, decodeFn) {
     const arg = encodeConfigIdArg(configId);
+    const dlog = window.Bes3DebugLog;
     for (let attempt = 0; attempt < 2; attempt++) {
       for (let i = 0; i < 4; i++) {
         if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
       }
-      await transport.doMcspWrite(buildRpcCallFrameWithArg(addr, nextSeq(), arg));
+      const frame = buildRpcCallFrameWithArg(addr, nextSeq(), arg);
+      if (dlog) dlog.log('assist-rpc', `-> addr 0x${addr.toString(16)} configId="${configId}" attempt ${attempt}`, frame);
+      await transport.doMcspWrite(frame);
       const deadline = Date.now() + 500; // RPC round-trip can be slower than a plain read
       while (Date.now() < deadline) {
         const raw = await transport.readNextFrame(4, 4);
         if (!raw) continue;
+        if (dlog) dlog.log('assist-rpc', '<- raw frame', raw);
         const parsed = parseReadResponseFrame(raw);
         if (!parsed) continue;
         if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
-        if (!parsed.ok) return { declined: true, statusName: parsed.statusName };
+        if (!parsed.ok) {
+          if (dlog) dlog.log('assist-rpc', `<- declined: ${parsed.statusName}`);
+          return { declined: true, statusName: parsed.statusName };
+        }
+        if (dlog) dlog.log('assist-rpc', '<- ok, payload', parsed.payload);
         return decodeFn(parsed.payload);
       }
     }
+    if (dlog) dlog.log('assist-rpc', `<- timeout, no matching response for addr 0x${addr.toString(16)}`);
     return null;
   }
 
@@ -444,12 +453,15 @@
     if (!ASSIST_MODE_STATS_ADDR || !ACTIVE_ASSIST_MODES_ADDR) return;
 
     const activeModes = await readOne(ACTIVE_ASSIST_MODES_ADDR);
+    const dlog = window.Bes3DebugLog;
+    if (dlog) dlog.log('assist-rpc', 'ACTIVE_ASSIST_MODES read result', activeModes && activeModes.payload ? activeModes.payload : JSON.stringify(activeModes));
     const configIds = ['0']; // off/walk — confirmed hardcoded in Flow, always first
     if (activeModes && !activeModes.declined && activeModes.payload) {
       for (const id of decodeConfigIdList(activeModes.payload)) {
         if (id && !configIds.includes(id)) configIds.push(id);
       }
     }
+    if (dlog) dlog.log('assist-rpc', 'resolved configIds', JSON.stringify(configIds));
 
     configIds.forEach((configId, index) => {
       if (!assistModeStats.some((e) => e.configId === configId)) {
