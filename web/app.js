@@ -192,9 +192,9 @@
     els.pickBleBtn.classList.toggle('active', isBle);
     els.methodBlurb.textContent = isBle
       ? 'Wireless link over Bluetooth (Bosch’s official Live Data Interface). Make sure Bluetooth is enabled on this device and the bike is switched on and awake.'
-      : 'Wired link to the drive unit over USB-C. Currently the only implemented path to full diagnostic data (battery health, serials, tuning status).';
+      : 'Wired link to the drive unit over USB-C. The most complete path — full access, no fields denied.';
     els.methodReq.textContent = isBle
-      ? 'Requires Chrome or Edge on desktop or Android (Web Bluetooth). Uses Bosch’s official Live Data Interface — ride telemetry only, no battery health or serials. A fuller BLE read may be possible but isn’t implemented or tested yet.'
+      ? 'Requires Chrome or Edge on desktop or Android (Web Bluetooth). Uses Bosch’s official Live Data Interface — ride telemetry only, no battery health or serials. The experimental full-read option below reads the same ~370 points as USB, but a set of config/manufacturing/test fields are denied over BLE (dealer-tool-only access).'
       : 'Requires Chrome or Edge on desktop (WebUSB).';
     const bleSupported = 'bluetooth' in navigator;
     const locked = isBle && !bleSupported;

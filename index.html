@@ -188,7 +188,7 @@
           </div>
           <label id="fullReadToggleRow" style="display:none; gap:8px; align-items:flex-start; cursor:pointer; font: 400 12px/1.5 'IBM Plex Sans', sans-serif; color: var(--muted);">
             <input type="checkbox" id="attemptFullBleRead" style="width:16px; height:16px; margin-top:1px; accent-color: var(--accent); cursor:pointer;">
-            <span><strong style="color:var(--text);">Experimental:</strong> attempt the full ~370-point diagnostic read over BLE (reverse-engineered protocol). First hardware test connected and handshook correctly but got no read responses — traced to the bike expecting the phone to answer its own boot-stage handshake first; this build now answers that, but it hasn't been re-tested against real hardware yet. Falls back to the official Live Data Interface if unchecked.</span>
+            <span><strong style="color:var(--text);">Experimental:</strong> attempt the full ~370-point diagnostic read over BLE (reverse-engineered protocol). Confirmed working against real hardware — reads match the USB reference read field-for-field. One known difference: this link is lower-privilege than USB — a set of config/manufacturing/test fields are correctly reported as denied over BLE rather than returned. Falls back to the official Live Data Interface if unchecked.</span>
           </label>
           <button id="connectMainBtn" class="primary-btn" style="width:100%; padding:13px;">Connect &amp; Read</button>
           <span id="methodReq" class="method-req"></span>
