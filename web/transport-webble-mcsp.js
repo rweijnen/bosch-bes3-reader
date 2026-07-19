@@ -218,12 +218,19 @@ class Bes3BleMcspTransport {
           wrapped[0] = 0x30;
           wrapped[1] = frame.payload.length;
           wrapped.set(frame.payload, 2);
-          // Rewrite the echoed destination (our own BLE address, 0x40 0x00,
-          // masked with the response-direction MSB flag) back to the fixed
-          // 0x0e10 protocol.js's parseReadResponseFrame() expects as "us" —
-          // see BLE_HOST_HIGH/LOW above for why these differ.
+          // Rewrite the echoed destination (our own BLE address, 0x40 0x00)
+          // back to the fixed 0x0e10 protocol.js's parseReadResponseFrame()
+          // expects as "us" — see BLE_HOST_HIGH/LOW above for why these
+          // differ. Only the address bits (low 7) are rewritten; the MSB is
+          // the real SUCCESS-vs-explicit-status-code flag from the bike and
+          // MUST be preserved verbatim — forcing it to 1 unconditionally
+          // (an earlier version of this code did exactly that) makes every
+          // DENIED/NOT_READY/NO_ROUTE_FOUND status response get misread as
+          // an "ok" 1-byte payload instead of a declined status, corrupting
+          // both the ok/declined counts and the payload offset.
           if (wrapped.length >= 6 && (wrapped[4] & 0x7f) === BLE_HOST_HIGH) {
-            wrapped[4] = 0x80 | USB_HOST_HIGH;
+            const successFlag = wrapped[4] & 0x80;
+            wrapped[4] = successFlag | USB_HOST_HIGH;
             wrapped[5] = USB_HOST_LOW;
           }
           this._readQueue.push(wrapped);
