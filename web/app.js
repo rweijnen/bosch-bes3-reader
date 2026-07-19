@@ -1,6 +1,10 @@
 (function () {
   const { ALL_ADDRESSES } = window.Bes3Addresses;
-  const { buildReadRequestFrame, buildRpcCallFrame, parseReadResponseFrame, decodeValue } = window.Bes3Protocol;
+  const {
+    buildReadRequestFrame, buildRpcCallFrame, buildRpcCallFrameWithArg,
+    encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList,
+    parseReadResponseFrame, decodeValue,
+  } = window.Bes3Protocol;
   const { decodeTyped } = window.Bes3MessageTypes;
   const { Bes3WebUsbTransport, requestDevice } = window.Bes3WebUsb;
   const { Bes3LiveDataBleTransport, requestLiveDataDevice } = window.Bes3LiveDataBle;
@@ -42,6 +46,10 @@
     bikeId: $('bikeId'),
     bikeSerial: $('bikeSerial'),
     bikeCategory: $('bikeCategory'),
+    bikeIconFallback: $('bikeIconFallback'),
+    bikePhotoWrap: $('bikePhotoWrap'),
+    bikePhoto: $('bikePhoto'),
+    bikePhotoCaption: $('bikePhotoCaption'),
     batterySoc: $('batterySoc'),
     batterySocUnit: $('batterySocUnit'),
     socBar: $('socBar'),
@@ -52,6 +60,7 @@
     driveUnitGrid: $('driveUnitGrid'),
     drivetrainGrid: $('drivetrainGrid'),
     usageGrid: $('usageGrid'),
+    assistModeHistogram: $('assistModeHistogram'),
     rawToggle: $('rawToggle'),
     rawSummary: $('rawSummary'),
     rawBody: $('rawBody'),
@@ -380,6 +389,88 @@
     return null;
   }
 
+  // Ride distance per assist mode — a CallableDataPoint RPC
+  // (GET_ASSIST_MODE_STATISTICS), not a plain read: takes a ConfigId{value:
+  // string} argument, returns AssistModeStatistics{distance, consumedEnergy}.
+  //
+  // The ConfigId argument is NOT "1".."4" — that was this file's first cut
+  // and a real hardware test proved it wrong (mismatched names/colors,
+  // confirming the wrong modes were being queried). Traced properly against
+  // Flow's own decompiled source (com.bosch.ebike.appcore.bike.internal.
+  // datasources.ebike.readers.driveunit.AssistModeRefKt): Flow builds its
+  // list of ConfigIds from `ACTIVE_ASSIST_MODES` (`ArrayOf4ActiveAssistModeIdentifier`,
+  // `repeated ConfigId`) plus a hardcoded `ConfigId("0")` prepended for the
+  // off/walk mode (`createOffAssistModeRef`) — so the real per-mode IDs are
+  // whatever strings the bike itself reports there (e.g. "A100M0002"), read
+  // fresh each session, never guessed. See src/protocol.js's decodeConfigIdList.
+  //
+  // Names/colors: AssistModeInformation's nameShort/nameLong/color turned out
+  // NOT to match what the Flow app displays (also confirmed by hardware
+  // test) — traced why: AssistModePositionEnum only has generic
+  // ASSIST_MODE_POSITION0..4 values, and no jar in this project (DiagnosticTool
+  // 3 or Flow) contains a name/color lookup keyed off it — that mapping is a
+  // client-side-only UI convention inside Flow, not bike-reported data. So
+  // this histogram uses its own fixed design palette and generic position
+  // labels instead of asserting a "real" name/color that isn't actually
+  // sourced from the bike.
+  const ASSIST_MODE_STATS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'GET_ASSIST_MODE_STATISTICS') || {}).addr;
+  const ACTIVE_ASSIST_MODES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ACTIVE_ASSIST_MODES') || {}).addr;
+  const ASSIST_MODE_PALETTE = ['#8a8f98', '#4caf50', '#2196f3', '#ff9800', '#e53935', '#9c27b0'];
+  let assistModeStats = []; // [{ index, configId, label, status, distance, consumedEnergy, detail, color }]
+
+  async function rpcCallWithConfigId(addr, configId, decodeFn) {
+    const arg = encodeConfigIdArg(configId);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      for (let i = 0; i < 4; i++) {
+        if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
+      }
+      await transport.doMcspWrite(buildRpcCallFrameWithArg(addr, nextSeq(), arg));
+      const deadline = Date.now() + 500; // RPC round-trip can be slower than a plain read
+      while (Date.now() < deadline) {
+        const raw = await transport.readNextFrame(4, 4);
+        if (!raw) continue;
+        const parsed = parseReadResponseFrame(raw);
+        if (!parsed) continue;
+        if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
+        if (!parsed.ok) return { declined: true, statusName: parsed.statusName };
+        return decodeFn(parsed.payload);
+      }
+    }
+    return null;
+  }
+
+  async function readAllAssistModeStats() {
+    assistModeStats = [];
+    if (!ASSIST_MODE_STATS_ADDR || !ACTIVE_ASSIST_MODES_ADDR) return;
+
+    const activeModes = await readOne(ACTIVE_ASSIST_MODES_ADDR);
+    const configIds = ['0']; // off/walk — confirmed hardcoded in Flow, always first
+    if (activeModes && !activeModes.declined && activeModes.payload) {
+      for (const id of decodeConfigIdList(activeModes.payload)) {
+        if (id && !configIds.includes(id)) configIds.push(id);
+      }
+    }
+
+    configIds.forEach((configId, index) => {
+      if (!assistModeStats.some((e) => e.configId === configId)) {
+        assistModeStats.push({ index, configId, label: index === 0 ? 'Off / walk' : `Position ${index}`, color: ASSIST_MODE_PALETTE[index % ASSIST_MODE_PALETTE.length] });
+      }
+    });
+
+    for (const entry of assistModeStats) {
+      if (phase !== 'connecting' || !transport) return;
+      try {
+        const r = await rpcCallWithConfigId(ASSIST_MODE_STATS_ADDR, entry.configId, decodeAssistModeStatistics);
+        if (!r) entry.status = 'timeout';
+        else if (r.declined) { entry.status = 'declined'; entry.detail = r.statusName; }
+        else { entry.status = 'ok'; entry.distance = r.distance; entry.consumedEnergy = r.consumedEnergy; }
+      } catch (err) {
+        entry.status = 'error';
+        entry.detail = err.message;
+      }
+    }
+  }
+
   function findResult(component, name) {
     return lastResults.find((r) => r.component === component && r.name === name);
   }
@@ -393,6 +484,51 @@
     const r = findResult(component, name);
     if (!r || r.status !== 'ok' || !r.typed) return null;
     return r.typed.value;
+  }
+
+  // ---------- bike photo (public "emd" catalog cache, no login/OAuth) ----------
+  // Bosch publishes an unauthenticated bike-model catalog (brand/model
+  // pictures keyed by GTIN) on bosch-ebike.com. `tools/build-model-cache.mjs`
+  // pre-resolves that catalog offline into web/data/bike-model-cache.json,
+  // which is all this ever loads — no per-user API call, no OAuth token.
+  let modelCache = null; // null = not loaded yet, Map once loaded
+  let modelCacheLoading = null;
+  function loadModelCache() {
+    if (modelCache) return Promise.resolve(modelCache);
+    if (modelCacheLoading) return modelCacheLoading;
+    modelCacheLoading = fetch('web/data/bike-model-cache.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        modelCache = new Map(data ? Object.entries(data.models) : []);
+        return modelCache;
+      })
+      .catch(() => {
+        modelCache = new Map();
+        return modelCache;
+      });
+    return modelCacheLoading;
+  }
+
+  function renderBikePhoto() {
+    const gtin = valueOf('DriveUnit', 'OEM_BIKE_MODEL_ID');
+    const showFallback = () => {
+      els.bikePhotoWrap.style.display = 'none';
+      els.bikeIconFallback.style.display = '';
+    };
+    if (!gtin) { showFallback(); return; }
+    loadModelCache().then((cache) => {
+      // Bail if the dashboard has moved on to a different bike/read since
+      // this lookup started (cache fetch is async).
+      if (valueOf('DriveUnit', 'OEM_BIKE_MODEL_ID') !== gtin) return;
+      const entry = cache.get(String(gtin));
+      if (!entry || !entry.imageUrl) { showFallback(); return; }
+      els.bikePhoto.src = entry.imageUrl;
+      els.bikePhoto.alt = `${entry.brand || ''} ${entry.model || ''}`.trim();
+      els.bikePhotoCaption.textContent = [entry.brand, entry.model, entry.modelYear]
+        .filter(Boolean).join(' · ');
+      els.bikePhotoWrap.style.display = '';
+      els.bikeIconFallback.style.display = 'none';
+    });
   }
 
   function kvRow(container, label, value) {
@@ -409,6 +545,7 @@
     els.bikeId.textContent = displayOf('DriveUnit', 'BIKE_ID');
     els.bikeSerial.textContent = displayOf('DriveUnit', 'SERIAL_NUMBER');
     els.bikeCategory.textContent = displayOf('DriveUnit', 'BIKE_CATEGORY');
+    renderBikePhoto();
 
     const soc = valueOf('Battery', 'STATE_OF_CHARGE');
     els.batterySoc.textContent = soc == null ? '—' : soc;
@@ -440,6 +577,8 @@
     kvRow(els.drivetrainGrid, 'Max legal speed', displayOf('DriveUnit', 'MAXIMUM_LEGAL_BIKE_SPEED'));
     kvRow(els.drivetrainGrid, 'Max assist speed', displayOf('DriveUnit', 'MAXIMUM_ASSISTANCE_SPEED'));
     kvRow(els.drivetrainGrid, 'Wheel circ. (OEM)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_OEM'));
+    kvRow(els.drivetrainGrid, 'Wheel circ. (user)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_USER'));
+    kvRow(els.drivetrainGrid, 'Max motor torque', displayOf('DriveUnit', 'MAXIMUM_AVAILABLE_MOTOR_TORQUE'));
     kvRow(els.drivetrainGrid, 'Region / speed class', displayOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'));
     const tuning = findResult('DriveUnit', 'TUNING_DETECTION');
     const tv = tuning && tuning.status === 'ok' && tuning.typed ? tuning.typed.value : null;
@@ -455,10 +594,48 @@
     els.drivetrainGrid.appendChild(tVal);
 
     els.usageGrid.innerHTML = '';
-    kvRow(els.usageGrid, 'Odometer', displayOf('DriveUnit', 'ODOMETER'));
+    const odometerM = valueOf('DriveUnit', 'ODOMETER');
+    kvRow(els.usageGrid, 'Odometer (total)', odometerM == null ? '—' : `${(odometerM / 1000).toFixed(1)} km`);
     kvRow(els.usageGrid, 'Power-on time', displayOf('DriveUnit', 'POWER_ON_TIME'));
     kvRow(els.usageGrid, 'OEM bike ID', displayOf('DriveUnit', 'OEM_BIKE_ID'));
     kvRow(els.usageGrid, 'OEM brand', displayOf('DriveUnit', 'OEM_BRAND_NAME'));
+
+    renderAssistModeHistogram();
+  }
+
+  function renderAssistModeHistogram() {
+    const okEntries = assistModeStats.filter((e) => e.status === 'ok' && e.distance != null);
+    els.assistModeHistogram.style.display = assistModeStats.length ? '' : 'none';
+    els.assistModeHistogram.innerHTML = '';
+    if (!assistModeStats.length) return;
+    const maxDistance = Math.max(1, ...okEntries.map((e) => e.distance));
+    for (const entry of assistModeStats) {
+      const row = document.createElement('div');
+      row.className = 'histogram-row';
+      const label = document.createElement('span');
+      label.className = 'histogram-label';
+      label.textContent = entry.label;
+      label.title = entry.label;
+      const track = document.createElement('div');
+      track.className = 'histogram-track';
+      const value = document.createElement('span');
+      value.className = 'histogram-value';
+      if (entry.status === 'ok') {
+        const fill = document.createElement('div');
+        fill.className = 'histogram-fill';
+        fill.style.width = `${Math.max(1, (entry.distance / maxDistance) * 100)}%`;
+        if (entry.color) fill.style.background = entry.color;
+        track.appendChild(fill);
+        value.textContent = `${(entry.distance / 1000).toFixed(1)} km`;
+      } else {
+        value.textContent = entry.status === 'declined' ? 'n/a' : '—';
+        value.className += ' muted';
+      }
+      row.appendChild(label);
+      row.appendChild(track);
+      row.appendChild(value);
+      els.assistModeHistogram.appendChild(row);
+    }
   }
 
   function renderRawTable() {
@@ -537,6 +714,7 @@
   // dashboard/raw-table code is unaware which transport was used.
   async function runSweep(transportKind) {
     disconnectedAfterRead = false;
+    assistModeStats = [];
     let device;
     try {
       device = transportKind === 'ble-mcsp'
@@ -647,6 +825,11 @@
         lastResults = results;
       }
       await sleep(10);
+    }
+
+    if (!aborted && phase === 'connecting') {
+      els.connectingSub.textContent = 'reading per-mode ride statistics…';
+      try { await readAllAssistModeStats(); } catch (_) {}
     }
 
     lastResults = results;

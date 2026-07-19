@@ -117,6 +117,60 @@ function buildRpcCallFrame(addr, seq) {
   return buildFrame(addr, MessageType.RPC, seq);
 }
 
+// RPC call carrying a protobuf-encoded argument (CallableDataPoint<Arg, Result>,
+// e.g. GET_ASSIST_MODE_STATISTICS(ConfigId) -> AssistModeStatistics — confirmed
+// via decompile of com.bosch.ebike.diagnostic.adapter.bike3.core.Bes3BduAdapterImpl).
+function buildRpcCallFrameWithArg(addr, seq, argPayload) {
+  return buildFrame(addr, MessageType.RPC, seq, argPayload);
+}
+
+// Encodes a Bosch `ConfigId` protobuf message ({ value: string }, field 1,
+// length-delimited) — the argument type for GET_ASSIST_MODE_STATISTICS and
+// several other per-mode RPCs (GET_ASSIST_MODE_INFORMATION, udam values/defaults).
+// Confirmed shape from com.bosch.ebike.bes3.messagebus.ConfigId (decompiled);
+// confirmed usage as a decimal-string mode index from
+// BduAssistModeReader.getOffModeDistance$eds_adapter_bike3_core, which hardcodes
+// ConfigId.newBuilder().setValue("0") for the off/no-assist/walk mode. The
+// indices for the other (configurable) assist levels follow Bosch's
+// conventional 1-4 numbering but are NOT independently confirmed from
+// decompile — treat results for those as provisional until checked against a
+// real bike's own display/app.
+function encodeConfigIdArg(idString) {
+  const strBytes = Array.from(new TextEncoder().encode(String(idString)));
+  return [0x0a, ...encodeVarint(strBytes.length), ...strBytes];
+}
+
+// Decodes a Bosch `AssistModeStatistics` protobuf message: field 1 = distance
+// (uint32, meters — same unit as ODOMETER), field 2 = consumedEnergy (uint32,
+// unit not confirmed from decompile — plausibly Wh, not independently
+// verified). Confirmed field shape from
+// com.bosch.ebike.bes3.messagebus.AssistModeStatistics (decompiled).
+function decodeAssistModeStatistics(payload) {
+  let i = 0;
+  let distance = null;
+  let consumedEnergy = null;
+  while (i < payload.length) {
+    const tag = payload[i];
+    const fieldNum = tag >>> 3;
+    const wireType = tag & 0x7;
+    i += 1;
+    if (wireType !== 0) break; // both fields are varints — anything else, stop rather than misparse
+    let result = 0;
+    let shift = 0;
+    for (;;) {
+      const b = payload[i];
+      i += 1;
+      result |= (b & 0x7f) << shift;
+      if ((b & 0x80) === 0) break;
+      shift += 7;
+    }
+    const value = result >>> 0;
+    if (fieldNum === 1) distance = value;
+    else if (fieldNum === 2) consumedEnergy = value;
+  }
+  return { distance, consumedEnergy };
+}
+
 // Parses a raw MCSP frame (as received from the reader loop) into a
 // structured result, or null if it doesn't look like a message-bus
 // read/RPC response at all (e.g. the bundled multi-field identify block,
@@ -209,12 +263,117 @@ function decodeValue(payload) {
   return { kind: 'raw', value: toHex(payload), display: `hex: ${toHex(payload)}` };
 }
 
+// Decodes a Bosch `AssistModeInformation` protobuf message — the response
+// to GET_ASSIST_MODE_INFORMATION(ConfigId), the RPC that returns a mode's
+// actual display name (field 1 = ApplicationIdentifier submessage, skipped
+// here; field 2 = nameShort string; field 3 = nameLong string; field 4 =
+// color uint32; field 5 = assistModePosition enum ordinal; field 6/7 =
+// userAdjustable/userAdjusted bool). Confirmed field shape from
+// com.bosch.ebike.bes3.messagebus.AssistModeInformation (decompiled).
+function decodeAssistModeInformation(payload) {
+  let i = 0;
+  const out = { nameShort: null, nameLong: null, color: null, assistModePosition: null, userAdjustable: null, userAdjusted: null };
+  while (i < payload.length) {
+    const tag = payload[i];
+    const fieldNum = tag >>> 3;
+    const wireType = tag & 0x7;
+    i += 1;
+    if (wireType === 0) {
+      let result = 0;
+      let shift = 0;
+      for (;;) {
+        const b = payload[i];
+        i += 1;
+        result |= (b & 0x7f) << shift;
+        if ((b & 0x80) === 0) break;
+        shift += 7;
+      }
+      const value = result >>> 0;
+      if (fieldNum === 4) out.color = value;
+      else if (fieldNum === 5) out.assistModePosition = value;
+      else if (fieldNum === 6) out.userAdjustable = !!value;
+      else if (fieldNum === 7) out.userAdjusted = !!value;
+    } else if (wireType === 2) {
+      let len = 0;
+      let shift = 0;
+      for (;;) {
+        const b = payload[i];
+        i += 1;
+        len |= (b & 0x7f) << shift;
+        if ((b & 0x80) === 0) break;
+        shift += 7;
+      }
+      const content = payload.slice(i, i + len);
+      i += len;
+      if (fieldNum === 2) out.nameShort = decodeUtf8(content);
+      else if (fieldNum === 3) out.nameLong = decodeUtf8(content);
+      // field 1 (identifier submessage) intentionally not parsed — not needed for a display name
+    } else {
+      break;
+    }
+  }
+  return out;
+}
+
+// Decodes `ArrayOf4ActiveAssistModeIdentifier` (ACTIVE_ASSIST_MODES) —
+// `repeated ConfigId value = 1`, i.e. each top-level field-1 entry wraps its
+// OWN nested field-1 string (ConfigId{value: string}). Confirmed shape from
+// Flow's decompiled source (com.bosch.ebike.bes3.messagebus.
+// ArrayOf4ActiveAssistModeIdentifier) — this is the actual list of per-mode
+// ConfigId argument strings the bike expects for GET_ASSIST_MODE_STATISTICS/
+// GET_ASSIST_MODE_INFORMATION; they are NOT simply "1".."4" (that was an
+// unconfirmed guess in an earlier version of this file that a real hardware
+// test proved wrong — see RESEARCH.md).
+function decodeConfigIdList(payload) {
+  const ids = [];
+  let i = 0;
+  while (i < payload.length) {
+    const tag = payload[i];
+    const fieldNum = tag >>> 3;
+    const wireType = tag & 0x7;
+    i += 1;
+    if (wireType !== 2) break; // only field 1 (length-delimited submessages) expected
+    let len = 0;
+    let shift = 0;
+    for (;;) {
+      const b = payload[i];
+      i += 1;
+      len |= (b & 0x7f) << shift;
+      if ((b & 0x80) === 0) break;
+      shift += 7;
+    }
+    const entry = payload.slice(i, i + len);
+    i += len;
+    if (fieldNum !== 1) continue;
+    // entry should itself be a ConfigId message: field 1 (tag 0x0a), varint
+    // len, utf8 bytes. Parse that one level in; if it doesn't look like a
+    // valid nested tag, fall back to treating `entry` as the raw string
+    // directly (defensive — covers a single-entry capture seen where the
+    // nesting looked flatter than the confirmed proto shape predicts).
+    if (entry.length >= 2 && entry[0] === 0x0a) {
+      const innerLen = entry[1];
+      const inner = entry.slice(2, 2 + innerLen);
+      if (inner.length === innerLen) {
+        ids.push(decodeUtf8(inner));
+        continue;
+      }
+    }
+    ids.push(decodeUtf8(entry));
+  }
+  return ids;
+}
+
 const protocolExports = {
   MessageType,
   encodeVarint,
   buildFrame,
   buildReadRequestFrame,
   buildRpcCallFrame,
+  buildRpcCallFrameWithArg,
+  encodeConfigIdArg,
+  decodeAssistModeStatistics,
+  decodeAssistModeInformation,
+  decodeConfigIdList,
   parseReadResponseFrame,
   statusCodeName,
   decodeValue,

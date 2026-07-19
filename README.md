@@ -64,6 +64,16 @@ npm install
 node cli.js
 ```
 
+## Bike photo
+
+The dashboard shows the bike's stock photo and brand/model when it recognizes
+the GTIN reported by `OEM_BIKE_MODEL_ID`. This uses a small static lookup
+(`web/data/bike-model-cache.json`) built offline from Bosch's own public,
+unauthenticated bike catalog (`bosch-ebike.com/emd/data/emd-*.json`) — no
+login, no account, no per-user API call. Currently resolves ~9,100 GTINs
+(~79% with a photo); unrecognized models just show the generic bike icon.
+Refresh the cache with `node tools/build-model-cache.mjs`.
+
 ## Status / limitations
 
 Not every known data-point address responds to the simple read request this
