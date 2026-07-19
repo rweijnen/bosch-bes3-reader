@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-19.3';
+  const APP_VERSION = '2026-07-19.4';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
