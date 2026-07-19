@@ -62,17 +62,22 @@ const STARTUP_STAGE_DONE = 9;
 
 // The fixed "host" node address 0x0e10 used throughout src/protocol.js was
 // captured from a real USB DiagnosticTool 3 session and confirmed correct
-// for USB. But the Flow app's own source (AddressesKt.MobileAppBrokerAddress
-// = 16384 = 0x4000) uses a DIFFERENT self-identity address on BLE — 0x0e10
-// may be specific to the dealer tool's own identity, not a universal "any
-// client" address. If the bike's BLE-side routing only accepts requests from
-// a recognized source address, using 0x0e10 here would explain exactly the
-// observed symptom (boot handshake fine, every plain read/RPC silently
-// ignored). Substituted at this transport's boundary only — protocol.js and
-// the USB transport are untouched, so this is purely a BLE-specific
-// hypothesis test, not a protocol.js change.
-const BLE_HOST_HIGH = 0x40;
-const BLE_HOST_LOW = 0x00;
+// for USB. The Flow app uses a DIFFERENT self-identity address on BLE — but
+// NOT AddressesKt.MobileAppBrokerAddress (0x4000, that's the address Flow
+// answers AS when the bike addresses IT as a "MobileApp" peer — see
+// MOBILE_APP_HIGH_BYTE above, a separate role). The address Flow actually
+// stamps as the SOURCE on every outgoing request it sends TO the bike
+// (reads, writes, RPCs alike) is MobileAppGatewaysAddresses.E_BIKE = 16768 =
+// 0x4180 — confirmed via BluetoothGateway's constructor default
+// (`getAddress()` returns this, and InternalGatewayImpl/BluetoothGateway use
+// it as `source` for every RpcCallMessage/ReadMessage/WriteMessage). Using
+// the wrong one of these two addresses here plausibly explains both the
+// original "every read timed out" symptom AND the confirmed UNSUPPORTED
+// response for GET_ASSIST_MODE_STATISTICS: reads/writes tolerate a
+// not-quite-right source address, but the bike's stricter checks (some
+// fields, and evidently this RPC) don't.
+const BLE_HOST_HIGH = 0x41;
+const BLE_HOST_LOW = 0x80;
 const USB_HOST_HIGH = 0x0e; // what protocol.js hardcodes; rewritten back to this on the way in
 const USB_HOST_LOW = 0x10;
 // MobileAppStaticFeatureProperties: proto3 bools, field 3 = stagedStartup.
@@ -218,7 +223,7 @@ class Bes3BleMcspTransport {
           wrapped[0] = 0x30;
           wrapped[1] = frame.payload.length;
           wrapped.set(frame.payload, 2);
-          // Rewrite the echoed destination (our own BLE address, 0x40 0x00)
+          // Rewrite the echoed destination (our own BLE address, 0x41 0x80)
           // back to the fixed 0x0e10 protocol.js's parseReadResponseFrame()
           // expects as "us" — see BLE_HOST_HIGH/LOW above for why these
           // differ. Only the address bits (low 7) are rewritten; the MSB is
@@ -364,13 +369,13 @@ class Bes3BleMcspTransport {
   async doMcspWrite(payload) {
     const body = payload.slice(2);
     // Rewrite the fixed USB host address (0x0e10, baked in by protocol.js) to
-    // this transport's own BLE identity (MobileAppBrokerAddress = 0x4000) —
-    // see BLE_HOST_HIGH/LOW above.
+    // this transport's own BLE identity (MobileAppGatewaysAddresses.E_BIKE =
+    // 0x4180) — see BLE_HOST_HIGH/LOW above.
     if (body.length >= 2 && body[0] === USB_HOST_HIGH && body[1] === USB_HOST_LOW) {
       body[0] = BLE_HOST_HIGH;
       body[1] = BLE_HOST_LOW;
       const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
-      log && log('ble-mcsp', 'rewrote outgoing source 0x0e10 -> 0x4000 (MobileAppBrokerAddress)');
+      log && log('ble-mcsp', 'rewrote outgoing source 0x0e10 -> 0x4180 (MobileAppGatewaysAddresses.E_BIKE)');
     }
     await this._writeFrame(Channel.MESSAGE_BUS, body);
   }
