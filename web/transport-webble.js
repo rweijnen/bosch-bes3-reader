@@ -157,8 +157,14 @@ class Bes3LiveDataBleTransport {
   // Reads the characteristic once (server returns latest values of all
   // currently-available fields, per spec section 2.2.3.2).
   async readOnce() {
+    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    log && log('ble-live', 'readValue()…');
     const value = await this.characteristic.readValue();
-    return decodeLiveData(new Uint8Array(value.buffer));
+    const bytes = new Uint8Array(value.buffer);
+    log && log('ble-live', `readValue() returned ${bytes.length} bytes`, bytes);
+    const decoded = decodeLiveData(bytes);
+    log && log('ble-live', 'decoded', JSON.stringify(decoded));
+    return decoded;
   }
 
   // Subscribes to change notifications; callback receives a partial
@@ -166,13 +172,19 @@ class Bes3LiveDataBleTransport {
   // the server may also include some unchanged fields — known bug LDI-002
   // in the v19 release notes, harmless to ignore).
   async subscribe(callback) {
+    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
     this._onData = callback;
     this._handleNotify = (event) => {
       const bytes = new Uint8Array(event.target.value.buffer);
-      this._onData(decodeLiveData(bytes));
+      log && log('ble-live', `notification (${bytes.length} bytes)`, bytes);
+      const decoded = decodeLiveData(bytes);
+      log && log('ble-live', 'decoded', JSON.stringify(decoded));
+      this._onData(decoded);
     };
     this.characteristic.addEventListener('characteristicvaluechanged', this._handleNotify);
+    log && log('ble-live', 'startNotifications()…');
     await this.characteristic.startNotifications();
+    log && log('ble-live', 'subscribed');
   }
 }
 

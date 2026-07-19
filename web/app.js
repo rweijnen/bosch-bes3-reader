@@ -735,6 +735,7 @@
       goIdle('BLE connection failed: ' + (err.message || err));
       return;
     }
+    if (window.Bes3DebugLog) window.Bes3DebugLog.log('app', 'Live Data Interface connected + subscribed', JSON.stringify(bleLiveState));
 
     phase = 'connected';
     renderPhase();
