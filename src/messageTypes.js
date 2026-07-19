@@ -31,6 +31,8 @@ const REGIO_SPEED_CONFIGURATION_ENUM = {
   7: { name: 'USA28MPH', label: 'USA, 28 mph' },
   8: { name: 'EUROPE_ATHLETE25KMH', label: 'Europe, "Athlete" 25 km/h' },
   9: { name: 'USA_ATHLETE20MPH', label: 'USA, "Athlete" 20 mph' },
+  10: { name: 'SOUTH_AFRICA25KMH', label: 'South Africa, 25 km/h' },
+  11: { name: 'NEW_ZEALAND45KMH', label: 'New Zealand, 45 km/h (S-Pedelec class)' },
   '-1': { name: 'UNRECOGNIZED', label: 'Unrecognized' },
 };
 
@@ -49,6 +51,7 @@ const BIKE_CATEGORY_ENUM = {
   9: { name: 'FLEET', label: 'eFleet' },
   10: { name: 'OTHERS', label: 'Other' },
   11: { name: 'E_CARGO_LONG_TAIL', label: 'eCargo Long Tail' },
+  12: { name: 'COMPACT', label: 'eCompact' },
   '-1': { name: 'UNRECOGNIZED', label: 'Unknown' },
 };
 
@@ -78,6 +81,7 @@ const FIELD_TYPES = {
   6167: { label: 'Maximum Assistance Speed', kind: 'normFactor', factor: 100, unit: 'km/h' },
   6183: { label: 'Product Line', kind: 'string' },
   6184: { label: 'Rear Wheel Circumference (OEM)', kind: 'normFactor', factor: 10, unit: 'mm' }, // SafeUint16NormFactor10 — has a field-2 checksum we ignore
+  6185: { label: 'Rear Wheel Circumference (User)', kind: 'normFactor', factor: 10, unit: 'mm' }, // MessageBus.DriveUnit.Companion.normalizeRearWheelCircumferenceUser (Flow source)
   6186: { label: 'OEM Brand Identifier', kind: 'string' },
   6187: { label: 'Gearing System', kind: 'string' },
   6188: { label: 'eBike ID', kind: 'uuid' },
@@ -99,6 +103,7 @@ const FIELD_TYPES = {
   6242: { label: 'OEM Free Text Field', kind: 'string' },
   6252: { label: 'OEM Brand Name', kind: 'string' },
   6261: { label: 'OEM Bike Model ID', kind: 'string' },
+  6263: { label: 'Maximum Available Motor Torque', kind: 'normFactor', factor: 10, unit: 'Nm' }, // MessageBus.DriveUnit.Companion.normalizeMotorTorque (Flow source)
   6269: { label: 'Regional Speed Configuration ("Speed ID")', kind: 'enum', enumTable: REGIO_SPEED_CONFIGURATION_ENUM },
   6276: { label: 'Present PCB Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true }, // Int16NormFactor10Message — zigzag varint (writeSInt32)
   6302: { label: 'Motor Product Code', kind: 'string' },
