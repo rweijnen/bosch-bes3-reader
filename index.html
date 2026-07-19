@@ -35,6 +35,7 @@
   .brand { display: flex; align-items: center; gap: 10px; }
   .brand-badge { width: 28px; height: 28px; border-radius: 6px; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent-ink); font: 700 13px 'Space Grotesk', sans-serif; }
   .brand-name { font: 600 16px 'Space Grotesk', sans-serif; }
+  .app-version { font: 400 10px 'IBM Plex Mono', monospace; color: var(--faint); margin-left: 2px; }
   .status-chip { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--chipbg); border: 1px solid var(--border2); border-radius: 999px; }
   .status-dot { width: 8px; height: 8px; border-radius: 50%; }
   .status-label { font: 500 12px 'IBM Plex Mono', monospace; color: var(--muted); letter-spacing: 0.04em; }
@@ -158,6 +159,7 @@
     <div class="brand">
       <div class="brand-badge">B3</div>
       <span class="brand-name">BES3 Reader</span>
+      <span id="appVersion" class="app-version" title="Build version — check this matches after a reload"></span>
     </div>
     <div class="status-chip">
       <span id="statusDot" class="status-dot"></span>

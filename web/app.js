@@ -1,4 +1,11 @@
 (function () {
+  // Bump this on every meaningful app.js/index.html change. Shown in the
+  // header and logged as the first debug-log line so a "did my reload
+  // actually pick up the new build?" question can be answered by looking,
+  // not assumed — browser/CDN caching can otherwise make a hard refresh
+  // silently keep serving a stale bundle.
+  const APP_VERSION = '2026-07-19.3';
+
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
     buildReadRequestFrame, buildRpcCallFrame, buildRpcCallFrameWithArg,
@@ -11,6 +18,7 @@
 
   const $ = (id) => document.getElementById(id);
   const els = {
+    appVersion: $('appVersion'),
     debugLogBtn: $('debugLogBtn'),
     themeToggle: $('themeToggle'),
     statusDot: $('statusDot'),
@@ -939,6 +947,8 @@
   }
 
   // ---------- init ----------
+  els.appVersion.textContent = `v${APP_VERSION}`;
+  if (window.Bes3DebugLog) window.Bes3DebugLog.log('app', `BES3 Reader version ${APP_VERSION}`);
   initDisclaimer();
   method = 'usb';
   renderChooser();
