@@ -402,6 +402,40 @@ function decodeConfigIdList(payload) {
   return ids;
 }
 
+// Decodes `AssistModeShortNames`/`AssistModeLongNames` (ASSIST_MODE_SHORT_NAMES
+// addr 6156 / ASSIST_MODE_LONG_NAMES addr 6157) — both `repeated string value
+// = 1`, i.e. flat, non-nested field-1 UTF-8 string entries back to back.
+// Confirmed shape from Flow's decompiled source (both classes share the
+// identical generated-message shape). This is Flow's actual real-name source
+// for assist modes — GET_ASSIST_MODE_INFORMATION's nameShort/nameLong (tried
+// earlier) don't match what Flow displays and aren't used by it for this;
+// these two bulk data points are, one entry per active mode in the same
+// order as ACTIVE_ASSIST_MODES/the resolved ConfigId list.
+function decodeStringList(payload) {
+  const values = [];
+  let i = 0;
+  while (i < payload.length) {
+    const tag = payload[i];
+    const fieldNum = tag >>> 3;
+    const wireType = tag & 0x7;
+    i += 1;
+    if (wireType !== 2) break; // only field 1 (length-delimited strings) expected
+    let len = 0;
+    let shift = 0;
+    for (;;) {
+      const b = payload[i];
+      i += 1;
+      len |= (b & 0x7f) << shift;
+      if ((b & 0x80) === 0) break;
+      shift += 7;
+    }
+    const content = payload.slice(i, i + len);
+    i += len;
+    if (fieldNum === 1 && content.length === len) values.push(decodeUtf8(content));
+  }
+  return values;
+}
+
 // Decodes a Bosch `UdamParams` protobuf message — the response to
 // GET_UDAM_VALUES(ConfigId)/GET_UDAM_DEFAULT_VALUES(ConfigId), the per-mode
 // assist parameters (confirmed from decompile of
@@ -475,6 +509,7 @@ const protocolExports = {
   decodeAssistModeStatistics,
   decodeAssistModeInformation,
   decodeConfigIdList,
+  decodeStringList,
   decodeUdamParams,
   decodeBoolResponse,
   parseReadResponseFrame,

@@ -4,13 +4,13 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.4';
+  const APP_VERSION = '2026-07-20.5';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
     MessageType, buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
     buildRpcCallFrame, buildRpcCallFrameWithArg,
-    encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList,
+    encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList, decodeStringList,
     decodeUdamParams, decodeBoolResponse,
     parseReadResponseFrame, decodeValue,
   } = window.Bes3Protocol;
@@ -478,6 +478,14 @@
   // sourced from the bike.
   const ASSIST_MODE_STATS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'GET_ASSIST_MODE_STATISTICS') || {}).addr;
   const ACTIVE_ASSIST_MODES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ACTIVE_ASSIST_MODES') || {}).addr;
+  // Real bike-reported mode names — NOT the per-mode GET_ASSIST_MODE_INFORMATION
+  // RPC (tried earlier; its nameShort/nameLong don't match what Flow displays
+  // and Flow doesn't use it for this). Flow's actual source is these two bulk
+  // repeated-string data points, one entry per active mode in the same order
+  // as ACTIVE_ASSIST_MODES — confirmed from Flow's decompiled source
+  // (AssistModeShortNames/AssistModeLongNames, both `repeated string value=1`).
+  const ASSIST_MODE_SHORT_NAMES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_SHORT_NAMES') || {}).addr;
+  const ASSIST_MODE_LONG_NAMES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_LONG_NAMES') || {}).addr;
   // Per-mode assist parameters (assist level / max speed / acceleration
   // response) — same ConfigId argument as the stats RPC above. Read-only.
   const UDAM_VALUES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'READ_UDAM_VALUES') || {}).addr;
@@ -551,6 +559,36 @@
         assistModeStats.push({ index, configId, label: index === 0 ? 'Off / walk' : `Position ${index}`, color: ASSIST_MODE_PALETTE[index % ASSIST_MODE_PALETTE.length] });
       }
     });
+
+    // Real names: off/walk (index 0) is synthesized client-side (by us, same
+    // as Flow's own createOffAssistMode()) and never appears in these lists —
+    // they only cover the modes actually read from ACTIVE_ASSIST_MODES, i.e.
+    // assistModeStats[1..]. Only apply if the count lines up; otherwise leave
+    // the generic "Position N" labels rather than mismatching modes to names.
+    if (ASSIST_MODE_SHORT_NAMES_ADDR) {
+      try {
+        const shortRes = await readOne(ASSIST_MODE_SHORT_NAMES_ADDR);
+        if (shortRes && !shortRes.declined && shortRes.payload) {
+          const names = decodeStringList(shortRes.payload);
+          if (dlog) dlog.log('assist-rpc', 'ASSIST_MODE_SHORT_NAMES decoded', JSON.stringify(names));
+          if (names.length === assistModeStats.length - 1) {
+            names.forEach((name, i) => { if (name) assistModeStats[i + 1].label = name; });
+          }
+        }
+      } catch (_) { /* leave generic labels */ }
+    }
+    if (ASSIST_MODE_LONG_NAMES_ADDR) {
+      try {
+        const longRes = await readOne(ASSIST_MODE_LONG_NAMES_ADDR);
+        if (longRes && !longRes.declined && longRes.payload) {
+          const names = decodeStringList(longRes.payload);
+          if (dlog) dlog.log('assist-rpc', 'ASSIST_MODE_LONG_NAMES decoded', JSON.stringify(names));
+          if (names.length === assistModeStats.length - 1) {
+            names.forEach((name, i) => { if (name) assistModeStats[i + 1].longLabel = name; });
+          }
+        }
+      } catch (_) { /* leave generic labels */ }
+    }
 
     for (const entry of assistModeStats) {
       if (phase !== 'connecting' || !transport) return;
@@ -863,7 +901,7 @@
       const label = document.createElement('span');
       label.className = 'histogram-label';
       label.textContent = entry.label;
-      label.title = entry.label;
+      label.title = entry.longLabel || entry.label;
       const track = document.createElement('div');
       track.className = 'histogram-track';
       const value = document.createElement('span');
