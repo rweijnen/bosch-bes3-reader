@@ -331,13 +331,52 @@
   let keepAliveTimer = null;
   let keepAliveSeq = 0;
 
+  // Previously fire-and-forget: sent the keep-alive RPC but never checked
+  // for a response, so it could only ever detect an outright USB write
+  // failure (device unplugged), never "the bike silently stopped answering
+  // but our own USB write still succeeds" — exactly the failure mode
+  // suspected after a write got zero response following a long idle gap
+  // (see private research notes). Now waits briefly for the matching
+  // RPC_RESPONSE and logs the outcome, so an idle-period debug log actually
+  // shows whether the bike's session was still alive throughout, not just
+  // whether we tried.
+  async function sendKeepAlive() {
+    if (!transport) return;
+    keepAliveSeq = (keepAliveSeq + 1) & 0x0f;
+    const addr = KEEP_ALIVE_ADDR;
+    const dlog = window.Bes3DebugLog;
+    // Something else (a sweep read, an assist-mode RPC, a write) is already
+    // waiting on transport.readNextFrame() — don't also wait here, since two
+    // concurrent readers pulling from the same frame queue could steal a
+    // response meant for the other one. Fall back to fire-and-forget, same
+    // as this function's original behavior, rather than risk that.
+    if (transportBusy) {
+      transport.doMcspWrite(buildRpcCallFrame(addr, keepAliveSeq)).catch((err) => {
+        if (dlog) dlog.log('keepalive', 'write failed (busy path): ' + err.message);
+      });
+      return;
+    }
+    try {
+      await transport.doMcspWrite(buildRpcCallFrame(addr, keepAliveSeq));
+      const deadline = Date.now() + 300;
+      while (Date.now() < deadline) {
+        const raw = await transport.readNextFrame(2, 5);
+        if (!raw) continue;
+        const parsed = parseReadResponseFrame(raw);
+        if (!parsed) continue;
+        if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
+        if (dlog) dlog.log('keepalive', parsed.ok ? 'ok' : `declined: ${parsed.statusName}`);
+        return;
+      }
+      if (dlog) dlog.log('keepalive', 'no response (timeout)');
+    } catch (err) {
+      if (dlog) dlog.log('keepalive', 'write failed: ' + err.message);
+    }
+  }
+
   function startKeepAlive() {
     stopKeepAlive();
-    keepAliveTimer = setInterval(() => {
-      if (!transport) return;
-      keepAliveSeq = (keepAliveSeq + 1) & 0x0f;
-      transport.doMcspWrite(buildRpcCallFrame(KEEP_ALIVE_ADDR, keepAliveSeq)).catch(() => {});
-    }, KEEP_ALIVE_INTERVAL_MS);
+    keepAliveTimer = setInterval(() => { sendKeepAlive(); }, KEEP_ALIVE_INTERVAL_MS);
   }
   function stopKeepAlive() {
     if (keepAliveTimer) {
@@ -380,24 +419,37 @@
     return seqCounter;
   }
 
+  // Set for the duration of any function that polls transport.readNextFrame()
+  // waiting for a specific response — the keep-alive timer checks this
+  // before doing its own read-wait, since two concurrent readers pulling
+  // from the same underlying frame queue could steal a response meant for
+  // the other one (e.g. keep-alive firing mid-sweep). Fire-and-forget
+  // (write only, no wait) whenever something else is already waiting.
+  let transportBusy = false;
+
   async function readOne(addr) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      for (let i = 0; i < 4; i++) {
-        if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
+    transportBusy = true;
+    try {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        for (let i = 0; i < 4; i++) {
+          if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
+        }
+        await transport.doMcspWrite(buildReadRequestFrame(addr, nextSeq()));
+        const deadline = Date.now() + 300;
+        while (Date.now() < deadline) {
+          const raw = await transport.readNextFrame(4, 4);
+          if (!raw) continue;
+          const parsed = parseReadResponseFrame(raw);
+          if (!parsed) continue;
+          if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
+          if (!parsed.ok) return { declined: true, statusName: parsed.statusName };
+          return { payload: parsed.payload };
+        }
       }
-      await transport.doMcspWrite(buildReadRequestFrame(addr, nextSeq()));
-      const deadline = Date.now() + 300;
-      while (Date.now() < deadline) {
-        const raw = await transport.readNextFrame(4, 4);
-        if (!raw) continue;
-        const parsed = parseReadResponseFrame(raw);
-        if (!parsed) continue;
-        if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
-        if (!parsed.ok) return { declined: true, statusName: parsed.statusName };
-        return { payload: parsed.payload };
-      }
+      return null;
+    } finally {
+      transportBusy = false;
     }
-    return null;
   }
 
   // Ride distance per assist mode — a CallableDataPoint RPC
@@ -445,33 +497,38 @@
   let assistModeStats = []; // [{ index, configId, label, status, distance, consumedEnergy, detail, color, udam, resetState }]
 
   async function rpcCallWithConfigId(addr, configId, decodeFn) {
-    const arg = encodeConfigIdArg(configId);
-    const dlog = window.Bes3DebugLog;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      for (let i = 0; i < 4; i++) {
-        if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
-      }
-      const frame = buildRpcCallFrameWithArg(addr, nextSeq(), arg);
-      if (dlog) dlog.log('assist-rpc', `-> addr 0x${addr.toString(16)} configId="${configId}" attempt ${attempt}`, frame);
-      await transport.doMcspWrite(frame);
-      const deadline = Date.now() + 500; // RPC round-trip can be slower than a plain read
-      while (Date.now() < deadline) {
-        const raw = await transport.readNextFrame(4, 4);
-        if (!raw) continue;
-        if (dlog) dlog.log('assist-rpc', '<- raw frame', raw);
-        const parsed = parseReadResponseFrame(raw);
-        if (!parsed) continue;
-        if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
-        if (!parsed.ok) {
-          if (dlog) dlog.log('assist-rpc', `<- declined: ${parsed.statusName}`);
-          return { declined: true, statusName: parsed.statusName };
+    transportBusy = true;
+    try {
+      const arg = encodeConfigIdArg(configId);
+      const dlog = window.Bes3DebugLog;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        for (let i = 0; i < 4; i++) {
+          if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
         }
-        if (dlog) dlog.log('assist-rpc', '<- ok, payload', parsed.payload);
-        return decodeFn(parsed.payload);
+        const frame = buildRpcCallFrameWithArg(addr, nextSeq(), arg);
+        if (dlog) dlog.log('assist-rpc', `-> addr 0x${addr.toString(16)} configId="${configId}" attempt ${attempt}`, frame);
+        await transport.doMcspWrite(frame);
+        const deadline = Date.now() + 500; // RPC round-trip can be slower than a plain read
+        while (Date.now() < deadline) {
+          const raw = await transport.readNextFrame(4, 4);
+          if (!raw) continue;
+          if (dlog) dlog.log('assist-rpc', '<- raw frame', raw);
+          const parsed = parseReadResponseFrame(raw);
+          if (!parsed) continue;
+          if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
+          if (!parsed.ok) {
+            if (dlog) dlog.log('assist-rpc', `<- declined: ${parsed.statusName}`);
+            return { declined: true, statusName: parsed.statusName };
+          }
+          if (dlog) dlog.log('assist-rpc', '<- ok, payload', parsed.payload);
+          return decodeFn(parsed.payload);
+        }
       }
+      if (dlog) dlog.log('assist-rpc', `<- timeout, no matching response for addr 0x${addr.toString(16)}`);
+      return null;
+    } finally {
+      transportBusy = false;
     }
-    if (dlog) dlog.log('assist-rpc', `<- timeout, no matching response for addr 0x${addr.toString(16)}`);
-    return null;
   }
 
   async function readAllAssistModeStats() {
@@ -638,6 +695,7 @@
     renderStartModeAction();
     const arg = encodeEnumArg(START_ASSIST_MODE_LAST_USED);
     const dlog = window.Bes3DebugLog;
+    transportBusy = true;
     try {
       let done = false;
       for (let attempt = 0; attempt < 2 && !done; attempt++) {
@@ -665,9 +723,12 @@
     } catch (err) {
       startModeWriteState = 'failed';
       if (dlog) dlog.log('start-mode', 'write failed', err.message);
+    } finally {
+      transportBusy = false;
     }
     // Re-read to reflect the bike's actual current value, not just our
-    // assumption that the write took effect.
+    // assumption that the write took effect (readOne sets transportBusy
+    // itself, so this is safe to run after the finally above).
     if (transport && START_ASSIST_MODE_ADDR) {
       try {
         const r = await readOne(START_ASSIST_MODE_ADDR);
