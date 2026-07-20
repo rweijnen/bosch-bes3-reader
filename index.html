@@ -118,6 +118,10 @@
   .histogram-compact .histogram-track { height: 9px; border-radius: 3px; }
   .histogram-compact .histogram-fill { border-radius: 3px; }
   .histogram-compact .histogram-value { font-size: 11px; white-space: nowrap; }
+  .histogram-settings-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 0 4px 0; margin-top: -2px; }
+  .histogram-settings-summary { font: 400 10.5px 'IBM Plex Mono', monospace; color: var(--faint); }
+  .histogram-reset-btn { font: 500 10.5px 'IBM Plex Sans', sans-serif; color: var(--accent); background: none; border: 1px solid var(--border2); border-radius: 5px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
+  .histogram-reset-btn:disabled { color: var(--faint); cursor: default; opacity: 0.7; }
 
   .section-head { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
   .section-head .line { flex: 1; height: 1px; background: var(--border); }
@@ -321,7 +325,7 @@
         </div>
       </div>
 
-      <span class="footnote">READ-ONLY TOOL &middot; NOTHING IS WRITTEN TO THE BIKE &middot; RUNS ENTIRELY IN YOUR BROWSER</span>
+      <span class="footnote">READS ARE READ-ONLY &middot; THE ONLY WRITE IS THE OPT-IN PER-MODE RESET BELOW &middot; RUNS ENTIRELY IN YOUR BROWSER</span>
     </div>
 
     <!-- CONNECTED — BLE OFFICIAL LIVE DATA -->
@@ -362,6 +366,7 @@
         <ul>
           <li>You use this tool entirely <strong style="color:var(--text);">at your own risk</strong>. The authors accept no liability for any damage, data loss, voided warranty, or malfunction.</li>
           <li>Connecting to your drive unit may affect your manufacturer warranty or violate local regulations. You are responsible for how you use it.</li>
+          <li>This tool is almost entirely read-only. The one exception is an opt-in "reset to default" button per assist mode, which resets that mode's assist level/max speed/acceleration response to factory defaults &mdash; it never runs without you clicking it and confirming a dialog that explains exactly what it does.</li>
           <li>Cloud lookups (when available) run against Bosch services using your own account; respect their terms of service.</li>
         </ul>
         <label class="ack-row">

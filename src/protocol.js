@@ -363,6 +363,66 @@ function decodeConfigIdList(payload) {
   return ids;
 }
 
+// Decodes a Bosch `UdamParams` protobuf message — the response to
+// GET_UDAM_VALUES(ConfigId)/GET_UDAM_DEFAULT_VALUES(ConfigId), the per-mode
+// assist parameters (confirmed from decompile of
+// com.bosch.ebike.bes3.messagebus.UdamParams): field 1 = assistLevel
+// (uint32), field 2 = maximumMotorTorque (uint32), field 3 =
+// accelerationResponse (uint32), field 4 = maximumBikeSpeed (uint32),
+// field 5 = maximumMotorPower (uint32), field 6 = extendedBoost (uint32,
+// proto3 optional), field 7 = tractionControl (uint32, proto3 optional),
+// field 8 = driveTrainTensioner (bool, proto3 optional). Only
+// assistLevel/accelerationResponse/maximumBikeSpeed have a confirmed
+// normalization factor (÷100, from MessageBus.DriveUnit.Companion's
+// normalizeUdamParams* helpers) — the rest are returned as raw ints/bool,
+// undecoded, rather than guessing a unit/scale.
+function decodeUdamParams(payload) {
+  const out = {
+    assistLevel: null, maximumMotorTorque: null, accelerationResponse: null,
+    maximumBikeSpeed: null, maximumMotorPower: null, extendedBoost: null,
+    tractionControl: null, driveTrainTensioner: null,
+  };
+  let i = 0;
+  while (i < payload.length) {
+    const tag = payload[i];
+    const fieldNum = tag >>> 3;
+    const wireType = tag & 0x7;
+    i += 1;
+    if (wireType !== 0) break; // every field here is a varint (uint32 or bool)
+    let result = 0;
+    let shift = 0;
+    for (;;) {
+      const b = payload[i];
+      i += 1;
+      result |= (b & 0x7f) << shift;
+      if ((b & 0x80) === 0) break;
+      shift += 7;
+    }
+    const value = result >>> 0;
+    switch (fieldNum) {
+      case 1: out.assistLevel = value; break;
+      case 2: out.maximumMotorTorque = value; break;
+      case 3: out.accelerationResponse = value; break;
+      case 4: out.maximumBikeSpeed = value; break;
+      case 5: out.maximumMotorPower = value; break;
+      case 6: out.extendedBoost = value; break;
+      case 7: out.tractionControl = value; break;
+      case 8: out.driveTrainTensioner = !!value; break;
+      default: break;
+    }
+  }
+  return out;
+}
+
+// Decodes the plain `bool` response of RESET_UDAM_VALUES(ConfigId) — proto3
+// bool, field 1, omitted entirely (i.e. empty payload) when false.
+function decodeBoolResponse(payload) {
+  if (!payload || payload.length === 0) return false;
+  const tag = payload[0];
+  if ((tag >>> 3) !== 1 || (tag & 0x7) !== 0) return false;
+  return !!payload[1];
+}
+
 const protocolExports = {
   MessageType,
   encodeVarint,
@@ -374,6 +434,8 @@ const protocolExports = {
   decodeAssistModeStatistics,
   decodeAssistModeInformation,
   decodeConfigIdList,
+  decodeUdamParams,
+  decodeBoolResponse,
   parseReadResponseFrame,
   statusCodeName,
   decodeValue,

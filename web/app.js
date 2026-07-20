@@ -4,12 +4,13 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-19.4';
+  const APP_VERSION = '2026-07-20.1';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
     buildReadRequestFrame, buildRpcCallFrame, buildRpcCallFrameWithArg,
     encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList,
+    decodeUdamParams, decodeBoolResponse,
     parseReadResponseFrame, decodeValue,
   } = window.Bes3Protocol;
   const { decodeTyped } = window.Bes3MessageTypes;
@@ -423,8 +424,23 @@
   // sourced from the bike.
   const ASSIST_MODE_STATS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'GET_ASSIST_MODE_STATISTICS') || {}).addr;
   const ACTIVE_ASSIST_MODES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ACTIVE_ASSIST_MODES') || {}).addr;
+  // Per-mode assist parameters (assist level / max speed / acceleration
+  // response) — same ConfigId argument as the stats RPC above. Read-only.
+  const UDAM_VALUES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'READ_UDAM_VALUES') || {}).addr;
+  // RESET_UDAM_VALUES(ConfigId) -> bool — the ONE write this tool performs,
+  // added deliberately and only after real-world confirmation (2026-07-19/20
+  // hardware incident) that: (a) it's a plain consumer-tier RPC the official
+  // Flow app itself exposes via a UI "reset to default" button on a mode's
+  // detail screen (traced in DefaultResetAssistModeParams — identical
+  // ConfigId argument, no dealer/HSM gate), and (b) it's exactly what
+  // resolved a real corrupted-assist-mode fault on the maintainer's own
+  // bike. Scope is narrow and specific: resets ONE mode's assist
+  // level/max-speed/acceleration-response to Bosch factory defaults. It
+  // does not touch tuning, region/speed-class, or any other mode. See
+  // RESEARCH.md (private repo) for the full incident writeup and trace.
+  const RESET_UDAM_VALUES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'RESET_UDAM_VALUES') || {}).addr;
   const ASSIST_MODE_PALETTE = ['#8a8f98', '#4caf50', '#2196f3', '#ff9800', '#e53935', '#9c27b0'];
-  let assistModeStats = []; // [{ index, configId, label, status, distance, consumedEnergy, detail, color }]
+  let assistModeStats = []; // [{ index, configId, label, status, distance, consumedEnergy, detail, color, udam, resetState }]
 
   async function rpcCallWithConfigId(addr, configId, decodeFn) {
     const arg = encodeConfigIdArg(configId);
@@ -488,7 +504,47 @@
         entry.status = 'error';
         entry.detail = err.message;
       }
+
+      if (UDAM_VALUES_ADDR) {
+        if (phase !== 'connecting' || !transport) return;
+        try {
+          const u = await rpcCallWithConfigId(UDAM_VALUES_ADDR, entry.configId, decodeUdamParams);
+          if (u && !u.declined) entry.udam = u;
+        } catch (_) { /* leave entry.udam unset — rendered as "—" */ }
+      }
     }
+  }
+
+  // The one write this tool performs — see the comment on
+  // RESET_UDAM_VALUES_ADDR above for why this exists and what it's scoped
+  // to. Never called automatically; only from an explicit button click
+  // behind its own confirmation dialog (see index.html/renderAssistModeHistogram).
+  async function resetUdamValuesForMode(entry) {
+    if (!RESET_UDAM_VALUES_ADDR || !transport) {
+      window.alert('Not connected to the bike anymore — reconnect (Read again) and try the reset again.');
+      return { ok: false, error: 'not connected' };
+    }
+    entry.resetState = 'pending';
+    renderAssistModeHistogram();
+    try {
+      const r = await rpcCallWithConfigId(RESET_UDAM_VALUES_ADDR, entry.configId, decodeBoolResponse);
+      if (r && !r.declined && r === true) {
+        entry.resetState = 'done';
+        // Re-read this mode's UDAM values so the dashboard reflects the
+        // restored defaults instead of the stale (possibly corrupt) ones.
+        try {
+          const u = await rpcCallWithConfigId(UDAM_VALUES_ADDR, entry.configId, decodeUdamParams);
+          if (u && !u.declined) entry.udam = u;
+        } catch (_) {}
+      } else {
+        entry.resetState = 'failed';
+      }
+    } catch (err) {
+      entry.resetState = 'failed';
+      if (window.Bes3DebugLog) window.Bes3DebugLog.log('assist-rpc', 'reset failed', err.message);
+    }
+    renderAssistModeHistogram();
+    return { ok: entry.resetState === 'done' };
   }
 
   function findResult(component, name) {
@@ -655,6 +711,53 @@
       row.appendChild(track);
       row.appendChild(value);
       els.assistModeHistogram.appendChild(row);
+
+      // Per-mode assist settings (UDAM values) + the one write this tool
+      // performs. Only shown once we actually have UDAM data for this mode.
+      if (entry.udam) {
+        const settingsRow = document.createElement('div');
+        settingsRow.className = 'histogram-settings-row';
+
+        const summary = document.createElement('span');
+        summary.className = 'histogram-settings-summary';
+        const parts = [];
+        if (entry.udam.assistLevel != null) parts.push(`assist ${(entry.udam.assistLevel / 100).toFixed(0)}%`);
+        if (entry.udam.maximumBikeSpeed != null) parts.push(`max ${(entry.udam.maximumBikeSpeed / 100).toFixed(0)} km/h`);
+        if (entry.udam.accelerationResponse != null) parts.push(`accel ${(entry.udam.accelerationResponse / 100).toFixed(0)}%`);
+        summary.textContent = parts.join(' · ') || 'no settings data';
+
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'histogram-reset-btn';
+        if (entry.resetState === 'pending') {
+          resetBtn.textContent = 'Resetting…';
+          resetBtn.disabled = true;
+        } else if (entry.resetState === 'done') {
+          resetBtn.textContent = 'Reset ✓';
+          resetBtn.disabled = true;
+        } else if (entry.resetState === 'failed') {
+          resetBtn.textContent = 'Reset failed — retry?';
+        } else {
+          resetBtn.textContent = 'Reset to default';
+        }
+        resetBtn.addEventListener('click', () => {
+          const confirmed = window.confirm(
+            `Reset "${entry.label}" to Bosch factory defaults?\n\n` +
+            `This resets ONLY this mode's assist level, max speed, and ` +
+            `acceleration response back to the bike's factory settings — the ` +
+            `same operation the Bosch Flow app's own "Reset" button performs ` +
+            `on a mode's detail screen. It does not touch tuning, region/` +
+            `speed-class, or any other assist mode. This is the one write ` +
+            `operation this tool performs, and only runs when you click this ` +
+            `button.`
+          );
+          if (confirmed) resetUdamValuesForMode(entry);
+        });
+
+        settingsRow.appendChild(summary);
+        settingsRow.appendChild(resetBtn);
+        els.assistModeHistogram.appendChild(settingsRow);
+      }
     }
   }
 
@@ -868,9 +971,13 @@
     renderDashboard();
     renderRawTable();
 
-    stopKeepAlive();
-    try { await transport.close(); } catch (_) {}
-    transport = null;
+    // Deliberately NOT closing the transport here (an earlier version of
+    // this file always did). The per-mode "reset to default" repair action
+    // needs a live connection to call RESET_UDAM_VALUES after the user has
+    // seen the dashboard and explicitly chosen to use it — keep-alive keeps
+    // running too, so the session doesn't expire while they decide. The
+    // existing Disconnect button already handles closing a still-open
+    // transport correctly.
   }
 
   // ================= BLE: official Live Data Interface =================

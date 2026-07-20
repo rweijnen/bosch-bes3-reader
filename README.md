@@ -1,11 +1,13 @@
 # Bosch Smart System (BES3) Component Reader
 
-A **read-only** diagnostic tool for Bosch Smart System eBikes (2022+ "BES3"
-platform, USB-C direct connection to the drive unit's system controller).
-Reads identification and status data across every component — drive unit,
-both battery slots, remote control, head unit, connect module, ABS — serial
+A diagnostic tool for Bosch Smart System eBikes (2022+ "BES3" platform,
+USB-C direct connection to the drive unit's system controller). Reads
+identification and status data across every component — drive unit, both
+battery slots, remote control, head unit, connect module, ABS — serial
 numbers, product codes, hardware/software versions, speed limits, region
-configuration, and more, over USB.
+configuration, and more, over USB. Almost everything here is read-only; the
+one deliberate exception is a narrow, opt-in "reset this assist mode to
+default" repair action — see [Scope](#scope-mostly-read-only-one-deliberate-exception) below.
 
 Two identical implementations sharing the same protocol code:
 
@@ -37,18 +39,31 @@ It deliberately does **not** expose the data an owner or independent repair
 shop needs to make a repair-vs-replace call: battery **State of Health**,
 charge-cycle count, remaining Wh capacity, serials, hardware/software
 versions, tuning-detection status. That data only exists behind the fuller
-diagnostic protocol this repo implements — read-only, same as always. In an
-era where right-to-repair and reducing e-waste actually matter, being able
-to check whether *your own* battery is worth keeping shouldn't require a
-dealer visit. See [`docs/README.md`](docs/README.md) for a full comparison.
+diagnostic protocol this repo implements. In an era where right-to-repair
+and reducing e-waste actually matter, being able to check whether *your own*
+battery is worth keeping shouldn't require a dealer visit. See
+[`docs/README.md`](docs/README.md) for a full comparison.
 
-## Scope: read-only, by design
+## Scope: mostly read-only, one deliberate exception
 
-This tool only issues **read** requests. It never writes configuration, never
-attempts to change tuning/speed settings, and never touches the licensing or
-authorization systems some commercial services use. It reads the same class
-of identification data that's visible in your bike's own display and app —
-nothing that isn't already exposed to the bike's owner.
+This tool issues **read** requests only, with one narrow, opt-in exception:
+a **"reset to default"** button per assist mode (shown once its settings
+have been read), which resets that one mode's assist level, max speed, and
+acceleration response back to Bosch's factory defaults. Nothing else is
+ever written — no tuning, no speed-limit/region changes, no licensing or
+authorization systems some commercial services touch. Every read is the
+same class of identification data that's visible in your bike's own display
+and app — nothing that isn't already exposed to the bike's owner.
+
+The reset action exists because it's exactly what fixed a real
+corrupted-assist-mode fault (crash on opening a mode's settings, no assist
+in any mode) on the maintainer's own bike — and it's the *same* operation
+the official Bosch Flow app's own "Reset" button performs on a mode's
+detail screen (confirmed by decompiling Flow: identical RPC, identical
+argument, no dealer/HSM gate — a plain consumer-tier feature, not something
+this tool works around or bypasses). It never runs automatically: it's
+behind an explicit button click and a confirmation dialog explaining
+exactly what it does, every time.
 
 ## Usage
 
