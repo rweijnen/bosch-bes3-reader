@@ -6,8 +6,8 @@ identification and status data across every component — drive unit, both
 battery slots, remote control, head unit, connect module, ABS — serial
 numbers, product codes, hardware/software versions, speed limits, region
 configuration, and more, over USB. Almost everything here is read-only; the
-one deliberate exception is a narrow, opt-in "reset this assist mode to
-default" repair action — see [Scope](#scope-mostly-read-only-one-deliberate-exception) below.
+deliberate exceptions are a handful of narrow, opt-in repair/preference
+actions — see [Scope](#scope-mostly-read-only-a-few-deliberate-exceptions) below.
 
 Two identical implementations sharing the same protocol code:
 
@@ -44,16 +44,22 @@ and reducing e-waste actually matter, being able to check whether *your own*
 battery is worth keeping shouldn't require a dealer visit. See
 [`docs/README.md`](docs/README.md) for a full comparison.
 
-## Scope: mostly read-only, one deliberate exception
+## Scope: mostly read-only, a few deliberate exceptions
 
-This tool issues **read** requests only, with one narrow, opt-in exception:
-a **"reset to default"** button per assist mode (shown once its settings
-have been read), which resets that one mode's assist level, max speed, and
-acceleration response back to Bosch's factory defaults. Nothing else is
-ever written — no tuning, no speed-limit/region changes, no licensing or
-authorization systems some commercial services touch. Every read is the
-same class of identification data that's visible in your bike's own display
-and app — nothing that isn't already exposed to the bike's owner.
+This tool issues **read** requests only, with a small number of narrow,
+opt-in exceptions, each behind its own explicit button and confirmation:
+
+- A **"reset to default"** button per assist mode (shown once its settings
+  have been read), which resets that one mode's assist level, max speed, and
+  acceleration response back to Bosch's factory defaults.
+- An **"always start in last-used mode"** button (shown only if the bike is
+  currently set to always power on in off/walk mode), which sets one
+  setting so the bike resumes whichever assist mode you were last using.
+
+Nothing else is ever written — no tuning, no speed-limit/region changes, no
+licensing or authorization systems some commercial services touch. Every
+read is the same class of identification data that's visible in your bike's
+own display and app — nothing that isn't already exposed to the bike's owner.
 
 The reset action exists because it's exactly what fixed a real
 corrupted-assist-mode fault (crash on opening a mode's settings, no assist
@@ -61,9 +67,12 @@ in any mode) on the maintainer's own bike — and it's the *same* operation
 the official Bosch Flow app's own "Reset" button performs on a mode's
 detail screen (confirmed by decompiling Flow: identical RPC, identical
 argument, no dealer/HSM gate — a plain consumer-tier feature, not something
-this tool works around or bypasses). It never runs automatically: it's
-behind an explicit button click and a confirmation dialog explaining
-exactly what it does, every time.
+this tool works around or bypasses). The start-mode setting is the same
+story: a plain `ReadableWritableSubscribableDataPoint`, no dealer/HSM gate,
+confirmed writable at the protocol level with no UI in Flow to change it.
+Neither action ever runs automatically — both are behind an explicit
+button click and a confirmation dialog explaining exactly what it does,
+every time.
 
 ## Usage
 

@@ -4,11 +4,12 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.1';
+  const APP_VERSION = '2026-07-20.2';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
-    buildReadRequestFrame, buildRpcCallFrame, buildRpcCallFrameWithArg,
+    buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
+    buildRpcCallFrame, buildRpcCallFrameWithArg,
     encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList,
     decodeUdamParams, decodeBoolResponse,
     parseReadResponseFrame, decodeValue,
@@ -70,6 +71,7 @@
     drivetrainGrid: $('drivetrainGrid'),
     usageGrid: $('usageGrid'),
     assistModeHistogram: $('assistModeHistogram'),
+    startModeAction: $('startModeAction'),
     rawToggle: $('rawToggle'),
     rawSummary: $('rawSummary'),
     rawBody: $('rawBody'),
@@ -616,6 +618,102 @@
     container.appendChild(v);
   }
 
+  // This tool's second (and, like the first, deliberately narrow) write:
+  // START_ASSIST_MODE_CONFIGURATION (addr 6180) is a plain WritableDataPoint
+  // — confirmed via decompile (MessageBus.DriveUnit.getStartAssistModeConfiguration()
+  // returns ReadableWritableSubscribableDataPoint<StartAssistModePositionEnumMessage>,
+  // no dealer/HSM gate found anywhere). Sets it to START_ASSIST_MODE_LAST_USED
+  // (value 1) — never any other value, never automatic, always behind an
+  // explicit button + confirm() dialog, same pattern as the UDAM reset.
+  const START_ASSIST_MODE_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'START_ASSIST_MODE_CONFIGURATION') || {}).addr;
+  const START_ASSIST_MODE_LAST_USED = 1;
+  let startModeWriteState = null; // null | 'pending' | 'done' | 'failed'
+
+  async function writeStartAssistModeLastUsed() {
+    if (!START_ASSIST_MODE_ADDR || !transport) {
+      window.alert('Not connected to the bike anymore — reconnect (Read again) and try again.');
+      return;
+    }
+    startModeWriteState = 'pending';
+    renderStartModeAction();
+    const arg = encodeEnumArg(START_ASSIST_MODE_LAST_USED);
+    const dlog = window.Bes3DebugLog;
+    try {
+      let done = false;
+      for (let attempt = 0; attempt < 2 && !done; attempt++) {
+        for (let i = 0; i < 4; i++) {
+          if (!(await transport.readNextFrame(1, 2))) break;
+        }
+        const frame = buildWriteFrame(START_ASSIST_MODE_ADDR, nextSeq(), arg);
+        if (dlog) dlog.log('start-mode', `-> WRITE addr 0x${START_ASSIST_MODE_ADDR.toString(16)} value=${START_ASSIST_MODE_LAST_USED} attempt ${attempt}`, frame);
+        await transport.doMcspWrite(frame);
+        const deadline = Date.now() + 500;
+        while (Date.now() < deadline) {
+          const raw = await transport.readNextFrame(4, 4);
+          if (!raw) continue;
+          if (dlog) dlog.log('start-mode', '<- raw frame', raw);
+          const parsed = parseReadResponseFrame(raw);
+          if (!parsed) continue;
+          if (parsed.addrHigh !== (START_ASSIST_MODE_ADDR >> 8) || parsed.addrLow !== (START_ASSIST_MODE_ADDR & 0xff)) continue;
+          done = true;
+          startModeWriteState = parsed.ok ? 'done' : 'failed';
+          if (!parsed.ok && dlog) dlog.log('start-mode', `<- declined: ${parsed.statusName}`);
+          break;
+        }
+      }
+      if (!done) startModeWriteState = 'failed';
+    } catch (err) {
+      startModeWriteState = 'failed';
+      if (dlog) dlog.log('start-mode', 'write failed', err.message);
+    }
+    // Re-read to reflect the bike's actual current value, not just our
+    // assumption that the write took effect.
+    if (transport && START_ASSIST_MODE_ADDR) {
+      try {
+        const r = await readOne(START_ASSIST_MODE_ADDR);
+        if (r && !r.declined && r.payload) {
+          const idx = lastResults.findIndex((x) => x.component === 'DriveUnit' && x.name === 'START_ASSIST_MODE_CONFIGURATION');
+          const typed = decodeTyped(START_ASSIST_MODE_ADDR, r.payload);
+          if (idx >= 0) { lastResults[idx].status = 'ok'; lastResults[idx].typed = typed; lastResults[idx].decoded = typed; }
+        }
+      } catch (_) {}
+    }
+    renderDashboard();
+  }
+
+  function renderStartModeAction() {
+    els.startModeAction.innerHTML = '';
+    els.startModeAction.style.display = 'none';
+    if (!START_ASSIST_MODE_ADDR) return;
+    const current = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION');
+    if (current == null) return; // not read yet / declined — nothing to act on
+    if (current === 'START_ASSIST_MODE_LAST_USED' && startModeWriteState !== 'failed') return; // already set, nothing to do
+
+    els.startModeAction.style.display = '';
+    const summary = document.createElement('span');
+    summary.className = 'histogram-settings-summary';
+    summary.textContent = 'Bike doesn\'t resume your last assist mode on power-on.';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'histogram-reset-btn';
+    if (startModeWriteState === 'pending') { btn.textContent = 'Setting…'; btn.disabled = true; }
+    else if (startModeWriteState === 'done') { btn.textContent = 'Set ✓'; btn.disabled = true; }
+    else if (startModeWriteState === 'failed') { btn.textContent = 'Failed — retry?'; }
+    else { btn.textContent = 'Always start in last-used mode'; }
+    btn.addEventListener('click', () => {
+      const confirmed = window.confirm(
+        'Set the bike to always start in your last-used assist mode?\n\n' +
+        'This writes ONE setting (START_ASSIST_MODE_CONFIGURATION) so the bike ' +
+        'resumes whichever assist mode you were last using, instead of always ' +
+        'powering on in off/walk mode. It does not touch region, speed-class, ' +
+        'tuning, or any per-mode assist parameters.'
+      );
+      if (confirmed) writeStartAssistModeLastUsed();
+    });
+    els.startModeAction.appendChild(summary);
+    els.startModeAction.appendChild(btn);
+  }
+
   function renderDashboard() {
     els.bikeName.textContent = displayOf('DriveUnit', 'PRODUCT_NAME');
     els.bikeId.textContent = displayOf('DriveUnit', 'BIKE_ID');
@@ -656,6 +754,7 @@
     kvRow(els.drivetrainGrid, 'Wheel circ. (user)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_USER'));
     kvRow(els.drivetrainGrid, 'Max motor torque', displayOf('DriveUnit', 'MAXIMUM_AVAILABLE_MOTOR_TORQUE'));
     kvRow(els.drivetrainGrid, 'Region / speed class', displayOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'));
+    kvRow(els.drivetrainGrid, 'Start mode', displayOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION'));
     const tuning = findResult('DriveUnit', 'TUNING_DETECTION');
     const tv = tuning && tuning.status === 'ok' && tuning.typed ? tuning.typed.value : null;
     const tuningLabel =
@@ -668,6 +767,7 @@
     else if (tuningLabel.startsWith('FLAGGED')) tVal.className = 'bad';
     els.drivetrainGrid.appendChild(tRow);
     els.drivetrainGrid.appendChild(tVal);
+    renderStartModeAction();
 
     els.usageGrid.innerHTML = '';
     const odometerM = valueOf('DriveUnit', 'ODOMETER');
@@ -838,6 +938,7 @@
   async function runSweep(transportKind) {
     disconnectedAfterRead = false;
     assistModeStats = [];
+    startModeWriteState = null;
     let device;
     try {
       device = transportKind === 'ble-mcsp'

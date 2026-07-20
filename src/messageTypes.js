@@ -55,6 +55,21 @@ const BIKE_CATEGORY_ENUM = {
   '-1': { name: 'UNRECOGNIZED', label: 'Unknown' },
 };
 
+// com.bosch.ebike.bes3.messagebus.StartAssistModePositionEnumType — confirmed
+// via decompile. Backs both START_ASSIST_MODE_CONFIGURATION (addr 6180,
+// writable — see below) and its _OEM counterpart (addr 6179, read-only
+// manufacturer default).
+const START_ASSIST_MODE_POSITION_ENUM = {
+  0: { name: 'START_ASSIST_MODE_NOT_CONFIGURED', label: 'Not configured' },
+  1: { name: 'START_ASSIST_MODE_LAST_USED', label: 'Last used mode' },
+  2: { name: 'START_ASSIST_MODE_POSITION0', label: 'Position 0 (off/walk)' },
+  3: { name: 'START_ASSIST_MODE_POSITION1', label: 'Position 1' },
+  4: { name: 'START_ASSIST_MODE_POSITION2', label: 'Position 2' },
+  5: { name: 'START_ASSIST_MODE_POSITION3', label: 'Position 3' },
+  6: { name: 'START_ASSIST_MODE_POSITION4', label: 'Position 4' },
+  '-1': { name: 'UNRECOGNIZED', label: 'Unrecognized' },
+};
+
 // Address -> typed decode metadata, across all components (address ranges
 // don't overlap — see addresses.js). Labels for plain fields are Bosch's own
 // DiagnosticTool 3 UI strings where a matching one was found
@@ -79,6 +94,8 @@ const FIELD_TYPES = {
   6163: { label: 'Maximum Legal Bike Speed', kind: 'normFactor', factor: 100, unit: 'km/h' },
   6166: { label: 'Maximum Gear Ratio', kind: 'normFactor', factor: 100 },
   6167: { label: 'Maximum Assistance Speed', kind: 'normFactor', factor: 100, unit: 'km/h' },
+  6179: { label: 'Start Assist Mode (OEM default)', kind: 'enum', enumTable: START_ASSIST_MODE_POSITION_ENUM },
+  6180: { label: 'Start Assist Mode', kind: 'enum', enumTable: START_ASSIST_MODE_POSITION_ENUM }, // writable — MessageBus.DriveUnit.getStartAssistModeConfiguration() is ReadableWritableSubscribableDataPoint, no dealer/HSM gate found
   6183: { label: 'Product Line', kind: 'string' },
   6184: { label: 'Rear Wheel Circumference (OEM)', kind: 'normFactor', factor: 10, unit: 'mm' }, // SafeUint16NormFactor10 — has a field-2 checksum we ignore
   6185: { label: 'Rear Wheel Circumference (User)', kind: 'normFactor', factor: 10, unit: 'mm' }, // MessageBus.DriveUnit.Companion.normalizeRearWheelCircumferenceUser (Flow source)

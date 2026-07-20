@@ -110,6 +110,23 @@ function buildReadRequestFrame(addr, seq) {
   return buildFrame(addr, MessageType.READ, seq);
 }
 
+// Plain write (MessageType.WRITE) — a WritableDataPoint, confirmed via
+// Flow's MessageEncodingKt.encodeMessage to use the identical frame shape
+// as a read/RPC, just with type=WRITE and the new value as payload. Used
+// for START_ASSIST_MODE_CONFIGURATION (addr 6180) — this tool's second,
+// equally narrow write, alongside RESET_UDAM_VALUES.
+function buildWriteFrame(addr, seq, payload) {
+  return buildFrame(addr, MessageType.WRITE, seq, payload);
+}
+
+// Encodes a single-field protobuf enum value (field 1, varint) — the wire
+// shape of StartAssistModePositionEnumMessage (writeEnum(1, value), which
+// is plain varint encoding, same as any int field). Reusable for any other
+// single-enum WritableDataPoint with the same shape.
+function encodeEnumArg(value) {
+  return [0x08, ...encodeVarint(value)];
+}
+
 // Argument-less RPC call (MessageType.RPC) — used for the session keep-alive
 // (RemoteControlAddresses.RESET_INACTIVITY_SHUTDOWN_TIMER) and any other
 // ArgumentLessCallableDataPoint.
@@ -428,6 +445,8 @@ const protocolExports = {
   encodeVarint,
   buildFrame,
   buildReadRequestFrame,
+  buildWriteFrame,
+  encodeEnumArg,
   buildRpcCallFrame,
   buildRpcCallFrameWithArg,
   encodeConfigIdArg,
