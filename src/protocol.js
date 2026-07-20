@@ -161,12 +161,35 @@ function encodeConfigIdArg(idString) {
 // unit not confirmed from decompile — plausibly Wh, not independently
 // verified). Confirmed field shape from
 // com.bosch.ebike.bes3.messagebus.AssistModeStatistics (decompiled).
+//
+// GET_ASSIST_MODE_STATISTICS actually returns this wrapped one level deeper,
+// in an AssistModeStatisticsNullable envelope (a class also seen imported
+// alongside AssistModeStatistics in Flow's decompile): field 1,
+// length-delimited, contains the real AssistModeStatistics submessage,
+// omitted/empty when null/default. Confirmed against real hardware across
+// 5 modes in one capture, including a distance (4557m -> 4km truncated)
+// that matches Flow's own displayed value for that mode exactly — unwrap
+// that one level before parsing the flat fields.
 function decodeAssistModeStatistics(payload) {
+  let body = payload;
+  if (payload && payload.length >= 1 && (payload[0] >>> 3) === 1 && (payload[0] & 0x7) === 2) {
+    let i = 1;
+    let len = 0;
+    let shift = 0;
+    for (;;) {
+      const b = payload[i];
+      i += 1;
+      len |= (b & 0x7f) << shift;
+      if ((b & 0x80) === 0) break;
+      shift += 7;
+    }
+    body = payload.slice(i, i + len);
+  }
   let i = 0;
   let distance = null;
   let consumedEnergy = null;
-  while (i < payload.length) {
-    const tag = payload[i];
+  while (i < body.length) {
+    const tag = body[i];
     const fieldNum = tag >>> 3;
     const wireType = tag & 0x7;
     i += 1;
@@ -174,7 +197,7 @@ function decodeAssistModeStatistics(payload) {
     let result = 0;
     let shift = 0;
     for (;;) {
-      const b = payload[i];
+      const b = body[i];
       i += 1;
       result |= (b & 0x7f) << shift;
       if ((b & 0x80) === 0) break;
