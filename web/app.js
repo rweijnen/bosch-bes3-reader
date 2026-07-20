@@ -8,7 +8,7 @@
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
-    buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
+    MessageType, buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
     buildRpcCallFrame, buildRpcCallFrameWithArg,
     encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList,
     decodeUdamParams, decodeBoolResponse,
@@ -702,8 +702,9 @@
         for (let i = 0; i < 4; i++) {
           if (!(await transport.readNextFrame(1, 2))) break;
         }
-        const frame = buildWriteFrame(START_ASSIST_MODE_ADDR, nextSeq(), arg);
-        if (dlog) dlog.log('start-mode', `-> WRITE addr 0x${START_ASSIST_MODE_ADDR.toString(16)} value=${START_ASSIST_MODE_LAST_USED} attempt ${attempt}`, frame);
+        const sentSeq = nextSeq();
+        const frame = buildWriteFrame(START_ASSIST_MODE_ADDR, sentSeq, arg);
+        if (dlog) dlog.log('start-mode', `-> WRITE addr 0x${START_ASSIST_MODE_ADDR.toString(16)} value=${START_ASSIST_MODE_LAST_USED} attempt ${attempt} seq ${sentSeq}`, frame);
         await transport.doMcspWrite(frame);
         const deadline = Date.now() + 500;
         while (Date.now() < deadline) {
@@ -713,6 +714,16 @@
           const parsed = parseReadResponseFrame(raw);
           if (!parsed) continue;
           if (parsed.addrHigh !== (START_ASSIST_MODE_ADDR >> 8) || parsed.addrLow !== (START_ASSIST_MODE_ADDR & 0xff)) continue;
+          // Address alone isn't enough to trust this as *our* response — a
+          // stray frame from an unrelated exchange (confirmed to happen on
+          // real hardware) can share the same address. Only accept a genuine
+          // WRITE_RESPONSE whose sequence matches what we just sent; anything
+          // else (wrong type, wrong seq) is logged and ignored, not treated
+          // as an answer.
+          if (parsed.type !== MessageType.WRITE_RESPONSE || parsed.seq !== sentSeq) {
+            if (dlog) dlog.log('start-mode', `<- ignoring mismatched response (type ${parsed.type}, seq ${parsed.seq}, expected WRITE_RESPONSE seq ${sentSeq})`);
+            continue;
+          }
           done = true;
           startModeWriteState = parsed.ok ? 'done' : 'failed';
           if (!parsed.ok && dlog) dlog.log('start-mode', `<- declined: ${parsed.statusName}`);
