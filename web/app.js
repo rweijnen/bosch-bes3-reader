@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.3';
+  const APP_VERSION = '2026-07-20.4';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -893,9 +893,16 @@
         const summary = document.createElement('span');
         summary.className = 'histogram-settings-summary';
         const parts = [];
-        if (entry.udam.assistLevel != null) parts.push(`assist ${(entry.udam.assistLevel / 100).toFixed(0)}%`);
+        // assistLevel/accelerationResponse: the confirmed ÷100 factor yields
+        // a fraction (1.50 = 150%) that already IS the percentage once
+        // multiplied back by 100 — i.e. the raw value itself is the percent
+        // integer. Dividing by 100 here double-applies the factor (150 raw
+        // -> 1.5 -> "2%" instead of "150%", confirmed against a real Turbo
+        // mode capture). maximumBikeSpeed is different: its real unit is
+        // km/h, not a percentage, so ÷100 (centi-km/h -> km/h) is correct.
+        if (entry.udam.assistLevel != null) parts.push(`assist ${entry.udam.assistLevel}%`);
         if (entry.udam.maximumBikeSpeed != null) parts.push(`max ${(entry.udam.maximumBikeSpeed / 100).toFixed(0)} km/h`);
-        if (entry.udam.accelerationResponse != null) parts.push(`accel ${(entry.udam.accelerationResponse / 100).toFixed(0)}%`);
+        if (entry.udam.accelerationResponse != null) parts.push(`accel ${entry.udam.accelerationResponse}%`);
         summary.textContent = parts.join(' · ') || 'no settings data';
 
         const resetBtn = document.createElement('button');
