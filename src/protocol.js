@@ -98,9 +98,8 @@ function buildFrame(addr, type, seq, payload) {
   const highByte = (addr >> 8) & 0xff;
   const lowByte = addr & 0xff;
   const marker = 0x80 | highByte; // destination address, MSB always set on outgoing requests (confirmed convention, distinct from the response-side MSB meaning above)
-  const varint = encodeVarint(lowByte);
   const typeSeq = ((type & 0x0f) << 4) | (seq & 0x0f);
-  const body = [0x0e, 0x10, marker, ...varint, typeSeq, ...(payload || [])];
+  const body = [0x0e, 0x10, marker, lowByte, typeSeq, ...(payload || [])];
   return Uint8Array.from([BLOCK_OP, body.length, ...body]);
 }
 
