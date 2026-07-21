@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.7';
+  const APP_VERSION = '2026-07-20.8';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -342,20 +342,19 @@
   // whether we tried.
   async function sendKeepAlive() {
     if (!transport) return;
-    keepAliveSeq = (keepAliveSeq + 1) & 0x0f;
-    const addr = KEEP_ALIVE_ADDR;
     const dlog = window.Bes3DebugLog;
     // Something else (a sweep read, an assist-mode RPC, a write) is already
-    // waiting on transport.readNextFrame() — don't also wait here, since two
-    // concurrent readers pulling from the same frame queue could steal a
-    // response meant for the other one. Fall back to fire-and-forget, same
-    // as this function's original behavior, rather than risk that.
+    // waiting on transport.readNextFrame() — don't send our own ping here.
+    // Two concurrent readers pulling from the same frame queue could steal a
+    // response meant for the other one, and it's redundant anyway: any real
+    // command already exchanges data with the bike, which resets its
+    // inactivity timer just as well as a dedicated keep-alive ping would.
     if (transportBusy) {
-      transport.doMcspWrite(buildRpcCallFrame(addr, keepAliveSeq)).catch((err) => {
-        if (dlog) dlog.log('keepalive', 'write failed (busy path): ' + err.message);
-      });
+      if (dlog) dlog.log('keepalive', 'skipped (transport busy with real activity)');
       return;
     }
+    keepAliveSeq = (keepAliveSeq + 1) & 0x0f;
+    const addr = KEEP_ALIVE_ADDR;
     try {
       await transport.doMcspWrite(buildRpcCallFrame(addr, keepAliveSeq));
       const deadline = Date.now() + 300;
