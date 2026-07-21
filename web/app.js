@@ -4,14 +4,14 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.5';
+  const APP_VERSION = '2026-07-20.6';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
     MessageType, buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
     buildRpcCallFrame, buildRpcCallFrameWithArg,
     encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList, decodeStringList,
-    decodeUdamParams, decodeBoolResponse,
+    decodeUdamParams, decodeBoolResponse, decodeUdamLimits, encodeSetUdamValuesParametersArg,
     parseReadResponseFrame, decodeValue,
   } = window.Bes3Protocol;
   const { decodeTyped } = window.Bes3MessageTypes;
@@ -501,20 +501,41 @@
   // does not touch tuning, region/speed-class, or any other mode. See
   // RESEARCH.md (private repo) for the full incident writeup and trace.
   const RESET_UDAM_VALUES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'RESET_UDAM_VALUES') || {}).addr;
+  // Per-mode min/max bounds for the 3 editable UDAM fields — read-only,
+  // used to keep the change UI from ever offering a value the bike itself
+  // wouldn't already permit for this mode.
+  const UDAM_LIMITS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'READ_UDAM_LIMITS') || {}).addr;
+  // SET_UDAM_VALUES_PARAMETERS(ConfigId, UdamParams) -> bool — the second
+  // write this tool performs on UDAM data (alongside RESET_UDAM_VALUES).
+  // Mirrors Flow's own "customize this mode" screen: a plain consumer-tier
+  // feature, not tuning — every value offered is bounded by this mode's own
+  // reported UDAM_LIMITS, so it can never request something the bike
+  // wouldn't already allow a user to set via Flow. Only the 3 fields with a
+  // confirmed unit/factor (assistLevel, accelerationResponse,
+  // maximumBikeSpeed) are editable; the rest are carried through unchanged
+  // from the mode's current values.
+  const SET_UDAM_VALUES_PARAMETERS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'SET_UDAM_VALUES_PARAMETERS') || {}).addr;
   const ASSIST_MODE_PALETTE = ['#8a8f98', '#4caf50', '#2196f3', '#ff9800', '#e53935', '#9c27b0'];
   let assistModeStats = []; // [{ index, configId, label, status, distance, consumedEnergy, detail, color, udam, resetState }]
 
-  async function rpcCallWithConfigId(addr, configId, decodeFn) {
+  // Generic RPC-with-argument caller. Validates both the response's address
+  // AND its type/sequence before accepting it — address-only matching was
+  // confirmed unsafe on real hardware (a same-address, wrong-type/wrong-seq
+  // frame was observed arriving during a write's response window; see the
+  // writeStartAssistModeLastUsed fix). Matters even more here since this is
+  // also used for the UDAM write below — accepting a stray frame as "success"
+  // for a write is worse than for a read.
+  async function rpcCallWithArg(addr, argPayload, decodeFn, logLabel) {
     transportBusy = true;
     try {
-      const arg = encodeConfigIdArg(configId);
       const dlog = window.Bes3DebugLog;
       for (let attempt = 0; attempt < 2; attempt++) {
         for (let i = 0; i < 4; i++) {
           if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
         }
-        const frame = buildRpcCallFrameWithArg(addr, nextSeq(), arg);
-        if (dlog) dlog.log('assist-rpc', `-> addr 0x${addr.toString(16)} configId="${configId}" attempt ${attempt}`, frame);
+        const sentSeq = nextSeq();
+        const frame = buildRpcCallFrameWithArg(addr, sentSeq, argPayload);
+        if (dlog) dlog.log('assist-rpc', `-> addr 0x${addr.toString(16)}${logLabel ? ' ' + logLabel : ''} attempt ${attempt} seq ${sentSeq}`, frame);
         await transport.doMcspWrite(frame);
         const deadline = Date.now() + 500; // RPC round-trip can be slower than a plain read
         while (Date.now() < deadline) {
@@ -524,6 +545,10 @@
           const parsed = parseReadResponseFrame(raw);
           if (!parsed) continue;
           if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
+          if (parsed.type !== MessageType.RPC_RESPONSE || parsed.seq !== sentSeq) {
+            if (dlog) dlog.log('assist-rpc', `<- ignoring mismatched response (type ${parsed.type}, seq ${parsed.seq}, expected RPC_RESPONSE seq ${sentSeq})`);
+            continue;
+          }
           if (!parsed.ok) {
             if (dlog) dlog.log('assist-rpc', `<- declined: ${parsed.statusName}`);
             return { declined: true, statusName: parsed.statusName };
@@ -537,6 +562,10 @@
     } finally {
       transportBusy = false;
     }
+  }
+
+  async function rpcCallWithConfigId(addr, configId, decodeFn) {
+    return rpcCallWithArg(addr, encodeConfigIdArg(configId), decodeFn, `configId="${configId}"`);
   }
 
   async function readAllAssistModeStats() {
@@ -609,6 +638,14 @@
           if (u && !u.declined) entry.udam = u;
         } catch (_) { /* leave entry.udam unset — rendered as "—" */ }
       }
+
+      if (UDAM_LIMITS_ADDR) {
+        if (phase !== 'connecting' || !transport) return;
+        try {
+          const l = await rpcCallWithConfigId(UDAM_LIMITS_ADDR, entry.configId, decodeUdamLimits);
+          if (l && !l.declined) entry.udamLimits = l;
+        } catch (_) { /* leave entry.udamLimits unset — change UI stays hidden for this mode */ }
+      }
     }
   }
 
@@ -642,6 +679,52 @@
     }
     renderAssistModeHistogram();
     return { ok: entry.resetState === 'done' };
+  }
+
+  // The second UDAM write this tool performs — see the comment on
+  // SET_UDAM_VALUES_PARAMETERS_ADDR above for scope/rationale. `changes` only
+  // carries the fields the user actually edited (assistLevel/
+  // accelerationResponse/maximumBikeSpeed); every other field is carried
+  // through unchanged from the mode's last-read UDAM values, so this can
+  // never touch anything the user didn't explicitly set. Never called
+  // automatically; only from the change UI's own confirmation dialog.
+  async function setUdamValuesForMode(entry, changes) {
+    if (!SET_UDAM_VALUES_PARAMETERS_ADDR || !transport) {
+      window.alert('Not connected to the bike anymore — reconnect (Read again) and try again.');
+      return { ok: false, error: 'not connected' };
+    }
+    if (!entry.udam) {
+      window.alert('No current settings read for this mode yet — cannot build a safe write.');
+      return { ok: false, error: 'no current udam' };
+    }
+    const merged = { ...entry.udam, ...changes };
+    entry.setState = 'pending';
+    renderAssistModeHistogram();
+    try {
+      const r = await rpcCallWithArg(
+        SET_UDAM_VALUES_PARAMETERS_ADDR,
+        encodeSetUdamValuesParametersArg(entry.configId, merged),
+        decodeBoolResponse,
+        `configId="${entry.configId}" set`
+      );
+      if (r && !r.declined && r === true) {
+        entry.setState = 'done';
+        entry.editing = false;
+        // Re-read to reflect the bike's actual current value, not just our
+        // assumption that the write took effect.
+        try {
+          const u = await rpcCallWithConfigId(UDAM_VALUES_ADDR, entry.configId, decodeUdamParams);
+          if (u && !u.declined) entry.udam = u;
+        } catch (_) {}
+      } else {
+        entry.setState = 'failed';
+      }
+    } catch (err) {
+      entry.setState = 'failed';
+      if (window.Bes3DebugLog) window.Bes3DebugLog.log('assist-rpc', 'set udam values failed', err.message);
+    }
+    renderAssistModeHistogram();
+    return { ok: entry.setState === 'done' };
   }
 
   function findResult(component, name) {
@@ -899,9 +982,16 @@
       const row = document.createElement('div');
       row.className = 'histogram-row';
       const label = document.createElement('span');
-      label.className = 'histogram-label';
+      label.className = 'histogram-label' + (entry.udam ? ' histogram-label-clickable' : '');
       label.textContent = entry.label;
       label.title = entry.longLabel || entry.label;
+      if (entry.udam) {
+        label.addEventListener('click', () => {
+          entry.expanded = !entry.expanded;
+          if (!entry.expanded) entry.editing = false;
+          renderAssistModeHistogram();
+        });
+      }
       const track = document.createElement('div');
       track.className = 'histogram-track';
       const value = document.createElement('span');
@@ -974,8 +1064,132 @@
         settingsRow.appendChild(summary);
         settingsRow.appendChild(resetBtn);
         els.assistModeHistogram.appendChild(settingsRow);
+
+        if (entry.expanded) renderAssistModeDetailPanel(entry);
       }
     }
+  }
+
+  // Expanded per-mode detail panel: all 8 UDAM fields (the 3 shown in the
+  // compact summary plus the 5 that are decoded but otherwise hidden), and
+  // — only when this mode's UDAM_LIMITS were read successfully — a "Change
+  // values" editor for the 3 fields with a confirmed unit/factor, bounded to
+  // this mode's own reported min/max so it can never request something the
+  // bike wouldn't already permit. Rebuilt fully on every
+  // renderAssistModeHistogram() call, same as the rest of this view.
+  function renderAssistModeDetailPanel(entry) {
+    const panel = document.createElement('div');
+    panel.className = 'histogram-detail-panel';
+    const u = entry.udam;
+
+    const addField = (label, valueText) => {
+      const field = document.createElement('div');
+      field.className = 'histogram-detail-field';
+      const l = document.createElement('span');
+      l.textContent = label;
+      const v = document.createElement('span');
+      v.textContent = valueText;
+      field.appendChild(l);
+      field.appendChild(v);
+      panel.appendChild(field);
+    };
+
+    if (entry.editing && entry.udamLimits && entry.udamLimits.min && entry.udamLimits.max) {
+      const lim = entry.udamLimits;
+      const addEditableField = (label, key, unit, toDisplay, fromDisplay) => {
+        const field = document.createElement('div');
+        field.className = 'histogram-detail-field';
+        const l = document.createElement('span');
+        l.textContent = label;
+        const input = document.createElement('input');
+        input.type = 'number';
+        if (u[key] != null) input.value = toDisplay(u[key]);
+        if (lim.min[key] != null) input.min = toDisplay(lim.min[key]);
+        if (lim.max[key] != null) input.max = toDisplay(lim.max[key]);
+        input.dataset.udamKey = key;
+        field.appendChild(l);
+        const wrap = document.createElement('span');
+        wrap.appendChild(input);
+        if (unit) wrap.appendChild(document.createTextNode(' ' + unit));
+        field.appendChild(wrap);
+        panel.appendChild(field);
+        input._fromDisplay = fromDisplay;
+      };
+      addEditableField('Assist level', 'assistLevel', '%', (v) => v, (v) => Math.round(v));
+      addEditableField('Max bike speed', 'maximumBikeSpeed', 'km/h', (v) => (v / 100).toFixed(1), (v) => Math.round(v * 100));
+      addEditableField('Acceleration resp.', 'accelerationResponse', '%', (v) => v, (v) => Math.round(v));
+    } else {
+      addField('Assist level', u.assistLevel != null ? `${u.assistLevel}%` : '—');
+      addField('Max bike speed', u.maximumBikeSpeed != null ? `${(u.maximumBikeSpeed / 100).toFixed(1)} km/h` : '—');
+      addField('Acceleration resp.', u.accelerationResponse != null ? `${u.accelerationResponse}%` : '—');
+    }
+    // Fields with no confirmed unit/factor from decompile — shown as raw
+    // values, never made editable (see decodeUdamParams's header comment).
+    addField('Max motor torque (raw)', u.maximumMotorTorque != null ? String(u.maximumMotorTorque) : '—');
+    addField('Max motor power (raw)', u.maximumMotorPower != null ? String(u.maximumMotorPower) : '—');
+    addField('Extended boost (raw)', u.extendedBoost != null ? String(u.extendedBoost) : '—');
+    addField('Traction control (raw)', u.tractionControl != null ? String(u.tractionControl) : '—');
+    addField('Drive-train tensioner', u.driveTrainTensioner == null ? '—' : (u.driveTrainTensioner ? 'true' : 'false'));
+
+    const actions = document.createElement('div');
+    actions.className = 'histogram-detail-actions';
+
+    if (entry.editing) {
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'histogram-change-btn';
+      saveBtn.textContent = entry.setState === 'pending' ? 'Saving…' : 'Save changes';
+      saveBtn.disabled = entry.setState === 'pending';
+      saveBtn.addEventListener('click', () => {
+        const changes = {};
+        const lines = [];
+        panel.querySelectorAll('input[data-udam-key]').forEach((input) => {
+          const key = input.dataset.udamKey;
+          const displayVal = parseFloat(input.value);
+          if (Number.isNaN(displayVal)) return;
+          const rawVal = input._fromDisplay(displayVal);
+          if (rawVal !== u[key]) {
+            changes[key] = rawVal;
+            lines.push(`  ${key}: ${u[key]} -> ${rawVal}`);
+          }
+        });
+        if (!lines.length) {
+          window.alert('No changes to save.');
+          return;
+        }
+        const confirmed = window.confirm(
+          `Change "${entry.label}" settings?\n\n` +
+          lines.join('\n') + '\n\n' +
+          `Only these fields change — everything else in this mode's ` +
+          `settings is sent back unchanged. Values are bounded by this ` +
+          `mode's own reported limits, the same as Bosch Flow's own ` +
+          `"customize this mode" screen.`
+        );
+        if (confirmed) setUdamValuesForMode(entry, changes);
+      });
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'histogram-change-btn secondary';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.addEventListener('click', () => { entry.editing = false; renderAssistModeHistogram(); });
+      actions.appendChild(saveBtn);
+      actions.appendChild(cancelBtn);
+    } else if (entry.udamLimits && entry.udamLimits.min && entry.udamLimits.max) {
+      const changeBtn = document.createElement('button');
+      changeBtn.type = 'button';
+      changeBtn.className = 'histogram-change-btn';
+      changeBtn.textContent = entry.setState === 'failed' ? 'Change failed — retry?' : 'Change values';
+      changeBtn.addEventListener('click', () => { entry.editing = true; renderAssistModeHistogram(); });
+      actions.appendChild(changeBtn);
+    } else {
+      const note = document.createElement('span');
+      note.className = 'histogram-settings-summary';
+      note.textContent = "no limits data — can't safely offer changes for this mode";
+      actions.appendChild(note);
+    }
+    panel.appendChild(actions);
+
+    els.assistModeHistogram.appendChild(panel);
   }
 
   function renderRawTable() {

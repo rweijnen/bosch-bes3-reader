@@ -496,6 +496,77 @@ function decodeBoolResponse(payload) {
   return !!payload[1];
 }
 
+// Decodes a Bosch `UdamLimits` protobuf message — the response to
+// READ_UDAM_LIMITS(ConfigId): field 1 = maximum (nested UdamParams,
+// length-delimited), field 2 = minimum (nested UdamParams, length-delimited).
+// Same field-shape confirmation basis as decodeUdamParams itself.
+function decodeUdamLimits(payload) {
+  let i = 0;
+  let max = null;
+  let min = null;
+  while (i < payload.length) {
+    const tag = payload[i];
+    const fieldNum = tag >>> 3;
+    const wireType = tag & 0x7;
+    i += 1;
+    if (wireType !== 2) break; // both fields are length-delimited UdamParams submessages
+    let len = 0;
+    let shift = 0;
+    for (;;) {
+      const b = payload[i];
+      i += 1;
+      len |= (b & 0x7f) << shift;
+      if ((b & 0x80) === 0) break;
+      shift += 7;
+    }
+    const content = payload.slice(i, i + len);
+    i += len;
+    if (fieldNum === 1) max = decodeUdamParams(content);
+    else if (fieldNum === 2) min = decodeUdamParams(content);
+  }
+  return { max, min };
+}
+
+// Encodes a `UdamParams` message from a params object (inverse of
+// decodeUdamParams) — used as the field-2 argument of
+// SET_UDAM_VALUES_PARAMETERS(ConfigId, UdamParams). Fields left null/undefined
+// are omitted entirely (proto3 default), matching how the bike itself omits
+// them in reads.
+function encodeUdamParams(params) {
+  const bytes = [];
+  const pushVarintField = (fieldNum, value) => {
+    if (value == null) return;
+    bytes.push((fieldNum << 3) | 0);
+    bytes.push(...encodeVarint(value >>> 0));
+  };
+  pushVarintField(1, params.assistLevel);
+  pushVarintField(2, params.maximumMotorTorque);
+  pushVarintField(3, params.accelerationResponse);
+  pushVarintField(4, params.maximumBikeSpeed);
+  pushVarintField(5, params.maximumMotorPower);
+  pushVarintField(6, params.extendedBoost);
+  pushVarintField(7, params.tractionControl);
+  if (params.driveTrainTensioner != null) {
+    bytes.push((8 << 3) | 0);
+    bytes.push(params.driveTrainTensioner ? 1 : 0);
+  }
+  return bytes;
+}
+
+// Encodes the two-field argument of SET_UDAM_VALUES_PARAMETERS: field 1 =
+// ConfigId (nested submessage), field 2 = UdamParams (nested submessage).
+// Confirmed field numbering from decompile of the shared message-bus RPC
+// definitions — same two-field wrapper shape as other ConfigId+payload RPCs
+// on this bike.
+function encodeSetUdamValuesParametersArg(configId, udamParams) {
+  const configIdMsg = encodeConfigIdArg(configId);
+  const paramsMsg = encodeUdamParams(udamParams);
+  return [
+    0x0a, ...encodeVarint(configIdMsg.length), ...configIdMsg,
+    0x12, ...encodeVarint(paramsMsg.length), ...paramsMsg,
+  ];
+}
+
 const protocolExports = {
   MessageType,
   encodeVarint,
@@ -512,6 +583,9 @@ const protocolExports = {
   decodeStringList,
   decodeUdamParams,
   decodeBoolResponse,
+  decodeUdamLimits,
+  encodeUdamParams,
+  encodeSetUdamValuesParametersArg,
   parseReadResponseFrame,
   statusCodeName,
   decodeValue,

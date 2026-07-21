@@ -124,6 +124,14 @@
   .histogram-settings-summary { font: 400 10.5px 'IBM Plex Mono', monospace; color: var(--faint); }
   .histogram-reset-btn { font: 500 10.5px 'IBM Plex Sans', sans-serif; color: var(--accent); background: none; border: 1px solid var(--border2); border-radius: 5px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
   .histogram-reset-btn:disabled { color: var(--faint); cursor: default; opacity: 0.7; }
+  .histogram-label-clickable { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+  .histogram-detail-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font: 400 10.5px 'IBM Plex Mono', monospace; color: var(--faint); padding: 6px 0 8px 0; margin-top: -2px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+  .histogram-detail-field { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .histogram-detail-field input { width: 64px; font: 400 10.5px 'IBM Plex Mono', monospace; background: var(--bg); color: var(--text); border: 1px solid var(--border2); border-radius: 4px; padding: 1px 4px; }
+  .histogram-detail-actions { grid-column: 1 / -1; display: flex; gap: 8px; margin-top: 4px; }
+  .histogram-change-btn { font: 500 10.5px 'IBM Plex Sans', sans-serif; color: var(--accent); background: none; border: 1px solid var(--border2); border-radius: 5px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
+  .histogram-change-btn:disabled { color: var(--faint); cursor: default; opacity: 0.7; }
+  .histogram-change-btn.secondary { color: var(--faint); }
 
   .section-head { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
   .section-head .line { flex: 1; height: 1px; background: var(--border); }
@@ -369,7 +377,7 @@
         <ul>
           <li>You use this tool entirely <strong style="color:var(--text);">at your own risk</strong>. The authors accept no liability for any damage, data loss, voided warranty, or malfunction.</li>
           <li>Connecting to your drive unit may affect your manufacturer warranty or violate local regulations. You are responsible for how you use it.</li>
-          <li>This tool is almost entirely read-only. The exceptions are a small number of opt-in actions: a "reset to default" button per assist mode (resets that mode's assist level/max speed/acceleration response to factory defaults), and an "always start in last-used mode" button. Neither runs without you clicking it and confirming a dialog that explains exactly what it does.</li>
+          <li>This tool is almost entirely read-only. The exceptions are a small number of opt-in actions: a "reset to default" button per assist mode (resets that mode's assist level/max speed/acceleration response to factory defaults), an "always start in last-used mode" button, and a per-mode "change values" editor (bounded to that mode's own reported limits). None run without you clicking it and confirming a dialog that explains exactly what it does.</li>
           <li>Cloud lookups (when available) run against Bosch services using your own account; respect their terms of service.</li>
         </ul>
         <label class="ack-row">

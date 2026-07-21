@@ -55,6 +55,11 @@ opt-in exceptions, each behind its own explicit button and confirmation:
 - An **"always start in last-used mode"** button (shown only if the bike is
   currently set to always power on in off/walk mode), which sets one
   setting so the bike resumes whichever assist mode you were last using.
+- A **"change values"** editor per assist mode (click a mode's name to expand
+  its full settings, shown once its limits have been read), letting you set
+  a new assist level, max speed, or acceleration response for that one mode —
+  bounded to the bike's own reported min/max for it, so it can never request
+  something outside what the mode already permits.
 
 Nothing else is ever written — no tuning, no speed-limit/region changes, no
 licensing or authorization systems some commercial services touch. Every
@@ -70,9 +75,12 @@ argument, no dealer/HSM gate — a plain consumer-tier feature, not something
 this tool works around or bypasses). The start-mode setting is the same
 story: a plain `ReadableWritableSubscribableDataPoint`, no dealer/HSM gate,
 confirmed writable at the protocol level with no UI in Flow to change it.
-Neither action ever runs automatically — both are behind an explicit
-button click and a confirmation dialog explaining exactly what it does,
-every time.
+The change-values editor mirrors Flow's own "customize this mode" screen —
+same RPC (`SET_UDAM_VALUES_PARAMETERS`), same argument shape, no dealer/HSM
+gate — with every value clamped to that mode's own reported limits before
+it's ever sent. None of these actions ever run automatically — all three
+are behind an explicit button click and a confirmation dialog explaining
+exactly what it does, every time.
 
 ## Usage
 
