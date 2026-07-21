@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.8';
+  const APP_VERSION = '2026-07-20.9';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -72,6 +72,11 @@
     usageGrid: $('usageGrid'),
     assistModeHistogram: $('assistModeHistogram'),
     startModeAction: $('startModeAction'),
+    assistModeModalBackdrop: $('assistModeModalBackdrop'),
+    assistModeModalTitle: $('assistModeModalTitle'),
+    assistModeModalBody: $('assistModeModalBody'),
+    assistModeModalActions: $('assistModeModalActions'),
+    assistModeModalClose: $('assistModeModalClose'),
     rawToggle: $('rawToggle'),
     rawSummary: $('rawSummary'),
     rawBody: $('rawBody'),
@@ -716,7 +721,6 @@
       );
       if (r && !r.declined && r === true) {
         entry.setState = 'done';
-        entry.editing = false;
         // Re-read to reflect the bike's actual current value, not just our
         // assumption that the write took effect.
         try {
@@ -993,11 +997,7 @@
       label.textContent = entry.label;
       label.title = entry.longLabel || entry.label;
       if (entry.udam) {
-        label.addEventListener('click', () => {
-          entry.expanded = !entry.expanded;
-          if (!entry.expanded) entry.editing = false;
-          renderAssistModeHistogram();
-        });
+        label.addEventListener('click', () => openAssistModeModal(entry));
       }
       const track = document.createElement('div');
       track.className = 'histogram-track';
@@ -1072,22 +1072,33 @@
         settingsRow.appendChild(resetBtn);
         els.assistModeHistogram.appendChild(settingsRow);
 
-        if (entry.expanded) renderAssistModeDetailPanel(entry);
       }
     }
   }
 
-  // Expanded per-mode detail panel: all 8 UDAM fields (the 3 shown in the
-  // compact summary plus the 5 that are decoded but otherwise hidden), and
-  // — only when this mode's UDAM_LIMITS were read successfully — a "Change
-  // values" editor for the 3 fields with a confirmed unit/factor, bounded to
-  // this mode's own reported min/max so it can never request something the
-  // bike wouldn't already permit. Rebuilt fully on every
-  // renderAssistModeHistogram() call, same as the rest of this view.
-  function renderAssistModeDetailPanel(entry) {
-    const panel = document.createElement('div');
-    panel.className = 'histogram-detail-panel';
+  function closeAssistModeModal() {
+    els.assistModeModalBackdrop.style.display = 'none';
+    els.assistModeModalBody.innerHTML = '';
+    els.assistModeModalActions.innerHTML = '';
+  }
+  els.assistModeModalClose.addEventListener('click', closeAssistModeModal);
+  els.assistModeModalBackdrop.addEventListener('click', (e) => {
+    if (e.target === els.assistModeModalBackdrop) closeAssistModeModal();
+  });
+
+  // Popup showing all 8 UDAM fields (the 3 shown in the compact summary
+  // plus the 5 that are decoded but otherwise hidden). When this mode's
+  // UDAM_LIMITS were read successfully, the 3 fields with a confirmed
+  // unit/factor are directly editable, bounded to this mode's own reported
+  // min/max so it can never request something the bike wouldn't already
+  // permit. "Save changes" starts disabled and only lights up once a value
+  // actually differs from what was last read — no separate "enter edit
+  // mode" step needed.
+  function openAssistModeModal(entry) {
     const u = entry.udam;
+    els.assistModeModalTitle.textContent = entry.longLabel || entry.label;
+    els.assistModeModalBody.innerHTML = '';
+    els.assistModeModalActions.innerHTML = '';
 
     const addField = (label, valueText) => {
       const field = document.createElement('div');
@@ -1098,10 +1109,24 @@
       v.textContent = valueText;
       field.appendChild(l);
       field.appendChild(v);
-      panel.appendChild(field);
+      els.assistModeModalBody.appendChild(field);
     };
 
-    if (entry.editing && entry.udamLimits && entry.udamLimits.min && entry.udamLimits.max) {
+    const canEdit = entry.udamLimits && entry.udamLimits.min && entry.udamLimits.max;
+    const editableInputs = []; // [{ input, key, fromDisplay, original }]
+
+    let saveBtn = null;
+    const updateDirty = () => {
+      if (!saveBtn) return;
+      const dirty = editableInputs.some(({ input, fromDisplay, original }) => {
+        const displayVal = parseFloat(input.value);
+        if (Number.isNaN(displayVal)) return false;
+        return fromDisplay(displayVal) !== original;
+      });
+      saveBtn.disabled = !dirty || entry.setState === 'pending';
+    };
+
+    if (canEdit) {
       const lim = entry.udamLimits;
       const addEditableField = (label, key, unit, toDisplay, fromDisplay) => {
         const field = document.createElement('div');
@@ -1113,14 +1138,14 @@
         if (u[key] != null) input.value = toDisplay(u[key]);
         if (lim.min[key] != null) input.min = toDisplay(lim.min[key]);
         if (lim.max[key] != null) input.max = toDisplay(lim.max[key]);
-        input.dataset.udamKey = key;
+        input.addEventListener('input', updateDirty);
         field.appendChild(l);
         const wrap = document.createElement('span');
         wrap.appendChild(input);
         if (unit) wrap.appendChild(document.createTextNode(' ' + unit));
         field.appendChild(wrap);
-        panel.appendChild(field);
-        input._fromDisplay = fromDisplay;
+        els.assistModeModalBody.appendChild(field);
+        editableInputs.push({ input, key, fromDisplay, original: u[key] });
       };
       addEditableField('Assist level', 'assistLevel', '%', (v) => v, (v) => Math.round(v));
       addEditableField('Max bike speed', 'maximumBikeSpeed', 'km/h', (v) => (v / 100).toFixed(1), (v) => Math.round(v * 100));
@@ -1138,32 +1163,25 @@
     addField('Traction control (raw)', u.tractionControl != null ? String(u.tractionControl) : '—');
     addField('Drive-train tensioner', u.driveTrainTensioner == null ? '—' : (u.driveTrainTensioner ? 'true' : 'false'));
 
-    const actions = document.createElement('div');
-    actions.className = 'histogram-detail-actions';
-
-    if (entry.editing) {
-      const saveBtn = document.createElement('button');
+    if (canEdit) {
+      saveBtn = document.createElement('button');
       saveBtn.type = 'button';
       saveBtn.className = 'histogram-change-btn';
       saveBtn.textContent = entry.setState === 'pending' ? 'Saving…' : 'Save changes';
-      saveBtn.disabled = entry.setState === 'pending';
+      saveBtn.disabled = true; // nothing changed yet
       saveBtn.addEventListener('click', () => {
         const changes = {};
         const lines = [];
-        panel.querySelectorAll('input[data-udam-key]').forEach((input) => {
-          const key = input.dataset.udamKey;
+        editableInputs.forEach(({ input, key, fromDisplay, original }) => {
           const displayVal = parseFloat(input.value);
           if (Number.isNaN(displayVal)) return;
-          const rawVal = input._fromDisplay(displayVal);
-          if (rawVal !== u[key]) {
+          const rawVal = fromDisplay(displayVal);
+          if (rawVal !== original) {
             changes[key] = rawVal;
-            lines.push(`  ${key}: ${u[key]} -> ${rawVal}`);
+            lines.push(`  ${key}: ${original} -> ${rawVal}`);
           }
         });
-        if (!lines.length) {
-          window.alert('No changes to save.');
-          return;
-        }
+        if (!lines.length) return; // save button is disabled in this case anyway
         const confirmed = window.confirm(
           `Change "${entry.label}" settings?\n\n` +
           lines.join('\n') + '\n\n' +
@@ -1172,31 +1190,32 @@
           `mode's own reported limits, the same as Bosch Flow's own ` +
           `"customize this mode" screen.`
         );
-        if (confirmed) setUdamValuesForMode(entry, changes);
+        if (confirmed) {
+          closeAssistModeModal();
+          setUdamValuesForMode(entry, changes);
+        }
       });
       const cancelBtn = document.createElement('button');
       cancelBtn.type = 'button';
       cancelBtn.className = 'histogram-change-btn secondary';
       cancelBtn.textContent = 'Cancel';
-      cancelBtn.addEventListener('click', () => { entry.editing = false; renderAssistModeHistogram(); });
-      actions.appendChild(saveBtn);
-      actions.appendChild(cancelBtn);
-    } else if (entry.udamLimits && entry.udamLimits.min && entry.udamLimits.max) {
-      const changeBtn = document.createElement('button');
-      changeBtn.type = 'button';
-      changeBtn.className = 'histogram-change-btn';
-      changeBtn.textContent = entry.setState === 'failed' ? 'Change failed — retry?' : 'Change values';
-      changeBtn.addEventListener('click', () => { entry.editing = true; renderAssistModeHistogram(); });
-      actions.appendChild(changeBtn);
+      cancelBtn.addEventListener('click', closeAssistModeModal);
+      els.assistModeModalActions.appendChild(saveBtn);
+      els.assistModeModalActions.appendChild(cancelBtn);
     } else {
       const note = document.createElement('span');
       note.className = 'histogram-settings-summary';
       note.textContent = "no limits data — can't safely offer changes for this mode";
-      actions.appendChild(note);
+      els.assistModeModalActions.appendChild(note);
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'histogram-change-btn secondary';
+      closeBtn.textContent = 'Close';
+      closeBtn.addEventListener('click', closeAssistModeModal);
+      els.assistModeModalActions.appendChild(closeBtn);
     }
-    panel.appendChild(actions);
 
-    els.assistModeHistogram.appendChild(panel);
+    els.assistModeModalBackdrop.style.display = 'flex';
   }
 
   function renderRawTable() {
