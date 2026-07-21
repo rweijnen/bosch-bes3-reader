@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.9';
+  const APP_VERSION = '2026-07-20.10';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -1100,16 +1100,21 @@
     els.assistModeModalBody.innerHTML = '';
     els.assistModeModalActions.innerHTML = '';
 
-    const addField = (label, valueText) => {
-      const field = document.createElement('div');
-      field.className = 'histogram-detail-field';
+    // 3 direct grid children per field (label / value / unit) — NOT wrapped
+    // in a row div — so the parent grid's fixed value/unit column widths
+    // apply to every field equally, editable or not. That's what keeps the
+    // numbers themselves in one vertical column regardless of how wide each
+    // row's unit suffix is ("%" vs "km/h").
+    const addField = (label, valueText, unit) => {
       const l = document.createElement('span');
       l.textContent = label;
       const v = document.createElement('span');
+      v.className = 'amf-value';
       v.textContent = valueText;
-      field.appendChild(l);
-      field.appendChild(v);
-      els.assistModeModalBody.appendChild(field);
+      const un = document.createElement('span');
+      un.className = 'amf-unit';
+      un.textContent = unit || '';
+      els.assistModeModalBody.append(l, v, un);
     };
 
     const canEdit = entry.udamLimits && entry.udamLimits.min && entry.udamLimits.max;
@@ -1129,31 +1134,30 @@
     if (canEdit) {
       const lim = entry.udamLimits;
       const addEditableField = (label, key, unit, toDisplay, fromDisplay) => {
-        const field = document.createElement('div');
-        field.className = 'histogram-detail-field';
         const l = document.createElement('span');
         l.textContent = label;
+        const v = document.createElement('span');
+        v.className = 'amf-value';
         const input = document.createElement('input');
         input.type = 'number';
         if (u[key] != null) input.value = toDisplay(u[key]);
         if (lim.min[key] != null) input.min = toDisplay(lim.min[key]);
         if (lim.max[key] != null) input.max = toDisplay(lim.max[key]);
         input.addEventListener('input', updateDirty);
-        field.appendChild(l);
-        const wrap = document.createElement('span');
-        wrap.appendChild(input);
-        if (unit) wrap.appendChild(document.createTextNode(' ' + unit));
-        field.appendChild(wrap);
-        els.assistModeModalBody.appendChild(field);
+        v.appendChild(input);
+        const un = document.createElement('span');
+        un.className = 'amf-unit';
+        un.textContent = unit || '';
+        els.assistModeModalBody.append(l, v, un);
         editableInputs.push({ input, key, fromDisplay, original: u[key] });
       };
       addEditableField('Assist level', 'assistLevel', '%', (v) => v, (v) => Math.round(v));
       addEditableField('Max bike speed', 'maximumBikeSpeed', 'km/h', (v) => (v / 100).toFixed(1), (v) => Math.round(v * 100));
       addEditableField('Acceleration resp.', 'accelerationResponse', '%', (v) => v, (v) => Math.round(v));
     } else {
-      addField('Assist level', u.assistLevel != null ? `${u.assistLevel}%` : '—');
-      addField('Max bike speed', u.maximumBikeSpeed != null ? `${(u.maximumBikeSpeed / 100).toFixed(1)} km/h` : '—');
-      addField('Acceleration resp.', u.accelerationResponse != null ? `${u.accelerationResponse}%` : '—');
+      addField('Assist level', u.assistLevel != null ? String(u.assistLevel) : '—', '%');
+      addField('Max bike speed', u.maximumBikeSpeed != null ? (u.maximumBikeSpeed / 100).toFixed(1) : '—', 'km/h');
+      addField('Acceleration resp.', u.accelerationResponse != null ? String(u.accelerationResponse) : '—', '%');
     }
     // Fields with no confirmed unit/factor from decompile — shown as raw
     // values, never made editable (see decodeUdamParams's header comment).

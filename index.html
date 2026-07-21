@@ -133,13 +133,21 @@
   .histogram-change-btn:disabled { color: var(--faint); cursor: default; opacity: 0.7; }
   .histogram-change-btn.secondary { color: var(--faint); }
 
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
-  .modal-box { background: var(--panel); border: 1px solid var(--border2); border-radius: 10px; padding: 16px 18px; max-width: 380px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font: 600 13px 'IBM Plex Sans', sans-serif; color: var(--text); }
-  .modal-close { background: none; border: none; font-size: 20px; line-height: 1; cursor: pointer; color: var(--faint); padding: 0 2px; }
-  .modal-close:hover { color: var(--text); }
-  .modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); }
-  .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .assist-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+  .assist-modal-box { background: var(--panel); border: 1px solid var(--border2); border-radius: 10px; padding: 16px 18px; max-width: 380px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
+  .assist-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font: 600 13px 'IBM Plex Sans', sans-serif; color: var(--text); }
+  .assist-modal-close { background: none; border: none; font-size: 20px; line-height: 1; cursor: pointer; color: var(--faint); padding: 0 2px; }
+  .assist-modal-close:hover { color: var(--text); }
+  /* 3 fixed columns (label / value / unit) so numbers land in the same
+     vertical column whether the row is an editable input (with a variable-
+     width unit suffix like "km/h" vs "%") or a plain readonly value —
+     a 2-column layout or a flex row per field can't guarantee that, since
+     "value+unit" as one flex child has no fixed width to line up against. */
+  .assist-modal-body { display: grid; grid-template-columns: 1fr 62px 34px; align-items: center; gap: 7px 8px; font: 400 11.5px 'IBM Plex Mono', monospace; color: var(--faint); }
+  .assist-modal-body .amf-value { text-align: right; color: var(--text); }
+  .assist-modal-body .amf-value input { width: 100%; box-sizing: border-box; text-align: right; font: inherit; background: var(--bg); color: var(--text); border: 1px solid var(--border2); border-radius: 4px; padding: 2px 5px; }
+  .assist-modal-body .amf-unit { text-align: left; color: var(--faint); }
+  .assist-modal-actions { display: flex; gap: 8px; margin-top: 14px; }
 
   .section-head { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
   .section-head .line { flex: 1; height: 1px; background: var(--border); }
@@ -398,14 +406,14 @@
   </div>
 </div>
 
-<div id="assistModeModalBackdrop" class="modal-backdrop" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-header">
+<div id="assistModeModalBackdrop" class="assist-modal-backdrop" style="display:none;">
+  <div class="assist-modal-box">
+    <div class="assist-modal-header">
       <span id="assistModeModalTitle"></span>
-      <button id="assistModeModalClose" type="button" class="modal-close">&times;</button>
+      <button id="assistModeModalClose" type="button" class="assist-modal-close">&times;</button>
     </div>
-    <div id="assistModeModalBody" class="modal-body"></div>
-    <div id="assistModeModalActions" class="modal-actions"></div>
+    <div id="assistModeModalBody" class="assist-modal-body"></div>
+    <div id="assistModeModalActions" class="assist-modal-actions"></div>
   </div>
 </div>
 
