@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.6';
+  const APP_VERSION = '2026-07-20.7';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -589,18 +589,24 @@
       }
     });
 
-    // Real names: off/walk (index 0) is synthesized client-side (by us, same
-    // as Flow's own createOffAssistMode()) and never appears in these lists —
-    // they only cover the modes actually read from ACTIVE_ASSIST_MODES, i.e.
-    // assistModeStats[1..]. Only apply if the count lines up; otherwise leave
-    // the generic "Position N" labels rather than mismatching modes to names.
+    // Real names. Originally assumed (from Flow's decompiled
+    // createOffAssistMode()/ensureOffAssistModePresent()) that off/walk is
+    // synthesized client-side and excluded from these lists — real hardware
+    // proved that wrong: a live capture showed ["OFF","ECO","TOUR+","AUTO",
+    // "TURBO"], i.e. "OFF" IS the first entry, aligning 1:1 with
+    // assistModeStats (index 0 = off/walk). Try that direct alignment first;
+    // fall back to the offset-by-one alignment in case some other bike/
+    // firmware version really does exclude it. If neither count matches,
+    // leave the generic "Position N" labels rather than mismatching modes.
     if (ASSIST_MODE_SHORT_NAMES_ADDR) {
       try {
         const shortRes = await readOne(ASSIST_MODE_SHORT_NAMES_ADDR);
         if (shortRes && !shortRes.declined && shortRes.payload) {
           const names = decodeStringList(shortRes.payload);
           if (dlog) dlog.log('assist-rpc', 'ASSIST_MODE_SHORT_NAMES decoded', JSON.stringify(names));
-          if (names.length === assistModeStats.length - 1) {
+          if (names.length === assistModeStats.length) {
+            names.forEach((name, i) => { if (name) assistModeStats[i].label = name; });
+          } else if (names.length === assistModeStats.length - 1) {
             names.forEach((name, i) => { if (name) assistModeStats[i + 1].label = name; });
           }
         }
@@ -612,7 +618,9 @@
         if (longRes && !longRes.declined && longRes.payload) {
           const names = decodeStringList(longRes.payload);
           if (dlog) dlog.log('assist-rpc', 'ASSIST_MODE_LONG_NAMES decoded', JSON.stringify(names));
-          if (names.length === assistModeStats.length - 1) {
+          if (names.length === assistModeStats.length) {
+            names.forEach((name, i) => { if (name) assistModeStats[i].longLabel = name; });
+          } else if (names.length === assistModeStats.length - 1) {
             names.forEach((name, i) => { if (name) assistModeStats[i + 1].longLabel = name; });
           }
         }
