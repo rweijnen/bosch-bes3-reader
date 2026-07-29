@@ -126,6 +126,26 @@ function encodeEnumArg(value) {
   return [0x08, ...encodeVarint(value)];
 }
 
+// Encodes a plain protobuf bool value (field 1, varint) — proto3 omits the field
+// entirely when false, so encoding false is deliberately an empty payload, not
+// a zero-valued byte. Used only by the DISTRACTED_RIDING_ALERT protocol probe
+// (addr 6161) — this field is read-only in Bosch's own code (no writer exists
+// anywhere in the adapter interface); this is a deliberate protocol-level probe
+// of what firmware itself does with a write Bosch's own client never sends, not
+// a supported feature. See the private research notes for the full rationale.
+function encodeBoolArg(value) {
+  return value ? [0x08, 0x01] : [];
+}
+
+// Encodes the 2-field StartAssistModeConfigurationOem shape (field 1 = position
+// enum, field 2 = configurable bool, proto3-omitted when false) — used only by
+// the START_ASSIST_MODE_CONFIGURATION_OEM protocol probe (addr 6179). Also
+// read-only in Bosch's own code (bikeState(), not bikeStateReadableWritableSubscribable())
+// — same deliberate-probe caveat as encodeBoolArg above.
+function encodeStartAssistModeOemArg(position, configurable) {
+  return [0x08, ...encodeVarint(position), ...(configurable ? [0x10, 0x01] : [])];
+}
+
 // Argument-less RPC call (MessageType.RPC) — used for the session keep-alive
 // (RemoteControlAddresses.RESET_INACTIVITY_SHUTDOWN_TIMER) and any other
 // ArgumentLessCallableDataPoint.
@@ -574,6 +594,8 @@ const protocolExports = {
   buildReadRequestFrame,
   buildWriteFrame,
   encodeEnumArg,
+  encodeBoolArg,
+  encodeStartAssistModeOemArg,
   buildRpcCallFrame,
   buildRpcCallFrameWithArg,
   encodeConfigIdArg,

@@ -122,6 +122,10 @@
   .card-action-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
   .card-action-row .histogram-settings-summary { font-size: 11.5px; }
   .histogram-settings-summary { font: 400 10.5px 'IBM Plex Mono', monospace; color: var(--faint); }
+  .protocol-probes-block { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border2); }
+  .protocol-probes-title { display: block; font: 600 9.5px 'IBM Plex Mono', monospace; color: var(--danger); letter-spacing: 0.03em; margin-bottom: 6px; cursor: help; }
+  .protocol-probe-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 0; }
+  .protocol-probe-row .histogram-settings-summary { font-size: 11px; }
   .histogram-reset-btn { font: 500 10.5px 'IBM Plex Sans', sans-serif; color: var(--accent); background: none; border: 1px solid var(--border2); border-radius: 5px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
   .histogram-reset-btn:disabled { color: var(--faint); cursor: default; opacity: 0.7; }
   .histogram-label-clickable { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
@@ -318,6 +322,10 @@
           <span class="card-label">DRIVETRAIN</span>
           <div class="kv-grid" id="drivetrainGrid"></div>
           <div id="startModeAction" class="histogram-settings-row card-action-row" style="display:none;"></div>
+          <div class="protocol-probes-block">
+            <span class="protocol-probes-title" title="These target fields that are read-only in Bosch's own client — no writer exists for them anywhere in the official code. Sent purely to see how the bike's firmware itself responds; never assumed to work.">PROTOCOL PROBES (not supported writes)</span>
+            <div id="protocolProbes"></div>
+          </div>
         </div>
         <div class="card data-card">
           <span class="card-label">USAGE</span>

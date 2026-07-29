@@ -4,17 +4,18 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-29.3';
+  const APP_VERSION = '2026-07-29.4';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
     MessageType, buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
+    encodeBoolArg, encodeStartAssistModeOemArg,
     buildRpcCallFrame, buildRpcCallFrameWithArg,
     encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList, decodeStringList,
     decodeUdamParams, decodeBoolResponse, decodeUdamLimits, encodeSetUdamValuesParametersArg,
     parseReadResponseFrame, decodeValue,
   } = window.Bes3Protocol;
-  const { decodeTyped } = window.Bes3MessageTypes;
+  const { decodeTyped, FIELD_TYPES } = window.Bes3MessageTypes;
   const { Bes3WebUsbTransport, requestDevice } = window.Bes3WebUsb;
   const { Bes3LiveDataBleTransport, requestLiveDataDevice } = window.Bes3LiveDataBle;
 
@@ -73,6 +74,7 @@
     remoteGrid: $('remoteGrid'),
     assistModeHistogram: $('assistModeHistogram'),
     startModeAction: $('startModeAction'),
+    protocolProbes: $('protocolProbes'),
     assistModeModalBackdrop: $('assistModeModalBackdrop'),
     assistModeModalTitle: $('assistModeModalTitle'),
     assistModeModalBody: $('assistModeModalBody'),
@@ -914,6 +916,144 @@
     renderDashboard();
   }
 
+  // Deliberate protocol-level probes — NOT supported writes. Both target addresses are read-only
+  // in Bosch's own adapter code (bikeState(), never bikeStateReadableWritableSubscribable()/
+  // BikeStateWritable — no writer exists anywhere in Bosch's own client for either address). The
+  // MessageBus WRITE opcode itself doesn't know or enforce that client-side declaration though —
+  // it's the same generic mechanism for any address — so this tests, at the protocol level,
+  // whether firmware independently rejects a write here (the documented ResponseMessageStatusCode
+  // table already covers DENIED/UNSUPPORTED/INVALID_VALUE-style explicit rejections) or does
+  // something else. Logs whatever status comes back; never claims success either way, and a
+  // WRITE_RESPONSE/SUCCESS ack still wouldn't prove the value durably changed (same "ack ≠ sticks"
+  // lesson as START_ASSIST_MODE_CONFIGURATION) — the re-read after is what actually shows that.
+  const PROTOCOL_PROBES = {
+    distractedRidingAlert: {
+      addrName: 'DISTRACTED_RIDING_ALERT',
+      label: 'Attempt to clear the disclaimer flag',
+      buildPayload: () => encodeBoolArg(false),
+      confirmText:
+        'Attempt to write DISTRACTED_RIDING_ALERT (addr 6161) to false, at the protocol level?\n\n' +
+        'This field is read-only in Bosch\'s own client (no writer exists in the decompiled ' +
+        'adapter code) — this sends a raw WRITE frame anyway, purely to see how firmware itself ' +
+        'responds (an explicit DENIED/UNSUPPORTED status is the most likely outcome). No claim ' +
+        'this will work; the result (including a re-read afterward) is only logged, not assumed.',
+    },
+    startAssistModeOemConfigurable: {
+      addrName: 'START_ASSIST_MODE_CONFIGURATION_OEM',
+      label: 'Attempt to set configurable=true',
+      buildPayload: () => {
+        const oem = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION_OEM');
+        const positionName = oem && typeof oem === 'object' ? oem.position : 'START_ASSIST_MODE_NOT_CONFIGURED';
+        const enumTable = FIELD_TYPES[6180].enumTable; // same enum table as START_ASSIST_MODE_CONFIGURATION
+        const entry = Object.entries(enumTable).find(([, v]) => v.name === positionName);
+        const positionValue = entry ? Number(entry[0]) : 0;
+        return encodeStartAssistModeOemArg(positionValue, true);
+      },
+      confirmText:
+        'Attempt to write START_ASSIST_MODE_CONFIGURATION_OEM (addr 6179) with configurable=true, ' +
+        'at the protocol level?\n\n' +
+        'This field is read-only in Bosch\'s own client (no writer exists in the decompiled ' +
+        'adapter code) — this sends a raw WRITE frame anyway, purely to see how firmware itself ' +
+        'responds. If this genuinely worked, START_ASSIST_MODE_CONFIGURATION\'s own write ' +
+        '(the "always start in last-used mode" action) might then actually stick — but that\'s a ' +
+        'hypothesis to test, not a claim. The result (including a re-read afterward) is only ' +
+        'logged, not assumed.',
+    },
+  };
+  const probeState = {}; // id -> null | 'pending' | 'done' | 'failed' ("done" = got a response, not "it worked")
+
+  async function attemptProtocolProbe(id) {
+    const probe = PROTOCOL_PROBES[id];
+    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === probe.addrName) || {}).addr;
+    if (!addr || !transport) {
+      window.alert('Not connected to the bike anymore — reconnect (Read again) and try again.');
+      return;
+    }
+    probeState[id] = 'pending';
+    renderProtocolProbes();
+    const payload = probe.buildPayload();
+    const dlog = window.Bes3DebugLog;
+    const tag = `probe-${id}`;
+    if (dlog) dlog.log(tag, `payload before write`, payload);
+    transportBusy = true;
+    try {
+      let done = false;
+      for (let attempt = 0; attempt < 2 && !done; attempt++) {
+        for (let i = 0; i < 4; i++) {
+          if (!(await transport.readNextFrame(1, 2))) break;
+        }
+        const sentSeq = nextSeq();
+        const frame = buildWriteFrame(addr, sentSeq, payload);
+        if (dlog) dlog.log(tag, `-> WRITE addr 0x${addr.toString(16)} attempt ${attempt} seq ${sentSeq}`, frame);
+        await transport.doMcspWrite(frame);
+        const deadline = Date.now() + 500;
+        while (Date.now() < deadline) {
+          const raw = await transport.readNextFrame(4, 4);
+          if (!raw) continue;
+          if (dlog) dlog.log(tag, '<- raw frame', raw);
+          const parsed = parseReadResponseFrame(raw);
+          if (!parsed) continue;
+          if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
+          if (parsed.type !== MessageType.WRITE_RESPONSE || parsed.seq !== sentSeq) {
+            if (dlog) dlog.log(tag, `<- ignoring mismatched response (type ${parsed.type}, seq ${parsed.seq}, expected WRITE_RESPONSE seq ${sentSeq})`);
+            continue;
+          }
+          done = true;
+          probeState[id] = 'done';
+          if (dlog) dlog.log(tag, `<- WRITE_RESPONSE ok=${parsed.ok} status=${parsed.statusName}`);
+          break;
+        }
+      }
+      if (!done) probeState[id] = 'failed';
+    } catch (err) {
+      probeState[id] = 'failed';
+      if (dlog) dlog.log(tag, 'write failed', err.message);
+    } finally {
+      transportBusy = false;
+    }
+    // Re-read regardless of outcome — same reasoning as the start-mode write: an ack (or even a
+    // clean rejection) doesn't by itself tell us what the bike now reports.
+    try {
+      const r = await readOne(addr);
+      if (dlog) dlog.log(tag, 'post-write re-read result', r);
+      if (r && !r.declined && r.payload) {
+        const idx = lastResults.findIndex((x) => x.component === 'DriveUnit' && x.name === probe.addrName);
+        const typed = decodeTyped(addr, r.payload);
+        if (dlog) dlog.log(tag, 'post-write re-read decoded', typed);
+        if (idx >= 0) { lastResults[idx].status = 'ok'; lastResults[idx].typed = typed; lastResults[idx].decoded = typed; }
+      }
+    } catch (err) {
+      if (dlog) dlog.log(tag, 'post-write re-read failed', err.message);
+    }
+    renderDashboard();
+  }
+
+  function renderProtocolProbes() {
+    els.protocolProbes.innerHTML = '';
+    for (const id of Object.keys(PROTOCOL_PROBES)) {
+      const probe = PROTOCOL_PROBES[id];
+      const row = document.createElement('div');
+      row.className = 'protocol-probe-row';
+      const label = document.createElement('span');
+      label.className = 'histogram-settings-summary';
+      label.textContent = probe.label;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'histogram-change-btn secondary';
+      const state = probeState[id];
+      if (state === 'pending') { btn.textContent = 'Sending…'; btn.disabled = true; }
+      else if (state === 'done') { btn.textContent = 'Sent — check log'; }
+      else if (state === 'failed') { btn.textContent = 'No response — retry?'; }
+      else { btn.textContent = 'Send probe'; }
+      btn.addEventListener('click', () => {
+        if (window.confirm(probe.confirmText)) attemptProtocolProbe(id);
+      });
+      row.appendChild(label);
+      row.appendChild(btn);
+      els.protocolProbes.appendChild(row);
+    }
+  }
+
   function renderStartModeAction() {
     els.startModeAction.innerHTML = '';
     els.startModeAction.style.display = 'none';
@@ -1046,7 +1186,20 @@
     else if (tuningLabel.startsWith('FLAGGED')) tVal.className = 'bad';
     els.drivetrainGrid.appendChild(tRow);
     els.drivetrainGrid.appendChild(tVal);
+    // Read-only (see private research notes for the full disclaimer-mechanism writeup) — this is
+    // the bike-side flag behind Flow's "distracted riding" disclaimer. true on this bike is
+    // consistent with running a non-standard/tuned region config.
+    const dra = valueOf('DriveUnit', 'DISTRACTED_RIDING_ALERT');
+    const draRow = document.createElement('span');
+    draRow.textContent = 'Distracted riding alert';
+    const draVal = document.createElement('span');
+    draVal.textContent = dra == null ? '—' : String(dra);
+    if (dra === true) draVal.className = 'bad';
+    else if (dra === false) draVal.className = 'good';
+    els.drivetrainGrid.appendChild(draRow);
+    els.drivetrainGrid.appendChild(draVal);
     renderStartModeAction();
+    renderProtocolProbes();
 
     els.usageGrid.innerHTML = '';
     const odometerM = valueOf('DriveUnit', 'ODOMETER');
