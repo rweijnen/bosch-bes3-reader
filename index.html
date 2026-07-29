@@ -164,9 +164,10 @@
   .raw-toggle .export { color: var(--accent); font-weight: 500; background: none; border: none; cursor: pointer; font: 500 12px 'IBM Plex Mono', monospace; }
   .raw-body { border-top: 1px solid var(--border); max-height: 480px; overflow-y: auto; }
   .raw-head { display: grid; grid-template-columns: 1.2fr 1fr 110px 1.6fr; gap: 16px; padding: 10px 20px; font: 500 11px 'IBM Plex Mono', monospace; color: var(--faint); letter-spacing: 0.08em; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--panel); }
-  .raw-row { display: grid; grid-template-columns: 1.2fr 1fr 110px 1.6fr; gap: 16px; padding: 8px 20px; font: 400 12px 'IBM Plex Mono', monospace; border-bottom: 1px solid var(--border); color: var(--muted); }
+  .raw-row { display: grid; grid-template-columns: 1.2fr 1fr 130px 1.6fr; gap: 16px; padding: 8px 20px; font: 400 12px 'IBM Plex Mono', monospace; border-bottom: 1px solid var(--border); color: var(--muted); }
   .raw-row span:first-child { color: var(--text); }
   .raw-row .typed-marker { color: var(--accent); }
+  .writable-marker { color: var(--danger); margin-left: 6px; cursor: help; }
 
   .footnote { font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); text-align: center; letter-spacing: 0.06em; }
 
@@ -323,6 +324,10 @@
           <div class="kv-grid" id="usageGrid"></div>
           <div id="assistModeHistogram" class="histogram histogram-compact" style="display:none;"></div>
         </div>
+        <div class="card data-card">
+          <span class="card-label">REMOTE</span>
+          <div class="kv-grid" id="remoteGrid"></div>
+        </div>
       </div>
 
       <!-- EBIKE CONNECT CLOUD LOOKUPS -->
@@ -347,7 +352,7 @@
           <button id="exportBtn" class="export" type="button">EXPORT REPORT &darr;</button>
         </button>
         <div id="rawBody" class="raw-body" style="display:none;">
-          <div class="raw-head"><span>COMPONENT.NAME</span><span>ADDRESS</span><span>&nbsp;</span><span>VALUE</span></div>
+          <div class="raw-head"><span>COMPONENT.NAME</span><span>ADDRESS</span><span title="&#9679; = confirmed type decode. &#9998; = statically writable in Bosch&rsquo;s own code (not a live check of this bike, not a safety claim &mdash; see README)">&#9679; type / &#9998; writable</span><span>VALUE</span></div>
           <div id="rawRows"></div>
         </div>
       </div>
@@ -389,11 +394,12 @@
         <span class="modal-title">Use at your own risk</span>
       </div>
       <div class="modal-body">
-        <p>BES3 Reader is an independent, unofficial tool and is <strong style="color:var(--text);">not affiliated with, endorsed by, or supported by Bosch</strong>. It communicates directly with your eBike's drive unit.</p>
+        <p>BES3 Reader is an independent, unofficial tool and is <strong style="color:var(--text);">not affiliated with, endorsed by, or supported by Bosch</strong>. It communicates directly with your eBike's drive unit using a protocol reverse-engineered from Bosch's own official software.</p>
         <ul>
+          <li>This is an <strong style="color:var(--text);">experimental, protocol-research tool</strong>, not a finished consumer product. Only use it if you understand what it's doing at the protocol level, knowingly accept the risks below, and doing so is legal where you live.</li>
           <li>You use this tool entirely <strong style="color:var(--text);">at your own risk</strong>. The authors accept no liability for any damage, data loss, voided warranty, or malfunction.</li>
           <li>Connecting to your drive unit may affect your manufacturer warranty or violate local regulations. You are responsible for how you use it.</li>
-          <li>This tool is almost entirely read-only. The exceptions are a small number of opt-in actions: a "reset to default" button per assist mode (resets that mode's assist level/max speed/acceleration response to factory defaults), an "always start in last-used mode" button, and a per-mode "change values" editor (bounded to that mode's own reported limits). None run without you clicking it and confirming a dialog that explains exactly what it does.</li>
+          <li>This tool is a work in progress and still changing a lot &mdash; not all functionality has been (thoroughly) tested.</li>
           <li>Cloud lookups (when available) run against Bosch services using your own account; respect their terms of service.</li>
         </ul>
         <label class="ack-row">

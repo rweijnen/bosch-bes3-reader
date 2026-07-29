@@ -5,9 +5,16 @@ USB-C direct connection to the drive unit's system controller). Reads
 identification and status data across every component — drive unit, both
 battery slots, remote control, head unit, connect module, ABS — serial
 numbers, product codes, hardware/software versions, speed limits, region
-configuration, and more, over USB. Almost everything here is read-only; the
-deliberate exceptions are a handful of narrow, opt-in repair/preference
-actions — see [Scope](#scope-mostly-read-only-a-few-deliberate-exceptions) below.
+configuration, and more, over USB. Overwhelmingly read-only; the handful of
+actual write actions are narrow, opt-in, and each behind its own explicit
+button and confirmation — see
+[Scope](#scope-mostly-read-only-a-few-deliberate-exceptions) below.
+
+This is an **experimental, protocol-research tool**, not a finished consumer
+product — built by reverse-engineering Bosch's own official software, not
+sanctioned by Bosch. Only use it if you understand what it's doing at the
+protocol level, knowingly accept the risks, and doing so is legal where you
+live.
 
 Two identical implementations sharing the same protocol code:
 

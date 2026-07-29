@@ -18,6 +18,14 @@
 //   uuid            - protobuf field 1 wraps a nested message whose own field 1 is 16 raw bytes
 //   enum            - protobuf field 1, varint enum ordinal; look up in `enumTable`
 //   tuningDetection - protobuf field 1 = bool flag, field 2 = varint counter
+//   unixTimestamp   - protobuf field 1, varint int64, Unix epoch seconds (com.bosch.ebike.bes3.
+//                     messagebus.Timestamp — distinct from the separate TimestampInMilliseconds
+//                     class Bosch also has, confirming this one is seconds, not ms)
+//   uint32List      - protobuf field 1, repeated varint uint32 (com.bosch.ebike.bes3.messagebus.
+//                     ArrayOf8Uint32) — up to 8 packed values, e.g. per-LED color codes
+//   serviceDue      - protobuf field 1 = nested Timestamp submessage, field 2 = varint odometer
+//                     (meters, same unit as ODOMETER elsewhere) — com.bosch.ebike.bes3.messagebus.
+//                     ServiceDue
 
 (function () {
 const REGIO_SPEED_CONFIGURATION_ENUM = {
@@ -67,6 +75,22 @@ const START_ASSIST_MODE_POSITION_ENUM = {
   4: { name: 'START_ASSIST_MODE_POSITION2', label: 'Position 2' },
   5: { name: 'START_ASSIST_MODE_POSITION3', label: 'Position 3' },
   6: { name: 'START_ASSIST_MODE_POSITION4', label: 'Position 4' },
+  '-1': { name: 'UNRECOGNIZED', label: 'Unrecognized' },
+};
+
+// com.bosch.ebike.bes3.messagebus.UnitEnumType — confirmed via decompile
+// (RemoteControlMessageBusWrapper.getUnits(): ReadableWritableSubscribableDataPoint<UnitEnumMessage>).
+const UNIT_ENUM = {
+  0: { name: 'METRIC', label: 'Metric' },
+  1: { name: 'IMPERIAL', label: 'Imperial' },
+  '-1': { name: 'UNRECOGNIZED', label: 'Unrecognized' },
+};
+
+// com.bosch.ebike.bes3.messagebus.TimeFormatEnumType — confirmed via decompile
+// (RemoteControlMessageBusWrapper.getTimeFormat(): ReadableWritableSubscribableDataPoint<TimeFormatEnumMessage>).
+const TIME_FORMAT_ENUM = {
+  0: { name: 'HOUR24', label: '24-hour' },
+  1: { name: 'HOUR12', label: '12-hour' },
   '-1': { name: 'UNRECOGNIZED', label: 'Unrecognized' },
 };
 
@@ -136,6 +160,11 @@ const FIELD_TYPES = {
   6302: { label: 'Motor Product Code', kind: 'string' },
   6168: { label: 'Odometer', kind: 'uint', unit: 'm' }, // inferred — bare UInt, see file header
   6169: { label: 'Power-On Time', kind: 'uint', unit: 's' }, // inferred — bare UShort
+  // Read-only (ReadableSubscribableDataPoint<Boolean>, no write method anywhere) — this is the
+  // trigger flag behind the "distracted riding" disclaimer flow, see the private research notes
+  // for the full trigger/display-mechanism writeup. Baked into the signed region config; not
+  // independently settable from the client side.
+  6161: { label: 'Distracted Riding Alert', kind: 'bool' },
 
   // --- Battery (slot 1) ---
   129: { label: 'Serial Number', kind: 'string' },
@@ -152,6 +181,18 @@ const FIELD_TYPES = {
   155: { label: 'Product Name', kind: 'string' },
   156: { label: 'Delivered Wh (Lifetime)', kind: 'uint', unit: 'Wh' }, // inferred — bare UInt
   216: { label: 'State of Health', kind: 'uint', unit: '%' }, // inferred — bare UByte
+
+  // --- RemoteControl (BRC) — all confirmed via decompile of RemoteControlMessageBusWrapper.
+  // LANGUAGE/UNITS/TIME/TIME_FORMAT/LED_COLORS/SERVICE_DUE are all declared writable
+  // (ReadableWritable[Subscribable]DataPoint) — same trust tier as START_ASSIST_MODE_CONFIGURATION,
+  // but none of these write paths have been traced/tested the way that one has (see private
+  // research notes) — decoded here as read-only for now, no write UI added.
+  8226: { label: 'Time', kind: 'unixTimestamp' },
+  8354: { label: 'LED Colors', kind: 'uint32List' },
+  8577: { label: 'Language', kind: 'string' },
+  8578: { label: 'Units', kind: 'enum', enumTable: UNIT_ENUM },
+  8579: { label: 'Time Format', kind: 'enum', enumTable: TIME_FORMAT_ENUM },
+  8581: { label: 'Service Due', kind: 'serviceDue' },
 };
 
 function toHex(bytes) {
@@ -225,6 +266,22 @@ function decodeTyped(addr, payload) {
       const entry = meta.enumTable[0];
       return { label: meta.label, display: `${entry.label} [${entry.name}=0], configurable=false`, value: { position: entry.name, configurable: false } };
     }
+    // Pre-existing gap fixed here: proto3 omits an enum field entirely when its value is the
+    // default (0) — same reasoning as 'bool'/'uint' above, just not handled for 'enum' until now.
+    // Affects any enum-kind field whenever the bike reports its 0 value (e.g. UNITS=METRIC,
+    // TIME_FORMAT=HOUR24) — previously misreported as "(empty / default)" instead of resolving
+    // to the real enum-0 value.
+    if (meta.kind === 'enum') {
+      const entry = meta.enumTable[0];
+      return { label: meta.label, display: entry ? `${entry.label} [${entry.name}=0]` : 'unknown enum value 0', value: entry ? entry.name : 0 };
+    }
+    // Unlike a 0-value counter or false flag, an epoch-0 timestamp (1970-01-01) is never a
+    // real bike-reported clock value — showing it as a literal date would be misleading, so
+    // this is deliberately displayed as "(not set)" rather than following strict proto3-omission
+    // semantics like the kinds above.
+    if (meta.kind === 'unixTimestamp') return { label: meta.label, display: '(not set)', value: 0 };
+    if (meta.kind === 'uint32List') return { label: meta.label, display: '(none)', value: [] };
+    if (meta.kind === 'serviceDue') return { label: meta.label, display: '(not set)', value: { timestamp: 0, odometer: 0 } };
     return { label: meta.label, display: '(empty / default)', value: null };
   }
 
@@ -286,6 +343,36 @@ function decodeTyped(addr, payload) {
         display: `${positionLabel}, configurable=${configurable}`,
         value: { position, configurable },
       };
+    }
+    case 'unixTimestamp': {
+      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      const iso = new Date(f1.value * 1000).toISOString();
+      return { label: meta.label, display: iso, value: f1.value };
+    }
+    case 'uint32List': {
+      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      // proto3 packed repeated scalar encoding: field 1 is one length-delimited run of
+      // concatenated varints, not one wire entry per element.
+      const values = [];
+      let i = 0;
+      while (i < f1.value.length) {
+        const [v, next] = readVarint(f1.value, i);
+        values.push(v);
+        i = next;
+      }
+      return { label: meta.label, display: values.length ? values.join(', ') : '(none)', value: values };
+    }
+    case 'serviceDue': {
+      let timestamp = 0;
+      if (fields[1] && fields[1].wireType === 2) {
+        const inner = parseFields(fields[1].value);
+        timestamp = inner[1] && inner[1].wireType === 0 ? inner[1].value : 0;
+      }
+      const odometer = fields[2] && fields[2].wireType === 0 ? fields[2].value : 0;
+      const display = timestamp
+        ? `${new Date(timestamp * 1000).toISOString()}, odometer ${odometer} m`
+        : `odometer ${odometer} m`;
+      return { label: meta.label, display, value: { timestamp, odometer } };
     }
     default:
       return null;

@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.12';
+  const APP_VERSION = '2026-07-29.1';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -70,6 +70,7 @@
     driveUnitGrid: $('driveUnitGrid'),
     drivetrainGrid: $('drivetrainGrid'),
     usageGrid: $('usageGrid'),
+    remoteGrid: $('remoteGrid'),
     assistModeHistogram: $('assistModeHistogram'),
     startModeAction: $('startModeAction'),
     assistModeModalBackdrop: $('assistModeModalBackdrop'),
@@ -798,9 +799,20 @@
     });
   }
 
-  function kvRow(container, label, value) {
+  function kvRow(container, label, value, writable) {
     const l = document.createElement('span');
     l.textContent = label;
+    if (writable) {
+      const w = document.createElement('span');
+      w.className = 'writable-marker';
+      w.textContent = '✎';
+      // Same caveat as the raw-table marker (see there for the full explanation): this is a
+      // STATIC protocol-level fact from Bosch's own code, not a live check of this bike, and not
+      // a safety claim — a field can be statically writable yet have an untested/untraced
+      // precondition, the way START_ASSIST_MODE_CONFIGURATION did.
+      w.title = 'Statically writable in Bosch’s own code (not a live check of this bike, not a safety claim)';
+      l.appendChild(w);
+    }
     const v = document.createElement('span');
     v.textContent = value;
     container.appendChild(l);
@@ -1016,6 +1028,17 @@
     kvRow(els.usageGrid, 'Power-on time', displayOf('DriveUnit', 'POWER_ON_TIME'));
     kvRow(els.usageGrid, 'OEM bike ID', displayOf('DriveUnit', 'OEM_BIKE_ID'));
     kvRow(els.usageGrid, 'OEM brand', displayOf('DriveUnit', 'OEM_BRAND_NAME'));
+
+    els.remoteGrid.innerHTML = '';
+    // All of these are declared writable in Bosch's own RemoteControl adapter (see the ✎ marker
+    // and its tooltip / README) — read-only display here, no write UI built for any of them yet;
+    // none have had their write path traced/tested the way START_ASSIST_MODE_CONFIGURATION has.
+    kvRow(els.remoteGrid, 'Language', displayOf('RemoteControl', 'LANGUAGE'), true);
+    kvRow(els.remoteGrid, 'Units', displayOf('RemoteControl', 'UNITS'), true);
+    kvRow(els.remoteGrid, 'Time format', displayOf('RemoteControl', 'TIME_FORMAT'), true);
+    kvRow(els.remoteGrid, 'Time (bike clock)', displayOf('RemoteControl', 'TIME'), true);
+    kvRow(els.remoteGrid, 'LED colors', displayOf('RemoteControl', 'LED_COLORS'), true);
+    kvRow(els.remoteGrid, 'Service due', displayOf('RemoteControl', 'SERVICE_DUE'), true);
 
     renderAssistModeHistogram();
   }
@@ -1279,6 +1302,20 @@
       const markCell = document.createElement('span');
       markCell.className = 'typed-marker';
       markCell.textContent = r.typed ? '●' : '';
+      if (r.writable) {
+        const w = document.createElement('span');
+        w.className = 'writable-marker';
+        w.textContent = '✎'; // pencil
+        // IMPORTANT distinction (see private research notes): this marks a STATIC protocol fact —
+        // Bosch's own code declares this MessageBus address as a writable data point for every
+        // Smart System bike — not a live capability check of THIS bike. START_ASSIST_MODE_CONFIGURATION
+        // (6180) is always statically "writable" in this sense too, yet whether a write to it actually
+        // sticks depends on a separate live flag read from a DIFFERENT address (6179's `configurable`
+        // field) that our tool now checks before offering that write. None of the other fields marked
+        // here have had a similar hidden-precondition check traced — this badge is not a safety claim.
+        w.title = 'Statically writable in Bosch’s own code (protocol-level fact, not a live check of this bike) — whether a write actually sticks may depend on an untraced precondition, as it did for start-assist-mode';
+        markCell.appendChild(w);
+      }
       const valCell = document.createElement('span');
       if (r.status === 'ok') {
         valCell.textContent = (r.typed || r.decoded).display;
@@ -1314,6 +1351,9 @@
         address: '0x' + r.addr.toString(16).padStart(4, '0'),
         status: r.status,
         typed: !!r.typed,
+        // Statically writable per Bosch's own code — not a live check of this bike, see the
+        // matching UI tooltip / README for the important caveat (start-assist-mode precedent).
+        writable: !!r.writable,
         value: r.status === 'ok' ? (r.typed || r.decoded).display : null,
       })),
     };
