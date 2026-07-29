@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-29.2';
+  const APP_VERSION = '2026-07-29.3';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -939,6 +939,32 @@
         'itself as locked by the manufacturer for this setting (same flag Bosch\'s own tool ' +
         'checks), so a write here is expected not to stick.';
       els.startModeAction.appendChild(summary);
+
+      // Deliberate research override: we've only ever observed correlation between this flag
+      // and the write not sticking, never a controlled test (see private research notes — no
+      // write attempt has happened since the OEM-flag logging was added). This lets that test
+      // actually happen, clearly labeled as bypassing a known precondition rather than hiding
+      // that fact from the user.
+      const overrideBtn = document.createElement('button');
+      overrideBtn.type = 'button';
+      overrideBtn.className = 'histogram-change-btn secondary'; // deliberately muted styling — not a primary action
+      if (startModeWriteState === 'pending') { overrideBtn.textContent = 'Setting…'; overrideBtn.disabled = true; }
+      else { overrideBtn.textContent = 'Attempt anyway (research override)'; }
+      overrideBtn.addEventListener('click', () => {
+        const confirmed = window.confirm(
+          'Attempt the write anyway, despite the "locked by manufacturer" flag?\n\n' +
+          'This bike reports START_ASSIST_MODE_CONFIGURATION_OEM.configurable = false — the ' +
+          'same flag Bosch\'s own DiagnosticTool 3 checks before offering this control at all. ' +
+          'We\'ve only ever observed a CORRELATION between this flag and the write not sticking, ' +
+          'never a controlled test. This bypasses that gate on purpose so the write can actually ' +
+          'be attempted and logged, to find out whether it\'s really the cause.\n\n' +
+          'Expected outcome: the bike may still ack the write (WRITE_RESPONSE/SUCCESS) without it ' +
+          'durably sticking, same as before. Please export a debug log afterward regardless of ' +
+          'outcome — this test is only useful if the OEM-flag-before-write log line is captured.'
+        );
+        if (confirmed) writeStartAssistModeLastUsed();
+      });
+      els.startModeAction.appendChild(overrideBtn);
       return;
     }
 
