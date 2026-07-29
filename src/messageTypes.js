@@ -94,7 +94,17 @@ const FIELD_TYPES = {
   6163: { label: 'Maximum Legal Bike Speed', kind: 'normFactor', factor: 100, unit: 'km/h' },
   6166: { label: 'Maximum Gear Ratio', kind: 'normFactor', factor: 100 },
   6167: { label: 'Maximum Assistance Speed', kind: 'normFactor', factor: 100, unit: 'km/h' },
-  6179: { label: 'Start Assist Mode (OEM default)', kind: 'enum', enumTable: START_ASSIST_MODE_POSITION_ENUM },
+  // NOT a plain enum, despite the name suggesting it's just the OEM default position — confirmed
+  // via decompile of the real Bosch DiagnosticTool 3 UI (AssistModesTilesModel/ViewModel,
+  // eds-bdp-ui-assistmode-17.9.3.jar): StartAssistModeConfigurationOem is a 2-field protobuf message,
+  // field 1 = startAssistModePosition (enum, the OEM default — what we already decoded), field 2 =
+  // startAssistModePositionConfigurable (bool, proto3-omitted when false). The official UI reads
+  // ONLY field 2 to decide whether to let the user change START_ASSIST_MODE_CONFIGURATION (6180) at
+  // all — shows a "locked by manufacturer" tooltip and treats the control as non-configurable when
+  // false. Our own write path never checked this flag before — a real hardware test showed a write
+  // to 6180 get a genuine WRITE_RESPONSE/SUCCESS ack that didn't durably stick, and this gate is the
+  // leading candidate explanation (firmware silently no-ops the write when field2 is false here).
+  6179: { label: 'Start Assist Mode (OEM default)', kind: 'startAssistModeOem', enumTable: START_ASSIST_MODE_POSITION_ENUM },
   6180: { label: 'Start Assist Mode', kind: 'enum', enumTable: START_ASSIST_MODE_POSITION_ENUM }, // writable — MessageBus.DriveUnit.getStartAssistModeConfiguration() is ReadableWritableSubscribableDataPoint, no dealer/HSM gate found
   6183: { label: 'Product Line', kind: 'string' },
   6184: { label: 'Rear Wheel Circumference (OEM)', kind: 'normFactor', factor: 10, unit: 'mm' }, // SafeUint16NormFactor10 — has a field-2 checksum we ignore
@@ -211,6 +221,10 @@ function decodeTyped(addr, payload) {
     // read means "no tuning detected", not "unknown". Return a real value object so
     // callers can read .flag / .counter without a null guard.
     if (meta.kind === 'tuningDetection') return { label: meta.label, display: 'flag=false, counter=0', value: { flag: false, counter: 0 } };
+    if (meta.kind === 'startAssistModeOem') {
+      const entry = meta.enumTable[0];
+      return { label: meta.label, display: `${entry.label} [${entry.name}=0], configurable=false`, value: { position: entry.name, configurable: false } };
+    }
     return { label: meta.label, display: '(empty / default)', value: null };
   }
 
@@ -260,6 +274,18 @@ function decodeTyped(addr, payload) {
       const flag = fields[1] ? !!fields[1].value : false;
       const counter = fields[2] ? fields[2].value : 0;
       return { label: meta.label, display: `flag=${flag}, counter=${counter}`, value: { flag, counter } };
+    }
+    case 'startAssistModeOem': {
+      const posValue = f1 && f1.wireType === 0 ? f1.value : 0;
+      const entry = meta.enumTable[posValue] || meta.enumTable[String(posValue)];
+      const position = entry ? entry.name : posValue;
+      const positionLabel = entry ? `${entry.label} [${entry.name}=${posValue}]` : `unknown enum value ${posValue}`;
+      const configurable = fields[2] ? !!fields[2].value : false;
+      return {
+        label: meta.label,
+        display: `${positionLabel}, configurable=${configurable}`,
+        value: { position, configurable },
+      };
     }
     default:
       return null;

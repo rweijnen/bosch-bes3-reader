@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.11';
+  const APP_VERSION = '2026-07-20.12';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -827,6 +827,10 @@
     renderStartModeAction();
     const arg = encodeEnumArg(START_ASSIST_MODE_LAST_USED);
     const dlog = window.Bes3DebugLog;
+    if (dlog) {
+      const oem = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION_OEM');
+      dlog.log('start-mode', 'OEM configurable flag before write', oem);
+    }
     transportBusy = true;
     try {
       let done = false;
@@ -905,6 +909,26 @@
     const current = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION');
     if (current == null) return; // not read yet / declined — nothing to act on
     if (current === 'START_ASSIST_MODE_LAST_USED' && startModeWriteState !== 'failed') return; // already set, nothing to do
+
+    // Bosch's own DiagnosticTool 3 UI (AssistModesTilesModel/ViewModel, confirmed via decompile)
+    // gates this exact control on START_ASSIST_MODE_CONFIGURATION_OEM's (6179) second field,
+    // `startAssistModePositionConfigurable` — showing a "locked by manufacturer" state when false,
+    // rather than letting the user attempt the write at all. We didn't check this before; a real
+    // hardware test showed a write get a genuine WRITE_RESPONSE/SUCCESS ack that didn't durably
+    // stick, and this flag being false is the leading explanation. Mirror that gate here.
+    const oem = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION_OEM');
+    const configurable = oem && typeof oem === 'object' ? oem.configurable : null;
+    if (configurable === false) {
+      els.startModeAction.style.display = '';
+      const summary = document.createElement('span');
+      summary.className = 'histogram-settings-summary';
+      summary.textContent =
+        'Bike doesn\'t resume your last assist mode on power-on — and this bike reports ' +
+        'itself as locked by the manufacturer for this setting (same flag Bosch\'s own tool ' +
+        'checks), so a write here is expected not to stick.';
+      els.startModeAction.appendChild(summary);
+      return;
+    }
 
     els.startModeAction.style.display = '';
     const summary = document.createElement('span');
