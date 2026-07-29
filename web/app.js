@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-20.10';
+  const APP_VERSION = '2026-07-20.11';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -871,16 +871,29 @@
     }
     // Re-read to reflect the bike's actual current value, not just our
     // assumption that the write took effect (readOne sets transportBusy
-    // itself, so this is safe to run after the finally above).
+    // itself, so this is safe to run after the finally above). Logged
+    // explicitly (unlike before) because a WRITE_RESPONSE/SUCCESS ack does
+    // NOT guarantee the value actually stuck — real hardware testing
+    // (2026-07-20/21) showed the write gets a genuine, sequence-matched ack
+    // yet a later fresh read still reports the old value. Without logging
+    // this re-read's own outcome, "shows the old value" is ambiguous between
+    // "confirmed reverted immediately" and "we just failed/timed out trying
+    // to check" — this line is what tells those apart next time.
     if (transport && START_ASSIST_MODE_ADDR) {
       try {
         const r = await readOne(START_ASSIST_MODE_ADDR);
+        if (dlog) dlog.log('start-mode', 'post-write re-read result', r);
         if (r && !r.declined && r.payload) {
           const idx = lastResults.findIndex((x) => x.component === 'DriveUnit' && x.name === 'START_ASSIST_MODE_CONFIGURATION');
           const typed = decodeTyped(START_ASSIST_MODE_ADDR, r.payload);
+          if (dlog) dlog.log('start-mode', 'post-write re-read decoded', typed);
           if (idx >= 0) { lastResults[idx].status = 'ok'; lastResults[idx].typed = typed; lastResults[idx].decoded = typed; }
         }
-      } catch (_) {}
+      } catch (err) {
+        if (dlog) dlog.log('start-mode', 'post-write re-read failed', err.message);
+      }
+    } else if (dlog) {
+      dlog.log('start-mode', 'post-write re-read skipped (no transport/addr)');
     }
     renderDashboard();
   }
