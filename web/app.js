@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-29.6';
+  const APP_VERSION = '2026-07-30.1';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -73,8 +73,7 @@
     usageGrid: $('usageGrid'),
     remoteGrid: $('remoteGrid'),
     assistModeHistogram: $('assistModeHistogram'),
-    startModeAction: $('startModeAction'),
-    protocolProbes: $('protocolProbes'),
+    writeExperiments: $('writeExperiments'),
     assistModeModalBackdrop: $('assistModeModalBackdrop'),
     assistModeModalTitle: $('assistModeModalTitle'),
     assistModeModalBody: $('assistModeModalBody'),
@@ -535,7 +534,7 @@
   // AND its type/sequence before accepting it — address-only matching was
   // confirmed unsafe on real hardware (a same-address, wrong-type/wrong-seq
   // frame was observed arriving during a write's response window; see the
-  // writeStartAssistModeLastUsed fix). Matters even more here since this is
+  // attemptWriteExperiment fix). Matters even more here since this is
   // also used for the UDAM write below — accepting a stray frame as "success"
   // for a write is worse than for a read.
   async function rpcCallWithArg(addr, argPayload, decodeFn, logLabel) {
@@ -827,126 +826,62 @@
     container.appendChild(v);
   }
 
-  // This tool's second (and, like the first, deliberately narrow) write:
-  // START_ASSIST_MODE_CONFIGURATION (addr 6180) is a plain WritableDataPoint
-  // — confirmed via decompile (MessageBus.DriveUnit.getStartAssistModeConfiguration()
-  // returns ReadableWritableSubscribableDataPoint<StartAssistModePositionEnumMessage>,
-  // no dealer/HSM gate found anywhere). Sets it to START_ASSIST_MODE_LAST_USED
-  // (value 1) — never any other value, never automatic, always behind an
-  // explicit button + confirm() dialog, same pattern as the UDAM reset.
-  const START_ASSIST_MODE_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'START_ASSIST_MODE_CONFIGURATION') || {}).addr;
   const START_ASSIST_MODE_LAST_USED = 1;
-  let startModeWriteState = null; // null | 'pending' | 'done' | 'failed'
 
-  async function writeStartAssistModeLastUsed() {
-    if (!START_ASSIST_MODE_ADDR || !transport) {
-      window.alert('Not connected to the bike anymore — reconnect (Read again) and try again.');
-      return;
-    }
-    startModeWriteState = 'pending';
-    renderStartModeAction();
-    const arg = encodeEnumArg(START_ASSIST_MODE_LAST_USED);
-    const dlog = window.Bes3DebugLog;
-    if (dlog) {
-      const oem = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION_OEM');
-      dlog.log('start-mode', 'OEM configurable flag before write', oem);
-    }
-    transportBusy = true;
-    try {
-      let done = false;
-      for (let attempt = 0; attempt < 2 && !done; attempt++) {
-        for (let i = 0; i < 4; i++) {
-          if (!(await transport.readNextFrame(1, 2))) break;
-        }
-        const sentSeq = nextSeq();
-        const frame = buildWriteFrame(START_ASSIST_MODE_ADDR, sentSeq, arg);
-        if (dlog) dlog.log('start-mode', `-> WRITE addr 0x${START_ASSIST_MODE_ADDR.toString(16)} value=${START_ASSIST_MODE_LAST_USED} attempt ${attempt} seq ${sentSeq}`, frame);
-        await transport.doMcspWrite(frame);
-        const deadline = Date.now() + 500;
-        while (Date.now() < deadline) {
-          const raw = await transport.readNextFrame(4, 4);
-          if (!raw) continue;
-          if (dlog) dlog.log('start-mode', '<- raw frame', raw);
-          const parsed = parseReadResponseFrame(raw);
-          if (!parsed) continue;
-          if (parsed.addrHigh !== (START_ASSIST_MODE_ADDR >> 8) || parsed.addrLow !== (START_ASSIST_MODE_ADDR & 0xff)) continue;
-          // Address alone isn't enough to trust this as *our* response — a
-          // stray frame from an unrelated exchange (confirmed to happen on
-          // real hardware) can share the same address. Only accept a genuine
-          // WRITE_RESPONSE whose sequence matches what we just sent; anything
-          // else (wrong type, wrong seq) is logged and ignored, not treated
-          // as an answer.
-          if (parsed.type !== MessageType.WRITE_RESPONSE || parsed.seq !== sentSeq) {
-            if (dlog) dlog.log('start-mode', `<- ignoring mismatched response (type ${parsed.type}, seq ${parsed.seq}, expected WRITE_RESPONSE seq ${sentSeq})`);
-            continue;
-          }
-          done = true;
-          startModeWriteState = parsed.ok ? 'done' : 'failed';
-          if (!parsed.ok && dlog) dlog.log('start-mode', `<- declined: ${parsed.statusName}`);
-          break;
-        }
-      }
-      if (!done) startModeWriteState = 'failed';
-    } catch (err) {
-      startModeWriteState = 'failed';
-      if (dlog) dlog.log('start-mode', 'write failed', err.message);
-    } finally {
-      transportBusy = false;
-    }
-    // Re-read to reflect the bike's actual current value, not just our
-    // assumption that the write took effect (readOne sets transportBusy
-    // itself, so this is safe to run after the finally above). Logged
-    // explicitly (unlike before) because a WRITE_RESPONSE/SUCCESS ack does
-    // NOT guarantee the value actually stuck — real hardware testing
-    // (2026-07-20/21) showed the write gets a genuine, sequence-matched ack
-    // yet a later fresh read still reports the old value. Without logging
-    // this re-read's own outcome, "shows the old value" is ambiguous between
-    // "confirmed reverted immediately" and "we just failed/timed out trying
-    // to check" — this line is what tells those apart next time.
-    if (transport && START_ASSIST_MODE_ADDR) {
-      try {
-        const r = await readOne(START_ASSIST_MODE_ADDR);
-        if (dlog) dlog.log('start-mode', 'post-write re-read result', r);
-        if (r && !r.declined && r.payload) {
-          const idx = lastResults.findIndex((x) => x.component === 'DriveUnit' && x.name === 'START_ASSIST_MODE_CONFIGURATION');
-          const typed = decodeTyped(START_ASSIST_MODE_ADDR, r.payload);
-          if (dlog) dlog.log('start-mode', 'post-write re-read decoded', typed);
-          if (idx >= 0) { lastResults[idx].status = 'ok'; lastResults[idx].typed = typed; lastResults[idx].decoded = typed; }
-        }
-      } catch (err) {
-        if (dlog) dlog.log('start-mode', 'post-write re-read failed', err.message);
-      }
-    } else if (dlog) {
-      dlog.log('start-mode', 'post-write re-read skipped (no transport/addr)');
-    }
-    renderDashboard();
-  }
-
-  // Deliberate protocol-level probes — NOT supported writes. Both target addresses are read-only
-  // in Bosch's own adapter code (bikeState(), never bikeStateReadableWritableSubscribable()/
-  // BikeStateWritable — no writer exists anywhere in Bosch's own client for either address). The
-  // MessageBus WRITE opcode itself doesn't know or enforce that client-side declaration though —
-  // it's the same generic mechanism for any address — so this tests, at the protocol level,
-  // whether firmware independently rejects a write here (the documented ResponseMessageStatusCode
-  // table already covers DENIED/UNSUPPORTED/INVALID_VALUE-style explicit rejections) or does
-  // something else. Logs whatever status comes back; never claims success either way, and a
-  // WRITE_RESPONSE/SUCCESS ack still wouldn't prove the value durably changed (same "ack ≠ sticks"
-  // lesson as START_ASSIST_MODE_CONFIGURATION) — the re-read after is what actually shows that.
-  const PROTOCOL_PROBES = {
-    distractedRidingAlert: {
-      addrName: 'DISTRACTED_RIDING_ALERT',
-      label: 'Attempt to clear the disclaimer flag',
-      buildPayload: () => encodeBoolArg(false),
-      confirmText:
-        'Attempt to write DISTRACTED_RIDING_ALERT (addr 6161) to false, at the protocol level?\n\n' +
-        'This field is read-only in Bosch\'s own client (no writer exists in the decompiled ' +
-        'adapter code) — this sends a raw WRITE frame anyway, purely to see how firmware itself ' +
-        'responds (an explicit DENIED/UNSUPPORTED status is the most likely outcome). No claim ' +
-        'this will work; the result (including a re-read afterward) is only logged, not assumed.',
+  // Unified panel: one row per field, each showing its own live current value plus a single
+  // action button that writes, logs, re-reads, and updates the shown value in place — replaces
+  // the earlier split between a start-mode-specific action and a separate "protocol probes"
+  // block, which looked like 3 identical buttons with no clear indication of which one did what.
+  //
+  // START_ASSIST_MODE_CONFIGURATION (6180) is the one genuinely declared-writable field here
+  // (ReadableWritableSubscribableDataPoint, confirmed via decompile, no dealer/HSM gate) — gated
+  // on its own OEM precondition (6179's `configurable` field), same gate Bosch's own UI uses,
+  // with a labeled override to bypass that gate on purpose for testing.
+  //
+  // The other two rows are deliberate protocol-level PROBES, not supported writes: both addresses
+  // are read-only in Bosch's own client (no writer exists anywhere in the decompiled adapter code)
+  // — sent anyway purely to see how firmware itself responds. Already confirmed once on real
+  // hardware: firmware returns an explicit WRITE_RESPONSE/DENIED for both, not a silent accept —
+  // see the private research notes.
+  const WRITE_EXPERIMENTS = [
+    {
+      id: 'startMode',
+      addrName: 'START_ASSIST_MODE_CONFIGURATION',
+      label: 'Start mode (6180)',
+      isRealWrite: true,
+      // Short form only — the full decoded display ("Position 0 (off/walk)
+      // [START_ASSIST_MODE_POSITION0=2]") is too long for this row's fixed layout, pushing the
+      // action button off the edge of the card.
+      formatValue: (typed) => {
+        const entry = Object.values(FIELD_TYPES[6180].enumTable).find((v) => v.name === (typed && typed.value));
+        return entry ? entry.label : (typed ? typed.value : '—');
+      },
+      buildPayload: () => encodeEnumArg(START_ASSIST_MODE_LAST_USED),
+      gate: () => {
+        const oem = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION_OEM');
+        return oem && typeof oem === 'object' ? oem.configurable : null;
+      },
+      confirmText: (gated) => gated === false
+        ? 'Attempt the write anyway, despite the "locked by manufacturer" flag?\n\n' +
+          'This bike reports START_ASSIST_MODE_CONFIGURATION_OEM.configurable = false — the same ' +
+          'flag Bosch\'s own DiagnosticTool 3 checks before offering this control at all. This ' +
+          'bypasses that gate on purpose so the write can actually be attempted, logged, and ' +
+          're-read.\n\nExpected outcome: an explicit DENIED (as already seen for the other two ' +
+          'rows here), or an accepted ack that doesn\'t durably stick. Either way the result and ' +
+          'a re-read are both logged, not assumed.'
+        : 'Set the bike to always start in your last-used assist mode?\n\n' +
+          'This writes ONE setting (START_ASSIST_MODE_CONFIGURATION) so the bike resumes whichever ' +
+          'assist mode you were last using, instead of always powering on in off/walk mode. It ' +
+          'does not touch region, speed-class, tuning, or any per-mode assist parameters.',
     },
-    startAssistModeOemConfigurable: {
+    {
+      id: 'startModeOemConfigurable',
       addrName: 'START_ASSIST_MODE_CONFIGURATION_OEM',
-      label: 'Attempt to set configurable=true',
+      label: 'Start mode OEM configurable (6179)',
+      isRealWrite: false,
+      // Just the bool this experiment cares about — the position half of this field duplicates
+      // the "Start mode" row above and isn't relevant to what this probe is testing.
+      formatValue: (typed) => (typed && typeof typed.value === 'object' ? String(typed.value.configurable) : '—'),
       buildPayload: () => {
         const oem = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION_OEM');
         const positionName = oem && typeof oem === 'object' ? oem.position : 'START_ASSIST_MODE_NOT_CONFIGURED';
@@ -955,32 +890,43 @@
         const positionValue = entry ? Number(entry[0]) : 0;
         return encodeStartAssistModeOemArg(positionValue, true);
       },
-      confirmText:
+      confirmText: () =>
         'Attempt to write START_ASSIST_MODE_CONFIGURATION_OEM (addr 6179) with configurable=true, ' +
-        'at the protocol level?\n\n' +
-        'This field is read-only in Bosch\'s own client (no writer exists in the decompiled ' +
-        'adapter code) — this sends a raw WRITE frame anyway, purely to see how firmware itself ' +
-        'responds. If this genuinely worked, START_ASSIST_MODE_CONFIGURATION\'s own write ' +
-        '(the "always start in last-used mode" action) might then actually stick — but that\'s a ' +
-        'hypothesis to test, not a claim. The result (including a re-read afterward) is only ' +
+        'at the protocol level?\n\nThis field is read-only in Bosch\'s own client (no writer exists ' +
+        'in the decompiled adapter code) — this sends a raw WRITE frame anyway. Already tested once ' +
+        'on real hardware: firmware returned an explicit DENIED. The result (including a re-read ' +
+        'afterward) is only logged, not assumed.',
+    },
+    {
+      id: 'distractedRidingAlert',
+      addrName: 'DISTRACTED_RIDING_ALERT',
+      label: 'Distracted riding alert (6161)',
+      isRealWrite: false,
+      formatValue: (typed) => (typed ? String(typed.value) : '—'),
+      buildPayload: () => encodeBoolArg(false),
+      confirmText: () =>
+        'Attempt to write DISTRACTED_RIDING_ALERT (addr 6161) to false, at the protocol level?\n\n' +
+        'This field is read-only in Bosch\'s own client (no writer exists in the decompiled adapter ' +
+        'code) — this sends a raw WRITE frame anyway. Already tested once on real hardware: ' +
+        'firmware returned an explicit DENIED. The result (including a re-read afterward) is only ' +
         'logged, not assumed.',
     },
-  };
-  const probeState = {}; // id -> null | 'pending' | 'done' | 'failed' ("done" = got a response, not "it worked")
+  ];
+  const experimentState = {}; // id -> null | 'pending' | 'done' | 'failed' ("done" = got a response, not "it worked")
 
-  async function attemptProtocolProbe(id) {
-    const probe = PROTOCOL_PROBES[id];
-    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === probe.addrName) || {}).addr;
+  async function attemptWriteExperiment(id) {
+    const exp = WRITE_EXPERIMENTS.find((e) => e.id === id);
+    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === exp.addrName) || {}).addr;
     if (!addr || !transport) {
       window.alert('Not connected to the bike anymore — reconnect (Read again) and try again.');
       return;
     }
-    probeState[id] = 'pending';
-    renderProtocolProbes();
-    const payload = probe.buildPayload();
+    experimentState[id] = 'pending';
+    renderWriteExperiments();
+    const payload = exp.buildPayload();
     const dlog = window.Bes3DebugLog;
-    const tag = `probe-${id}`;
-    if (dlog) dlog.log(tag, `payload before write`, payload);
+    const tag = `write-${id}`;
+    if (dlog) dlog.log(tag, 'payload before write', payload);
     transportBusy = true;
     try {
       let done = false;
@@ -1000,30 +946,36 @@
           const parsed = parseReadResponseFrame(raw);
           if (!parsed) continue;
           if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
+          // Address alone isn't enough to trust this as *our* response — a stray frame from an
+          // unrelated exchange (confirmed to happen on real hardware) can share the same address.
+          // Only accept a genuine WRITE_RESPONSE whose sequence matches what we just sent.
           if (parsed.type !== MessageType.WRITE_RESPONSE || parsed.seq !== sentSeq) {
             if (dlog) dlog.log(tag, `<- ignoring mismatched response (type ${parsed.type}, seq ${parsed.seq}, expected WRITE_RESPONSE seq ${sentSeq})`);
             continue;
           }
           done = true;
-          probeState[id] = 'done';
+          experimentState[id] = parsed.ok ? 'done' : 'failed';
           if (dlog) dlog.log(tag, `<- WRITE_RESPONSE ok=${parsed.ok} status=${parsed.statusName}`);
           break;
         }
       }
-      if (!done) probeState[id] = 'failed';
+      if (!done) experimentState[id] = 'failed';
     } catch (err) {
-      probeState[id] = 'failed';
+      experimentState[id] = 'failed';
       if (dlog) dlog.log(tag, 'write failed', err.message);
     } finally {
       transportBusy = false;
     }
-    // Re-read regardless of outcome — same reasoning as the start-mode write: an ack (or even a
-    // clean rejection) doesn't by itself tell us what the bike now reports.
+    // Re-read regardless of outcome and update the shown value in place — same reasoning
+    // throughout this project: an ack (or even a clean rejection) doesn't by itself tell us what
+    // the bike now reports; a WRITE_RESPONSE/SUCCESS ack in particular does NOT guarantee the
+    // value actually stuck (real hardware precedent: START_ASSIST_MODE_CONFIGURATION got a
+    // genuine, sequence-matched ack yet a later fresh read still showed the old value).
     try {
       const r = await readOne(addr);
       if (dlog) dlog.log(tag, 'post-write re-read result', r);
       if (r && !r.declined && r.payload) {
-        const idx = lastResults.findIndex((x) => x.component === 'DriveUnit' && x.name === probe.addrName);
+        const idx = lastResults.findIndex((x) => x.component === 'DriveUnit' && x.name === exp.addrName);
         const typed = decodeTyped(addr, r.payload);
         if (dlog) dlog.log(tag, 'post-write re-read decoded', typed);
         if (idx >= 0) { lastResults[idx].status = 'ok'; lastResults[idx].typed = typed; lastResults[idx].decoded = typed; }
@@ -1034,109 +986,55 @@
     renderDashboard();
   }
 
-  function renderProtocolProbes() {
-    els.protocolProbes.innerHTML = '';
-    for (const id of Object.keys(PROTOCOL_PROBES)) {
-      const probe = PROTOCOL_PROBES[id];
+  function renderWriteExperiments() {
+    els.writeExperiments.innerHTML = '';
+    for (const exp of WRITE_EXPERIMENTS) {
+      const addrEntry = ALL_ADDRESSES.DriveUnit.find((e) => e.name === exp.addrName);
+      if (!addrEntry) continue;
+      const current = valueOf('DriveUnit', exp.addrName);
+      if (current == null) continue; // not read yet / declined — nothing to show or act on
+
       const row = document.createElement('div');
-      row.className = 'protocol-probe-row';
+      row.className = 'write-experiment-row' + (exp.isRealWrite ? ' write-experiment-real' : '');
+
       const label = document.createElement('span');
-      label.className = 'histogram-settings-summary';
-      label.textContent = probe.label;
+      label.className = 'write-experiment-label';
+      label.textContent = exp.label;
+
+      const result = findResult('DriveUnit', exp.addrName);
+      const typed = result && result.status === 'ok' ? result.typed : null;
+      const value = document.createElement('span');
+      value.className = 'write-experiment-value';
+      value.textContent = exp.formatValue ? exp.formatValue(typed) : displayOf('DriveUnit', exp.addrName);
+
+      const state = experimentState[exp.id];
+      const gated = exp.gate ? exp.gate() : null;
+
+      if (exp.isRealWrite && current === 'START_ASSIST_MODE_LAST_USED' && state !== 'failed') {
+        // Already set — show the value, no action needed.
+        const done = document.createElement('span');
+        done.className = 'write-experiment-value good';
+        done.textContent = 'already set';
+        row.append(label, value, done);
+        els.writeExperiments.appendChild(row);
+        continue;
+      }
+
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'histogram-change-btn secondary';
-      const state = probeState[id];
+      btn.className = exp.isRealWrite ? 'histogram-reset-btn' : 'histogram-change-btn secondary';
       if (state === 'pending') { btn.textContent = 'Sending…'; btn.disabled = true; }
-      else if (state === 'done') { btn.textContent = 'Sent — check log'; }
+      else if (exp.isRealWrite && gated === false) { btn.textContent = state === 'failed' ? 'Denied — retry anyway?' : 'Attempt anyway (locked)'; }
+      else if (state === 'done') { btn.textContent = exp.isRealWrite ? 'Set ✓' : 'Sent — see value/log'; }
       else if (state === 'failed') { btn.textContent = 'No response — retry?'; }
-      else { btn.textContent = 'Send probe'; }
+      else { btn.textContent = exp.isRealWrite ? 'Set to last-used' : 'Send probe'; }
       btn.addEventListener('click', () => {
-        if (window.confirm(probe.confirmText)) attemptProtocolProbe(id);
+        if (window.confirm(exp.confirmText(gated))) attemptWriteExperiment(exp.id);
       });
-      row.appendChild(label);
-      row.appendChild(btn);
-      els.protocolProbes.appendChild(row);
+
+      row.append(label, value, btn);
+      els.writeExperiments.appendChild(row);
     }
-  }
-
-  function renderStartModeAction() {
-    els.startModeAction.innerHTML = '';
-    els.startModeAction.style.display = 'none';
-    if (!START_ASSIST_MODE_ADDR) return;
-    const current = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION');
-    if (current == null) return; // not read yet / declined — nothing to act on
-    if (current === 'START_ASSIST_MODE_LAST_USED' && startModeWriteState !== 'failed') return; // already set, nothing to do
-
-    // Bosch's own DiagnosticTool 3 UI (AssistModesTilesModel/ViewModel, confirmed via decompile)
-    // gates this exact control on START_ASSIST_MODE_CONFIGURATION_OEM's (6179) second field,
-    // `startAssistModePositionConfigurable` — showing a "locked by manufacturer" state when false,
-    // rather than letting the user attempt the write at all. We didn't check this before; a real
-    // hardware test showed a write get a genuine WRITE_RESPONSE/SUCCESS ack that didn't durably
-    // stick, and this flag being false is the leading explanation. Mirror that gate here.
-    const oem = valueOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION_OEM');
-    const configurable = oem && typeof oem === 'object' ? oem.configurable : null;
-    if (configurable === false) {
-      els.startModeAction.style.display = '';
-      const summary = document.createElement('span');
-      summary.className = 'histogram-settings-summary';
-      summary.textContent =
-        'Bike doesn\'t resume your last assist mode on power-on — and this bike reports ' +
-        'itself as locked by the manufacturer for this setting (same flag Bosch\'s own tool ' +
-        'checks), so a write here is expected not to stick.';
-      els.startModeAction.appendChild(summary);
-
-      // Deliberate research override: we've only ever observed correlation between this flag
-      // and the write not sticking, never a controlled test (see private research notes — no
-      // write attempt has happened since the OEM-flag logging was added). This lets that test
-      // actually happen, clearly labeled as bypassing a known precondition rather than hiding
-      // that fact from the user.
-      const overrideBtn = document.createElement('button');
-      overrideBtn.type = 'button';
-      overrideBtn.className = 'histogram-change-btn secondary'; // deliberately muted styling — not a primary action
-      if (startModeWriteState === 'pending') { overrideBtn.textContent = 'Setting…'; overrideBtn.disabled = true; }
-      else { overrideBtn.textContent = 'Attempt anyway (research override)'; }
-      overrideBtn.addEventListener('click', () => {
-        const confirmed = window.confirm(
-          'Attempt the write anyway, despite the "locked by manufacturer" flag?\n\n' +
-          'This bike reports START_ASSIST_MODE_CONFIGURATION_OEM.configurable = false — the ' +
-          'same flag Bosch\'s own DiagnosticTool 3 checks before offering this control at all. ' +
-          'We\'ve only ever observed a CORRELATION between this flag and the write not sticking, ' +
-          'never a controlled test. This bypasses that gate on purpose so the write can actually ' +
-          'be attempted and logged, to find out whether it\'s really the cause.\n\n' +
-          'Expected outcome: the bike may still ack the write (WRITE_RESPONSE/SUCCESS) without it ' +
-          'durably sticking, same as before. Please export a debug log afterward regardless of ' +
-          'outcome — this test is only useful if the OEM-flag-before-write log line is captured.'
-        );
-        if (confirmed) writeStartAssistModeLastUsed();
-      });
-      els.startModeAction.appendChild(overrideBtn);
-      return;
-    }
-
-    els.startModeAction.style.display = '';
-    const summary = document.createElement('span');
-    summary.className = 'histogram-settings-summary';
-    summary.textContent = 'Bike doesn\'t resume your last assist mode on power-on.';
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'histogram-reset-btn';
-    if (startModeWriteState === 'pending') { btn.textContent = 'Setting…'; btn.disabled = true; }
-    else if (startModeWriteState === 'done') { btn.textContent = 'Set ✓'; btn.disabled = true; }
-    else if (startModeWriteState === 'failed') { btn.textContent = 'Failed — retry?'; }
-    else { btn.textContent = 'Always start in last-used mode'; }
-    btn.addEventListener('click', () => {
-      const confirmed = window.confirm(
-        'Set the bike to always start in your last-used assist mode?\n\n' +
-        'This writes ONE setting (START_ASSIST_MODE_CONFIGURATION) so the bike ' +
-        'resumes whichever assist mode you were last using, instead of always ' +
-        'powering on in off/walk mode. It does not touch region, speed-class, ' +
-        'tuning, or any per-mode assist parameters.'
-      );
-      if (confirmed) writeStartAssistModeLastUsed();
-    });
-    els.startModeAction.appendChild(summary);
-    els.startModeAction.appendChild(btn);
   }
 
   function renderDashboard() {
@@ -1220,8 +1118,7 @@
     else if (dra === false) draVal.className = 'good';
     els.drivetrainGrid.appendChild(draRow);
     els.drivetrainGrid.appendChild(draVal);
-    renderStartModeAction();
-    renderProtocolProbes();
+    renderWriteExperiments();
 
     els.usageGrid.innerHTML = '';
     const odometerM = valueOf('DriveUnit', 'ODOMETER');
@@ -1623,7 +1520,7 @@
   async function runSweep(transportKind) {
     disconnectedAfterRead = false;
     assistModeStats = [];
-    startModeWriteState = null;
+    for (const key of Object.keys(experimentState)) delete experimentState[key];
     let device;
     try {
       device = transportKind === 'ble-mcsp'
