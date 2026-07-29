@@ -178,11 +178,25 @@ const FIELD_TYPES = {
   134: { label: 'SW Version', kind: 'string' },
   135: { label: 'FBL Version', kind: 'string' },
   136: { label: 'State of Charge', kind: 'uint', unit: '%' }, // inferred — bare UByte
-  139: { label: 'Present Pack Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true },
+  139: { label: 'Present Pack Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true }, // Bosch's own wrapper calls the identical address "presentCellTemperature" — same data point, our own address-table name predates that discovery
+  140: { label: 'Present Cell Voltage', kind: 'uint', unit: 'mV' }, // inferred — bare UShort, confirmed via decompile (BatteryMessageBusWrapper.getPresentCellVoltage())
   145: { label: 'Remaining Energy (Rider)', kind: 'normFactor', factor: 10, unit: 'Wh' },
   146: { label: 'Remaining Energy', kind: 'normFactor', factor: 10, unit: 'Wh' },
   150: { label: 'Full Charge Cycles', kind: 'normFactor', factor: 10 },
+  153: { label: 'Deactivation Proof', kind: 'deactivationProof' }, // DeactivationProof: field1=deactivationState (bool), field2=certificateSerialNumber (nested submessage), field3=signature (bytes) — confirmed via decompile
+  154: { label: 'Deactivation Enabled', kind: 'bool' }, // confirmed via decompile — ReadableDataPoint<Boolean>
   155: { label: 'Product Name', kind: 'string' },
+  157: { label: 'Duration in Thermal Protection', kind: 'uint', unit: 's' }, // inferred — bare UInt, confirmed via decompile (BatteryMessageBusWrapper.getDurationInThermalProtection())
+  158: { label: 'Last End-of-Charge Voltage', kind: 'normFactor', factor: 10, unit: 'V' }, // Uint16NormFactor10Message, confirmed via decompile
+  159: { label: 'Maximum Charging Current', kind: 'normFactor', factor: 10, unit: 'A', signed: true }, // Int16NormFactor10Message, confirmed via decompile
+  160: { label: 'Maximum Pack Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true }, // Int16NormFactor10Message, confirmed via decompile
+  161: { label: 'Minimum Pack Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true }, // Int16NormFactor10Message, confirmed via decompile
+  162: { label: 'SoC Lower Limit', kind: 'uint', unit: '%' }, // inferred — bare UByte, writable (see addresses.js)
+  163: { label: 'SoC Upper Limit', kind: 'uint', unit: '%' }, // inferred — bare UByte, writable (see addresses.js)
+  210: { label: 'Present FET Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true }, // Int16NormFactor10Message, confirmed via decompile
+  215: { label: 'Delivered Ah (Lifetime)', kind: 'uint', unit: 'mAh' }, // inferred unit — bare UInt (no norm-factor wrapper), mAh is a plausible-but-NOT-independently-confirmed guess (checked against a real capture: 557064 raw / 51.2 charge cycles ≈ 10.9 Ah/cycle, a plausible per-cycle capacity — not proof)
+  220: { label: 'Self-Discharging Rate', kind: 'normFactor', factor: 10 }, // Uint8NullableNormFactor10Message, confirmed via decompile — "Nullable" just means protobuf presence-tracking, decodes the same as any other NormFactor10 on the wire
+  224: { label: 'Device Certificate', kind: 'certificateBytes' }, // Certificate: field1 = raw bytes (ByteString), confirmed via decompile — likely an X.509 or Bosch CVC-format cert, not parsed further (see decode comment)
   156: { label: 'Delivered Wh (Lifetime)', kind: 'uint', unit: 'Wh' }, // inferred — bare UInt
   216: { label: 'State of Health', kind: 'uint', unit: '%' }, // inferred — bare UByte
 
@@ -252,6 +266,120 @@ function parseFields(bytes) {
   return fields;
 }
 
+// --- CVC (Card Verifiable Certificate, ISO 7816-8 / EAC) parser ---
+// Used only for DEVICE_CERTIFICATE (addr 224) so far. Confirmed against a real captured
+// battery certificate: this is the same certificate family already documented elsewhere in
+// this project's private research (BES3CONFIG's dealer/OEM signing chain, tags 5F25/5F24/5F37) —
+// also used, apparently, for a per-battery device identity certificate. Verified end-to-end
+// against a real capture: the OID decodes to Ed25519 (1.3.101.112), the 5F25 "valid from" date
+// decodes to exactly this battery's own real MANUFACTURING_DATE, the holder-reference and
+// authorization-template fields contain this battery's own serial number and product code in
+// plain ASCII, and the signature is exactly 64 bytes (Ed25519 signature size) — not a guess.
+
+// BER tag: 1 byte, or 2 bytes if the low 5 bits of the first byte are all set (0x1F) — this
+// format never goes beyond 2-byte tags in the samples seen. "Constructed" (contains nested
+// TLVs) is bit 0x20 of the first tag byte, standard ASN.1/BER convention.
+function readCvcTag(bytes, i) {
+  const first = bytes[i];
+  if ((first & 0x1f) === 0x1f) return [(first << 8) | bytes[i + 1], 2, !!(first & 0x20)];
+  return [first, 1, !!(first & 0x20)];
+}
+// BER length: short form (high bit clear) is the length itself; long form (high bit set) says
+// how many following bytes encode the big-endian length.
+function readCvcLen(bytes, i) {
+  const b = bytes[i];
+  if ((b & 0x80) === 0) return [b, 1];
+  const n = b & 0x7f;
+  let val = 0;
+  for (let k = 0; k < n; k++) val = (val << 8) | bytes[i + 1 + k];
+  return [val, 1 + n];
+}
+function parseCvcTlv(bytes, start, end) {
+  let i = start;
+  const items = [];
+  while (i < end) {
+    const [tag, tagLen, constructed] = readCvcTag(bytes, i);
+    i += tagLen;
+    const [len, lenLen] = readCvcLen(bytes, i);
+    i += lenLen;
+    items.push({ tag, value: bytes.slice(i, i + len), constructed });
+    i += len;
+  }
+  return items;
+}
+function findCvcTag(items, tag) {
+  return items.find((it) => it.tag === tag);
+}
+// Extracts printable-ASCII runs (length >= 4) from a byte value — these CVC fields mix binary
+// identifiers with embedded plain-text identifiers (bike/component serials, product codes);
+// this surfaces the readable parts without asserting exact field semantics for the rest.
+function cvcAsciiRuns(bytes) {
+  const runs = [];
+  let cur = [];
+  for (const b of bytes) {
+    if (b >= 0x20 && b <= 0x7e) cur.push(b);
+    else { if (cur.length >= 4) runs.push(decodeUtf8(cur)); cur = []; }
+  }
+  if (cur.length >= 4) runs.push(decodeUtf8(cur));
+  return runs;
+}
+// CVC dates (tags 5F25/5F24): 6 bytes, each byte's plain decimal value (0-9, not BCD-packed) is
+// one digit of YYMMDD. Confirmed against the real capture: bytes [02,03,00,01,01,02] -> "230112"
+// -> 2023-01-12, which is exactly this battery's own MANUFACTURING_DATE.
+function decodeCvcDate(bytes) {
+  if (bytes.length !== 6) return null;
+  const digits = Array.from(bytes).join('');
+  return `20${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4, 6)}`;
+}
+const CVC_KEY_OIDS = { '2b6570': 'Ed25519', '2b6571': 'Ed448' };
+function parseCvcCertificate(bytes) {
+  // A single leading byte (not part of the CVC TLV itself — likely a container version/count
+  // byte) precedes the outer 7F21 template in the one real sample this was checked against.
+  let start = 0;
+  if (bytes[0] !== 0x7f && bytes[1] === 0x7f && bytes[2] === 0x21) start = 1;
+  const outer = parseCvcTlv(bytes, start, bytes.length);
+  const cert = findCvcTag(outer, 0x7f21);
+  if (!cert || !cert.constructed) return null; // not a recognized CVC — caller falls back to raw hex
+
+  const body = findCvcTag(parseCvcTlv(cert.value, 0, cert.value.length), 0x7f4e);
+  const sig = findCvcTag(parseCvcTlv(cert.value, 0, cert.value.length), 0x5f37);
+  if (!body) return null;
+  const bodyItems = parseCvcTlv(body.value, 0, body.value.length);
+
+  const car = findCvcTag(bodyItems, 0x42); // Certification Authority Reference
+  const pubKeyItem = findCvcTag(bodyItems, 0x7f49);
+  let keyAlgorithm = null, publicKey = null;
+  if (pubKeyItem && pubKeyItem.constructed) {
+    const pkItems = parseCvcTlv(pubKeyItem.value, 0, pubKeyItem.value.length);
+    const oid = findCvcTag(pkItems, 0x06);
+    const key = findCvcTag(pkItems, 0x86);
+    keyAlgorithm = oid ? (CVC_KEY_OIDS[toHex(oid.value).replace(/ /g, '')] || `OID ${toHex(oid.value)}`) : null;
+    publicKey = key ? toHex(key.value).replace(/ /g, '') : null;
+  }
+  const holderRef = findCvcTag(bodyItems, 0x5f20); // Certificate Holder Reference
+  const authTemplate = findCvcTag(bodyItems, 0x7f4c); // Certificate Holder Authorization Template
+  const validFromItem = findCvcTag(bodyItems, 0x5f25);
+  const validUntilItem = findCvcTag(bodyItems, 0x5f24);
+  const serialItem = findCvcTag(bodyItems, 0x5f34);
+
+  return {
+    keyAlgorithm,
+    publicKeyHex: publicKey,
+    caReferenceHex: car ? toHex(car.value).replace(/ /g, '') : null,
+    holderReferenceText: holderRef ? cvcAsciiRuns(holderRef.value).join(' / ') : null,
+    authorizationText: authTemplate && authTemplate.constructed
+      ? parseCvcTlv(authTemplate.value, 0, authTemplate.value.length)
+          .flatMap((it) => cvcAsciiRuns(it.value))
+          .join(' / ')
+      : null,
+    validFrom: validFromItem ? decodeCvcDate(validFromItem.value) : null,
+    validUntil: validUntilItem ? decodeCvcDate(validUntilItem.value) : null,
+    serialHex: serialItem ? toHex(serialItem.value).replace(/ /g, '') : null,
+    signatureHex: sig ? toHex(sig.value).replace(/ /g, '') : null,
+    signatureLength: sig ? sig.value.length : null,
+  };
+}
+
 function decodeTyped(addr, payload) {
   const meta = FIELD_TYPES[addr];
   if (!meta) return null; // no confirmed type — caller should fall back to generic decode
@@ -286,6 +414,8 @@ function decodeTyped(addr, payload) {
     if (meta.kind === 'unixTimestamp') return { label: meta.label, display: '(not set)', value: 0 };
     if (meta.kind === 'uint32List') return { label: meta.label, display: '(none)', value: [] };
     if (meta.kind === 'serviceDue') return { label: meta.label, display: '(not set)', value: { timestamp: 0, odometer: 0 } };
+    if (meta.kind === 'deactivationProof') return { label: meta.label, display: 'not deactivated (no proof present)', value: { deactivated: false, signatureLength: 0 } };
+    if (meta.kind === 'certificateBytes') return { label: meta.label, display: '(no certificate)', value: null };
     return { label: meta.label, display: '(empty / default)', value: null };
   }
 
@@ -380,6 +510,33 @@ function decodeTyped(addr, payload) {
         ? `${new Date(timestamp * 1000).toISOString()}, odometer ${odometer} m`
         : `odometer ${odometer} m`;
       return { label: meta.label, display, value: { timestamp, odometer } };
+    }
+    case 'deactivationProof': {
+      // DeactivationProof: field1=deactivationState (bool), field2=certificateSerialNumber
+      // (nested submessage, not decoded further — no confirmed shape), field3=signature (bytes).
+      const deactivated = fields[1] ? !!fields[1].value : false;
+      const sig = fields[3] && fields[3].wireType === 2 ? fields[3].value : null;
+      const display = deactivated
+        ? `DEACTIVATED (signed proof, ${sig ? sig.length : 0}-byte signature)`
+        : `not deactivated${sig ? ` (${sig.length}-byte signature present)` : ''}`;
+      return { label: meta.label, display, value: { deactivated, signatureLength: sig ? sig.length : 0 } };
+    }
+    case 'certificateBytes': {
+      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      const raw = f1.value;
+      const cvc = parseCvcCertificate(raw);
+      if (!cvc) {
+        // Not a recognized CVC — show what we can without asserting a format we haven't verified.
+        return {
+          label: meta.label,
+          display: `${raw.length} bytes, unrecognized format (not X.509/CVC-parsed) — hex: ${toHex(raw).slice(0, 60)}...`,
+          value: { raw: toHex(raw).replace(/ /g, '') },
+        };
+      }
+      const display =
+        `${cvc.keyAlgorithm || 'unknown key alg'}, holder: ${cvc.holderReferenceText || '?'}, ` +
+        `valid ${cvc.validFrom || '?'} to ${cvc.validUntil || '?'}`;
+      return { label: meta.label, display, value: cvc };
     }
     default:
       return null;

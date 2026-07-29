@@ -151,6 +151,9 @@
   .assist-modal-body .amf-value { text-align: right; color: var(--text); }
   .assist-modal-body .amf-value input { width: 100%; box-sizing: border-box; text-align: right; font: inherit; background: var(--bg); color: var(--text); border: 1px solid var(--border2); border-radius: 4px; padding: 2px 5px; }
   .assist-modal-body .amf-unit { text-align: left; color: var(--faint); }
+  .cert-modal-body { display: grid; grid-template-columns: 100px 1fr; align-items: start; gap: 8px 10px; font: 400 11.5px 'IBM Plex Mono', monospace; color: var(--faint); max-width: 480px; }
+  .cert-modal-body .cert-value { color: var(--text); word-break: break-all; }
+  .battery-cert-btn { margin-top: 10px; width: 100%; }
   .assist-modal-actions { display: flex; gap: 8px; margin-top: 14px; }
 
   .section-head { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
@@ -310,6 +313,7 @@
             <div class="meta-item"><span>Remaining energy</span><span id="batteryEnergy">&mdash;</span></div>
             <div class="meta-item"><span>Temp</span><span id="batteryTemp">&mdash;</span></div>
           </div>
+          <button id="batteryCertBtn" type="button" class="histogram-change-btn secondary battery-cert-btn" style="display:none;">View device certificate</button>
         </div>
       </div>
 
@@ -335,6 +339,10 @@
         <div class="card data-card">
           <span class="card-label">REMOTE</span>
           <div class="kv-grid" id="remoteGrid"></div>
+        </div>
+        <div class="card data-card">
+          <span class="card-label">BATTERY DETAIL</span>
+          <div class="kv-grid" id="batteryDetailGrid"></div>
         </div>
       </div>
 
@@ -428,6 +436,16 @@
     </div>
     <div id="assistModeModalBody" class="assist-modal-body"></div>
     <div id="assistModeModalActions" class="assist-modal-actions"></div>
+  </div>
+</div>
+
+<div id="certModalBackdrop" class="assist-modal-backdrop" style="display:none;">
+  <div class="assist-modal-box">
+    <div class="assist-modal-header">
+      <span id="certModalTitle"></span>
+      <button id="certModalClose" type="button" class="assist-modal-close">&times;</button>
+    </div>
+    <div id="certModalBody" class="cert-modal-body"></div>
   </div>
 </div>
 

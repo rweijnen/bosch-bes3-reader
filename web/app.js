@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-29.4';
+  const APP_VERSION = '2026-07-29.5';
 
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
@@ -80,6 +80,12 @@
     assistModeModalBody: $('assistModeModalBody'),
     assistModeModalActions: $('assistModeModalActions'),
     assistModeModalClose: $('assistModeModalClose'),
+    batteryDetailGrid: $('batteryDetailGrid'),
+    batteryCertBtn: $('batteryCertBtn'),
+    certModalBackdrop: $('certModalBackdrop'),
+    certModalTitle: $('certModalTitle'),
+    certModalBody: $('certModalBody'),
+    certModalClose: $('certModalClose'),
     rawToggle: $('rawToggle'),
     rawSummary: $('rawSummary'),
     rawBody: $('rawBody'),
@@ -1155,6 +1161,22 @@
     els.batteryCycles.textContent = displayOf('Battery', 'NUMBER_OF_FULL_CHARGE_CYCLES');
     els.batteryEnergy.textContent = displayOf('Battery', 'REMAINING_ENERGY');
     els.batteryTemp.textContent = displayOf('Battery', 'PRESENT_PACK_TEMPERATURE');
+    const cert = valueOf('Battery', 'DEVICE_CERTIFICATE');
+    els.batteryCertBtn.style.display = cert ? '' : 'none';
+
+    els.batteryDetailGrid.innerHTML = '';
+    kvRow(els.batteryDetailGrid, 'Delivered Ah (lifetime)', displayOf('Battery', 'DELIVERED_AH_OVER_LIFETIME'));
+    kvRow(els.batteryDetailGrid, 'Delivered Wh (lifetime)', displayOf('Battery', 'DELIVERED_WH_OVER_LIFETIME'));
+    kvRow(els.batteryDetailGrid, 'Thermal protection', displayOf('Battery', 'DURATION_IN_THERMAL_PROTECTION'));
+    kvRow(els.batteryDetailGrid, 'Present cell voltage', displayOf('Battery', 'PRESENT_CELL_VOLTAGE'));
+    kvRow(els.batteryDetailGrid, 'Present FET temp', displayOf('Battery', 'PRESENT_FET_TEMPERATURE'));
+    kvRow(els.batteryDetailGrid, 'Min pack temp', displayOf('Battery', 'MINIMUM_PACK_TEMPERATURE'));
+    kvRow(els.batteryDetailGrid, 'Max pack temp', displayOf('Battery', 'MAXIMUM_PACK_TEMPERATURE'));
+    kvRow(els.batteryDetailGrid, 'Last end-of-charge V', displayOf('Battery', 'LAST_END_OF_CHARGE_VOLTAGE'));
+    kvRow(els.batteryDetailGrid, 'Max charging current', displayOf('Battery', 'MAXIMUM_CHARGING_CURRENT'));
+    kvRow(els.batteryDetailGrid, 'Self-discharge rate', displayOf('Battery', 'SELF_DISCHARGING_RATE'));
+    kvRow(els.batteryDetailGrid, 'SoC limits', `${displayOf('Battery', 'SO_C_LOWER_LIMIT')} – ${displayOf('Battery', 'SO_C_UPPER_LIMIT')}`, true);
+    kvRow(els.batteryDetailGrid, 'Deactivation', displayOf('Battery', 'COMPONENT_DEACTIVATION_PROOF'));
 
     els.driveUnitGrid.innerHTML = '';
     kvRow(els.driveUnitGrid, 'Product code', displayOf('DriveUnit', 'PRODUCT_CODE'));
@@ -1323,6 +1345,52 @@
   els.assistModeModalClose.addEventListener('click', closeAssistModeModal);
   els.assistModeModalBackdrop.addEventListener('click', (e) => {
     if (e.target === els.assistModeModalBackdrop) closeAssistModeModal();
+  });
+
+  // Certificate popup (currently only Battery's DEVICE_CERTIFICATE — a real EAC/ISO 7816-8 CVC,
+  // see messageTypes.js's parseCvcCertificate for the confirmed field semantics). Everything
+  // shown here is inherently public (a certificate's own public key + metadata + a signature
+  // meant to be publicly verifiable) — nothing sensitive.
+  function closeCertModal() {
+    els.certModalBackdrop.style.display = 'none';
+    els.certModalBody.innerHTML = '';
+  }
+  els.certModalClose.addEventListener('click', closeCertModal);
+  els.certModalBackdrop.addEventListener('click', (e) => {
+    if (e.target === els.certModalBackdrop) closeCertModal();
+  });
+  function openCertModal(title, cvc) {
+    els.certModalTitle.textContent = title;
+    els.certModalBody.innerHTML = '';
+    const addRow = (label, value) => {
+      const l = document.createElement('span');
+      l.textContent = label;
+      const v = document.createElement('span');
+      v.className = 'cert-value';
+      v.textContent = value == null ? '—' : value;
+      els.certModalBody.append(l, v);
+    };
+    if (cvc.raw) {
+      addRow('Format', 'Not recognized as CVC/X.509 — showing raw bytes');
+      addRow('Raw (hex)', cvc.raw);
+      els.certModalBackdrop.style.display = 'flex';
+      return;
+    }
+    addRow('Key algorithm', cvc.keyAlgorithm);
+    addRow('Public key', cvc.publicKeyHex);
+    addRow('Holder reference', cvc.holderReferenceText);
+    addRow('Authorization', cvc.authorizationText);
+    addRow('Valid from', cvc.validFrom);
+    addRow('Valid until', cvc.validUntil);
+    addRow('CA reference (hex)', cvc.caReferenceHex);
+    addRow('Serial (hex)', cvc.serialHex);
+    addRow('Signature', cvc.signatureHex ? `${cvc.signatureLength} bytes: ${cvc.signatureHex}` : null);
+    els.certModalBackdrop.style.display = 'flex';
+  }
+  els.batteryCertBtn.addEventListener('click', () => {
+    const cvc = valueOf('Battery', 'DEVICE_CERTIFICATE');
+    if (!cvc) return;
+    openCertModal('Battery device certificate', cvc);
   });
 
   // Popup showing all 8 UDAM fields (the 3 shown in the compact summary
