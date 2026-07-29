@@ -18,14 +18,18 @@
 //   uuid            - protobuf field 1 wraps a nested message whose own field 1 is 16 raw bytes
 //   enum            - protobuf field 1, varint enum ordinal; look up in `enumTable`
 //   tuningDetection - protobuf field 1 = bool flag, field 2 = varint counter
-//   unixTimestamp   - protobuf field 1, varint int64, Unix epoch seconds (com.bosch.ebike.bes3.
+//   unixTimestamp   - protobuf field 1, SINT64 (zigzag varint — confirmed from decompile:
+//                     Timestamp.value_ is read via codedInputStream.readSInt64(), not plain
+//                     readInt64() — a real hardware capture caught this: an un-zigzag-decoded
+//                     read showed a date ~2x too far in the future, exactly the zigzag-of-a-
+//                     positive-value signature), Unix epoch seconds (com.bosch.ebike.bes3.
 //                     messagebus.Timestamp — distinct from the separate TimestampInMilliseconds
 //                     class Bosch also has, confirming this one is seconds, not ms)
 //   uint32List      - protobuf field 1, repeated varint uint32 (com.bosch.ebike.bes3.messagebus.
 //                     ArrayOf8Uint32) — up to 8 packed values, e.g. per-LED color codes
-//   serviceDue      - protobuf field 1 = nested Timestamp submessage, field 2 = varint odometer
-//                     (meters, same unit as ODOMETER elsewhere) — com.bosch.ebike.bes3.messagebus.
-//                     ServiceDue
+//   serviceDue      - protobuf field 1 = nested Timestamp submessage (same sint64/zigzag field as
+//                     unixTimestamp above), field 2 = varint odometer (meters, same unit as
+//                     ODOMETER elsewhere) — com.bosch.ebike.bes3.messagebus.ServiceDue
 
 (function () {
 const REGIO_SPEED_CONFIGURATION_ENUM = {
@@ -346,8 +350,9 @@ function decodeTyped(addr, payload) {
     }
     case 'unixTimestamp': {
       if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
-      const iso = new Date(f1.value * 1000).toISOString();
-      return { label: meta.label, display: iso, value: f1.value };
+      const seconds = zigzagDecode(f1.value); // sint64 — see file header note
+      const iso = new Date(seconds * 1000).toISOString();
+      return { label: meta.label, display: iso, value: seconds };
     }
     case 'uint32List': {
       if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
@@ -366,7 +371,9 @@ function decodeTyped(addr, payload) {
       let timestamp = 0;
       if (fields[1] && fields[1].wireType === 2) {
         const inner = parseFields(fields[1].value);
-        timestamp = inner[1] && inner[1].wireType === 0 ? inner[1].value : 0;
+        // field 1 of the nested Timestamp submessage is sint64 (zigzag) — same field as
+        // unixTimestamp above, see the file header note.
+        timestamp = inner[1] && inner[1].wireType === 0 ? zigzagDecode(inner[1].value) : 0;
       }
       const odometer = fields[2] && fields[2].wireType === 0 ? fields[2].value : 0;
       const display = timestamp
