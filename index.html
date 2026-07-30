@@ -99,13 +99,13 @@
   /* Card headline: the part's own real name (e.g. "PowerTube 750") sits under the card's own
      all-caps label, same font as the BIKE card's bikeName so both read as the same kind of
      thing — a product's name. The product code (BDU3741, BBP3770) isn't repeated here; it's a
-     real "detail" and lives in the kv-grid below with its own label, like every other field. Photo
-     sits at the row's other end; a card whose read didn't resolve a photo (img stays
-     display:none) or a name (JS empties/hides the row) looks pixel-identical to one that never
-     had this treatment. */
-  .part-headline-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px; }
+     real "detail" and lives in the kv-grid below with its own label, like every other field. */
+  .part-headline-row { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
   .part-headline-group { display: flex; align-items: center; gap: 8px; }
-  .part-headline { font: 700 26px 'Space Grotesk', sans-serif; color: var(--text); }
+  /* Reserve room on the right for the corner photo so a long name (e.g. "Performance Line CX")
+     wraps onto a second line instead of running under it — the photo is absolutely positioned
+     and out of flow, so nothing here does that automatically. */
+  .part-headline { font: 700 26px 'Space Grotesk', sans-serif; color: var(--text); max-width: calc(100% - 96px); }
   /* Unlike .bike-photo (a studio catalog photo with its white background baked into the pixels),
      these part icons are transparent-alpha renders — confirmed by sampling a corner pixel — so
      they sit directly on the card, no white mat. A plain drop-shadow reads fine on both themes;
@@ -113,7 +113,13 @@
   /* Fixed height, auto width (capped) rather than a fixed square — battery renders are a wide
      576x320 canvas (a slim tube shape with a lot of transparent margin) while drive-unit/remote
      renders are square 320x320, so a square box left the battery looking like a thin sliver. */
-  .part-photo { height: 44px; width: auto; max-width: 78px; object-fit: contain; filter: drop-shadow(0 1px 4px rgba(0,0,0,0.35)); }
+  .part-photo { height: 84px; width: auto; max-width: 150px; flex-shrink: 0; object-fit: contain; filter: drop-shadow(0 1px 4px rgba(0,0,0,0.35)); }
+  /* Pinned to the card's own top-right corner, out of document flow — same small inset on both
+     sides so it reads as tucked into the corner rather than aligned to any particular text row.
+     Being out of flow means a card with no matched photo (img stays display:none) still looks
+     pixel-identical to one that never had this treatment; .part-headline's own max-width keeps
+     long names from running underneath it. */
+  .part-photo-corner { position: absolute; top: 6px; right: 6px; }
   .meta-item { display: flex; flex-direction: column; }
   .meta-item span:first-child { font-size: 11px; color: var(--faint); }
   .meta-item span:last-child { font: 500 13px 'IBM Plex Mono', monospace; }
@@ -188,7 +194,11 @@
   .assist-modal-body .amf-value { text-align: right; color: var(--text); }
   .assist-modal-body .amf-value input { width: 100%; box-sizing: border-box; text-align: right; font: inherit; background: var(--bg); color: var(--text); border: 1px solid var(--border2); border-radius: 4px; padding: 2px 5px; }
   .assist-modal-body .amf-unit { text-align: left; color: var(--faint); }
-  .cert-modal-body { display: grid; grid-template-columns: 100px 1fr; align-items: start; gap: 8px 10px; font: 400 11.5px 'IBM Plex Mono', monospace; color: var(--faint); max-width: 480px; }
+  /* Reuses .assist-modal-box's chrome, but this content (fingerprints, cert reference strings)
+     needs real width — the shared 380px was sized for the much narrower assist-mode editor and
+     was forcing short values like the holder reference onto two lines for no reason. */
+  .cert-modal-box { max-width: 620px; }
+  .cert-modal-body { display: grid; grid-template-columns: 130px 1fr; align-items: start; gap: 8px 10px; font: 400 11.5px 'IBM Plex Mono', monospace; color: var(--faint); }
   .cert-modal-body .cert-value { color: var(--text); word-break: break-all; }
   .assist-modal-actions { display: flex; gap: 8px; margin-top: 14px; }
   .app-dialog-box { max-width: 440px; }
@@ -329,10 +339,10 @@
           <span class="card-label">BIKE</span>
           <span id="bikeName" class="bike-name">&mdash;</span>
           <div class="kv-grid bike-meta-grid">
+            <span>Brand</span><span id="bikeBrand">&mdash;</span>
             <span>Bike ID</span><span id="bikeId">&mdash;</span>
             <span>OEM bike ID</span><span id="bikeOemId">&mdash;</span>
             <span>Serial</span><span id="bikeSerial">&mdash;</span>
-            <span>Brand</span><span id="bikeBrand">&mdash;</span>
             <span>Category</span><span id="bikeCategory">&mdash;</span>
           </div>
           <svg id="bikeIconFallback" class="bike-icon-corner" viewBox="0 0 200 120" style="color: var(--border2);" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
@@ -346,13 +356,13 @@
           </div>
         </div>
         <div class="card battery-card">
+          <img id="batteryPhoto" class="part-photo part-photo-corner" style="display:none;" alt="" />
           <span class="card-label">BATTERY</span>
           <div id="batteryHeadlineRow" class="part-headline-row">
             <span class="part-headline-group">
               <span id="batteryModel" class="part-headline"></span>
               <button id="batteryCertBtn" type="button" class="battery-cert-icon-btn" style="display:none;" title="View device certificate" aria-label="View device certificate">&#128274;</button>
             </span>
-            <img id="batteryPhoto" class="part-photo" style="display:none;" alt="" />
           </div>
           <div class="soc-row">
             <span class="soc-value"><span id="batterySoc">&mdash;</span><span class="soc-unit" id="batterySocUnit"></span></span>
@@ -371,10 +381,10 @@
 
       <div class="data-grid">
         <div class="card data-card">
+          <img id="driveUnitPhoto" class="part-photo part-photo-corner" style="display:none;" alt="" />
           <span class="card-label">DRIVE UNIT</span>
           <div id="driveUnitHeadlineRow" class="part-headline-row">
             <span id="driveUnitModel" class="part-headline"></span>
-            <img id="driveUnitPhoto" class="part-photo" style="display:none;" alt="" />
           </div>
           <div class="kv-grid" id="driveUnitGrid"></div>
         </div>
@@ -392,10 +402,10 @@
           <div id="assistModeHistogram" class="histogram histogram-compact" style="display:none;"></div>
         </div>
         <div class="card data-card">
+          <img id="remoteControlPhoto" class="part-photo part-photo-corner" style="display:none;" alt="" />
           <span class="card-label">REMOTE</span>
           <div id="remoteControlHeadlineRow" class="part-headline-row">
             <span id="remoteControlModel" class="part-headline"></span>
-            <img id="remoteControlPhoto" class="part-photo" style="display:none;" alt="" />
           </div>
           <div class="kv-grid" id="remoteGrid"></div>
         </div>
@@ -495,7 +505,7 @@
 </div>
 
 <div id="certModalBackdrop" class="assist-modal-backdrop" style="display:none;">
-  <div class="assist-modal-box">
+  <div class="assist-modal-box cert-modal-box">
     <div class="assist-modal-header">
       <span id="certModalTitle"></span>
       <button id="certModalClose" type="button" class="assist-modal-close">&times;</button>

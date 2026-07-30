@@ -735,6 +735,7 @@ const FIELD_TYPES = {
   8264: { label: "Request dynamic UI control", kind: "bool" }, // Flow decompile, confidence: low — requests activation of dynamic UI control mode
   8265: { label: "Dynamic UI control state", kind: 'enum', enumTable: REMOTECONTROL_DYNAMIC_UI_CONTROL_STATE_ENUM }, // Flow decompile, confidence: high — current UI mode state
   8273: { label: "Diagnosis program active", kind: "bool" }, // Flow decompile, confidence: high — matches RemoteControl.diagnosisProgramActive domain field
+  8293: { label: 'Product Code', kind: 'string' }, // was address-only — same field as Battery/DriveUnit's own PRODUCT_CODE (both already typed), just never wired up here; the gap silently broke the part-photo stale-check (see renderPartPhoto in app.js), since that guard needs a typed valueOf() to work
   8298: { label: "Easter egg string", kind: "string" }, // Flow decompile, confidence: high — hidden developer string
   8305: { label: "Data model version", kind: "string" }, // Flow decompile, confidence: high — Room column dataModelVersion TEXT
   8307: { label: "Sample/prototype hardware marker", kind: "bool" }, // Flow decompile, confidence: low — flags pre-production/sample hardware
@@ -1317,14 +1318,24 @@ function decodeTyped(addr, payload) {
       return { label: meta.label, display, value: cvc };
     }
     case 'assistModeColors': {
-      // Field 1 is a normal length-delimited protobuf field (tag+length), same as any other
-      // submessage — the ARGB bytes are its stripped content, NOT the raw response payload.
-      // Slicing `payload` directly (as this used to) shifts every 4-byte group by the tag+length
-      // header size and silently produces wrong colors.
+      // Confirmed against Flow's own decompiled source (MessageBus.java / PayloadKt.java): this
+      // field is a genuine protobuf message, `ArrayOf5Uint32` (`repeated uint32 value = 1`, packed
+      // encoding) — NOT a raw fixed-width ARGB byte array as previously assumed. Field 1's stripped
+      // content is a sequence of varint-encoded uint32s, one per assist mode slot.
+      // Byte order within each uint32 is R<<24|G<<16|B<<8|A (alpha LAST), not Android's
+      // conventional ARGB (alpha first) — confirmed empirically against a real capture: treating
+      // the high byte as alpha produced implausible, inconsistent per-mode alpha values, while
+      // treating the LOW byte as alpha gives 0xff (fully opaque) on every real mode and exactly
+      // 0x00000000 (fully unset) for the off/walk slot, matching proto3 default-omission — and the
+      // resulting RGB values (olive-green/sky-blue/purple/red) match what a rider actually sees on
+      // the bike, unlike the old alpha-first decode.
       const bytes = f1 && f1.wireType === 2 ? f1.value : payload;
       const colors = [];
-      for (let i = 0; i + 4 <= bytes.length; i += 4) {
-        const a = bytes[i], r = bytes[i + 1], g = bytes[i + 2], b = bytes[i + 3];
+      let i = 0;
+      while (i < bytes.length) {
+        const [v, next] = readVarint(bytes, i);
+        i = next;
+        const r = (v >>> 24) & 0xff, g = (v >>> 16) & 0xff, b = (v >>> 8) & 0xff, a = v & 0xff;
         const hex = '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('');
         colors.push({ a, r, g, b, hex });
       }
@@ -1368,7 +1379,32 @@ function decodeSubmessageFields(meta, fields) {
   return { label: meta.label, display: parts.length ? parts.join(', ') : '(empty)', value };
 }
 
-const messageTypesExports = { FIELD_TYPES, decodeTyped, REGIO_SPEED_CONFIGURATION_ENUM, BIKE_CATEGORY_ENUM };
+// Re-derive a fresh display string from a report's `rawValue` alone (no raw bytes available —
+// a loaded report only has the already-decoded value, not the wire frame). Only meaningful for
+// kinds whose display depends on the viewing environment rather than being a pure function of
+// the value itself — right now that's just the two timestamp-bearing kinds, since a date's
+// toLocaleString() reflects whoever's *looking* at it, not whoever exported the report. A report
+// generated on one machine/locale and reloaded later (possibly by someone else, in a different
+// locale) would otherwise show the exporter's frozen locale forever. Returns null for every other
+// kind — callers should fall back to the report's own stored display string in that case, since
+// re-deriving offers no benefit there and risks drifting from decodeTyped's real logic.
+function reformatDisplayFromRaw(addr, rawValue) {
+  const meta = FIELD_TYPES[addr];
+  if (!meta) return null;
+  if (meta.kind === 'unixTimestamp') {
+    if (!rawValue) return '(not set)';
+    return new Date(rawValue * 1000).toLocaleString();
+  }
+  if (meta.kind === 'serviceDue') {
+    const timestamp = rawValue && rawValue.timestamp;
+    const odometer = (rawValue && rawValue.odometer) || 0;
+    if (!timestamp) return odometer ? `odometer ${odometer} m` : '(not set)';
+    return `${new Date(timestamp * 1000).toLocaleString()}, odometer ${odometer} m`;
+  }
+  return null;
+}
+
+const messageTypesExports = { FIELD_TYPES, decodeTyped, reformatDisplayFromRaw, REGIO_SPEED_CONFIGURATION_ENUM, BIKE_CATEGORY_ENUM };
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = messageTypesExports;
 } else if (typeof window !== 'undefined') {

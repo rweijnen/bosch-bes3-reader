@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-30.10';
+  const APP_VERSION = '2026-07-31.4';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -20,7 +20,7 @@
     decodeUdamParams, decodeBoolResponse, decodeUdamLimits, encodeSetUdamValuesParametersArg,
     parseReadResponseFrame, decodeValue,
   } = window.Bes3Protocol;
-  const { decodeTyped, FIELD_TYPES } = window.Bes3MessageTypes;
+  const { decodeTyped, FIELD_TYPES, reformatDisplayFromRaw } = window.Bes3MessageTypes;
   const { Bes3WebUsbTransport, requestDevice } = window.Bes3WebUsb;
   const { Bes3LiveDataBleTransport, requestLiveDataDevice } = window.Bes3LiveDataBle;
 
@@ -905,7 +905,11 @@
     if (!productCode) { imgEl.style.display = 'none'; return; }
     loadPartImages().then((table) => {
       // Bail if the dashboard has moved on to a different bike/read since this lookup started.
-      if (valueOf(component, 'PRODUCT_CODE') !== productCode) return;
+      // Must match how the caller obtained `productCode` in the first place (displayOf, not
+      // valueOf) — valueOf only returns a value when the address has a FIELD_TYPES entry, which
+      // RemoteControl's PRODUCT_CODE (among others) doesn't; that mismatch made this guard always
+      // fail during a live sweep, hiding the remote's photo every time despite a correct decode.
+      if (displayOf(component, 'PRODUCT_CODE', '') !== productCode) return;
       const src = partImageFor(component, productCode, table);
       if (!src) { imgEl.style.display = 'none'; return; }
       imgEl.src = src;
@@ -1847,7 +1851,12 @@
         // checks) — loadReportFile() below warns the user up front when that's the case, rather
         // than silently mis-rendering.
         const value = Object.prototype.hasOwnProperty.call(r, 'rawValue') ? r.rawValue : r.value;
-        typed = { label: r.name, display: r.value, value };
+        // Re-derive the display string from rawValue where that's environment-dependent (right
+        // now: timestamps, which render in whoever's *viewing* them — the exported "value" string
+        // is frozen from whichever machine/locale produced the report, not this one). Falls back
+        // to the report's own stored string for every other kind, unchanged from before.
+        const display = reformatDisplayFromRaw(addr, value) ?? r.value;
+        typed = { label: r.name, display, value };
       }
       results.push({
         component: r.component,
