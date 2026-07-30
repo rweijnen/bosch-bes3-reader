@@ -928,6 +928,7 @@ function decodeTyped(addr, payload) {
     if (meta.kind === 'deactivationProof') return { label: meta.label, display: 'not deactivated (no proof present)', value: { deactivated: false, signatureLength: 0 } };
     if (meta.kind === 'certificateBytes') return { label: meta.label, display: '(no certificate)', value: null };
     if (meta.kind === 'assistModeColors') return { label: meta.label, display: '(none)', value: [] };
+    if (meta.kind === 'submessage') return decodeSubmessageFields(meta, {});
     return { label: meta.label, display: '(empty / default)', value: null };
   }
 
@@ -1065,9 +1066,42 @@ function decodeTyped(addr, payload) {
       }
       return { label: meta.label, display: colors.length ? colors.map((c) => c.hex).join(', ') : '(none)', value: colors };
     }
+    case 'submessage':
+      return decodeSubmessageFields(meta, fields);
     default:
       return null;
   }
+}
+
+// Generic multi-field protobuf message decoder — used by any FIELD_TYPES entry with
+// kind: 'submessage' and a `fields: [{num, name, label, kind, enumTable?}]` spec. Only
+// covers the field kinds this project already decodes elsewhere (bool/uint/string/enum);
+// nested sub-submessages are left as their raw wire value rather than recursively decoded.
+// A field with no spec entry (an address with no `fields` array at all) still returns a
+// valid result — just an empty one — so callers never need a null-guard for this kind.
+function decodeSubmessageFields(meta, fields) {
+  const value = {};
+  const parts = [];
+  for (const f of meta.fields || []) {
+    const raw = fields[f.num];
+    let decoded;
+    if (!raw) {
+      decoded = f.kind === 'bool' ? false : undefined;
+    } else if (f.kind === 'bool') {
+      decoded = !!raw.value;
+    } else if (f.kind === 'string') {
+      decoded = raw.wireType === 2 ? decodeUtf8(raw.value) : undefined;
+    } else if (f.kind === 'enum') {
+      const entry = f.enumTable && (f.enumTable[raw.value] || f.enumTable[String(raw.value)]);
+      decoded = entry ? entry.name : raw.value;
+    } else {
+      // 'uint' or unspecified — bare varint value, no scaling.
+      decoded = raw.wireType === 0 ? raw.value : undefined;
+    }
+    value[f.name] = decoded;
+    if (decoded !== undefined) parts.push(`${f.label || f.name}=${decoded}`);
+  }
+  return { label: meta.label, display: parts.length ? parts.join(', ') : '(empty)', value };
 }
 
 const messageTypesExports = { FIELD_TYPES, decodeTyped, REGIO_SPEED_CONFIGURATION_ENUM, BIKE_CATEGORY_ENUM };
