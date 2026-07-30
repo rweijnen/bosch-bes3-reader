@@ -933,6 +933,7 @@ const FIELD_TYPES = {
   6302: { label: 'Motor Product Code', kind: 'string' },
   6168: { label: 'Odometer', kind: 'uint', unit: 'm' }, // inferred — bare UInt, see file header
   6169: { label: 'Power-On Time', kind: 'uint', unit: 's' }, // inferred — bare UShort
+  6253: { label: 'Power-On Time (Motor Support)', kind: 'uint', unit: 's' }, // was previously address-only, falling through to the generic (wrong) little-endian-byte-concat heuristic instead of this project's real protobuf varint parser — this is the "running hours" figure Flow's own UI shows
   // Read-only (ReadableSubscribableDataPoint<Boolean>, no write method anywhere) — this is the
   // trigger flag behind the "distracted riding" disclaimer flow, see the private research notes
   // for the full trigger/display-mechanism writeup. Baked into the signed region config; not
