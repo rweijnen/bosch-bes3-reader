@@ -97,6 +97,7 @@
   .meta-item span:last-child { font: 500 13px 'IBM Plex Mono', monospace; }
 
   .battery-card { display: flex; flex-direction: column; gap: 12px; position: relative; }
+  .battery-model { font: 500 12px 'IBM Plex Sans', sans-serif; color: var(--muted); margin-top: -6px; }
   .battery-cert-icon-btn { position: absolute; top: 20px; right: 24px; width: 26px; height: 26px; background: none; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
   .battery-cert-icon-btn:hover { color: var(--accent); border-color: var(--accent); }
   .battery-detail-grid { margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--border); }
@@ -322,6 +323,7 @@
         <div class="card battery-card">
           <button id="batteryCertBtn" type="button" class="battery-cert-icon-btn" style="display:none;" title="View device certificate" aria-label="View device certificate">&#128274;</button>
           <span class="card-label">BATTERY</span>
+          <span id="batteryModel" class="battery-model"></span>
           <div class="soc-row">
             <span class="soc-value"><span id="batterySoc">&mdash;</span><span class="soc-unit" id="batterySocUnit"></span></span>
             <span class="soc-sub">state of charge</span>

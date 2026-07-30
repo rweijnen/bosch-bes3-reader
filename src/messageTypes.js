@@ -134,6 +134,92 @@ const DRIVEUNIT_BRAKE_DETECTION_STATUS_ENUM = {
   2: { name: "NORMAL_BRAKING_DETECTED", label: "Normal Braking Detected" },
   3: { name: "STRONG_BRAKING_DETECTED", label: "Strong Braking Detected" },
 };
+// Enums below back the field-number-verified 'submessage' decoders added after diving into
+// the address-only entries above — field numbers confirmed via decompiled FIELD_NUMBER
+// constants (not guessed sequentially; e.g. ComponentState's real order is context=1,
+// systemState=2, preCharge=3, which a sequential guess would have gotten wrong).
+const DRIVEUNIT_COMPONENT_STATE_CONTEXT_ENUM = {
+  0: { name: 'UNINITIALIZED_CONTEXT', label: 'Uninitialized' },
+  1: { name: 'BOOTLOADER', label: 'Bootloader' },
+  2: { name: 'APPLICATION', label: 'Application' },
+};
+const DRIVEUNIT_COMPONENT_STATE_SYSTEM_STATE_ENUM = {
+  0: { name: 'UNINITIALIZED_SYSTEM_STATE', label: 'Uninitialized' },
+  1: { name: 'NORMAL', label: 'Normal' },
+  2: { name: 'SW_INSTALLATION', label: 'Software Installation' },
+};
+const DRIVEUNIT_COMPONENT_STATE_PRE_CHARGE_STATE_ENUM = {
+  0: { name: 'UNINITIALIZED_PRE_CHARGE', label: 'Uninitialized' },
+  1: { name: 'NONE_PRE_CHARGE', label: 'None' },
+  2: { name: 'POWER_OFF', label: 'Power Off' },
+  3: { name: 'IN_PRE_CHARGE', label: 'In Pre-charge' },
+  4: { name: 'PRE_CHARGE_FINISHED', label: 'Pre-charge Finished' },
+};
+const DRIVEUNIT_WALK_ASSIST_STATE_ENUM = {
+  0: { name: 'WALK_ASSIST_AND_HILL_START_OFF', label: 'Off' },
+  1: { name: 'WALK_ASSIST_WAITING_FOR_MOVEMENT', label: 'Walk Assist: Waiting For Movement' },
+  2: { name: 'WALK_ASSIST_WAITING_FOR_BUTTON_PRESS', label: 'Walk Assist: Waiting For Button Press' },
+  3: { name: 'WALK_ASSIST_ACTIVE', label: 'Walk Assist: Active' },
+  4: { name: 'HILL_START_WAITING_FOR_PEDAL_TORQUE', label: 'Hill Start: Waiting For Pedal Torque' },
+  5: { name: 'HILL_START_WAITING_FOR_BUTTON_PRESS', label: 'Hill Start: Waiting For Button Press' },
+  6: { name: 'HILL_START_ACTIVE', label: 'Hill Start: Active' },
+};
+const DRIVEUNIT_SOUND_TYPE_ENUM = {
+  0: { name: 'UNLOCK', label: 'Unlock' },
+  1: { name: 'CONNECT_MODULE_SIGNIFICANT_MOVE', label: 'Connect Module: Significant Move' },
+  2: { name: 'CRASH_ALARM', label: 'Crash Alarm' },
+  3: { name: 'LOCK', label: 'Lock' },
+  4: { name: 'CRITICAL_ERROR', label: 'Critical Error' },
+  5: { name: 'SAFETY_LAMP_ON_DUE_TO_ERROR', label: 'Safety Lamp On (Error)' },
+  6: { name: 'CONNECT_MODULE_MOVEMENT', label: 'Connect Module: Movement' },
+  7: { name: 'POSITIVE_CONFIRMATION', label: 'Positive Confirmation' },
+};
+const DRIVEUNIT_TRICK_ACTIVITY_STATE_ENUM = {
+  0: { name: 'NO_TRICK', label: 'No Trick' },
+  1: { name: 'START', label: 'Start' },
+  2: { name: 'UPDATE', label: 'Update' },
+};
+const DRIVEUNIT_CHAIN_LOAD_ENUM = {
+  0: { name: 'UNKNOWN', label: 'Unknown' },
+  1: { name: 'NO_LOAD', label: 'No Load' },
+  2: { name: 'LOAD', label: 'Load' },
+};
+const DRIVEUNIT_CHAIN_MOVEMENT_ENUM = {
+  0: { name: 'UNKNOWN', label: 'Unknown' },
+  1: { name: 'NO_MOVEMENT', label: 'No Movement' },
+  2: { name: 'MOVEMENT', label: 'Movement' },
+};
+const DRIVEUNIT_CRASH_CLASS_ENUM = {
+  0: { name: 'NO_CRASH', label: 'No Crash' },
+  1: { name: 'CRASH_RIDING_COLLISION_TIP_OVER', label: 'Riding: Collision, Tip Over' },
+  2: { name: 'CRASH_RIDING_STRONG_COLLISION_NO_TIP_OVER', label: 'Riding: Strong Collision, No Tip Over' },
+  3: { name: 'CRASH_RIDING_COLLISION_NOSE_OVER', label: 'Riding: Collision, Nose Over' },
+  4: { name: 'CRASH_RIDING_STRONG_COLLISION_TIP_OVER', label: 'Riding: Strong Collision, Tip Over' },
+  5: { name: 'CRASH_RIDING_STRONG_COLLISION_NOSE_OVER', label: 'Riding: Strong Collision, Nose Over' },
+  6: { name: 'CRASH_RIDING_NO_COLLISION_TIP_OVER', label: 'Riding: No Collision, Tip Over' },
+  7: { name: 'CRASH_RIDING_NO_COLLISION_NOSE_OVER', label: 'Riding: No Collision, Nose Over' },
+  8: { name: 'CRASH_LOW_SPEED_NO_COLLISION_TIP_OVER', label: 'Low Speed: No Collision, Tip Over' },
+  9: { name: 'CRASH_LOW_SPEED_NO_COLLISION_NOSE_OVER', label: 'Low Speed: No Collision, Nose Over' },
+  10: { name: 'CRASH_STAND_STILL_NO_COLLISION_TIP_OVER', label: 'Standstill: No Collision, Tip Over' },
+  11: { name: 'CRASH_STAND_STILL_SOFT_COLLISION_TIP_OVER', label: 'Standstill: Soft Collision, Tip Over' },
+  12: { name: 'CRASH_STAND_STILL_STRONG_COLLISION_NO_TIP_OVER', label: 'Standstill: Strong Collision, No Tip Over' },
+  13: { name: 'CRASH_STAND_STILL_COLLISION_TIP_OVER', label: 'Standstill: Collision, Tip Over' },
+  14: { name: 'CRASH_STAND_STILL_STRONG_COLLISION_TIP_OVER', label: 'Standstill: Strong Collision, Tip Over' },
+  15: { name: 'NO_CRASH_STAND_STILL_RIDERLESS_ROLL_OVER', label: 'No Crash: Standstill, Riderless Roll Over' },
+};
+const DRIVEUNIT_CRASH_STATUS_ENUM = {
+  0: { name: 'NO_CRASH', label: 'No Crash' },
+  1: { name: 'POTENTIAL_CRASH_DETECTED', label: 'Potential Crash Detected' },
+};
+const DRIVEUNIT_TUNING_DETECTION_CONFIG_TYPE_ENUM = {
+  0: { name: 'DEFAULT', label: 'Default' },
+  1: { name: 'ROBUST_AI_CONFIGURATION', label: 'Robust AI Configuration' },
+  2: { name: 'ROBUST_CLASSIC_AND_AI_CONFIGURATION', label: 'Robust Classic + AI Configuration' },
+};
+const DRIVEUNIT_MOUNTING_ANGLE_ESTIMATION_STATUS_ENUM = {
+  0: { name: 'NOT_YET_LEARNED', label: 'Not Yet Learned' },
+  1: { name: 'LEARNED', label: 'Learned' },
+};
 
 // --- Battery (Flow decompile additions) ---
 const BATTERY_SHUTDOWN_STATE_ENUM = {
@@ -143,6 +229,17 @@ const BATTERY_SHUTDOWN_STATE_ENUM = {
 };
 const BATTERY_RESET_SETTINGS_ENUM = {
   0: { name: "RESET_ALL", label: "Reset All" },
+};
+// Two distinct enums despite both fields being named "chargingMode" — CHARGING_INFORMATION's
+// live/active-session mode vs CHARGING_SETTINGS' persisted user preference, confirmed as
+// separate value sets via decompile.
+const BATTERY_CHARGING_INFORMATION_MODE_ENUM = {
+  0: { name: 'STANDARD_CHARGING', label: 'Standard Charging' },
+  1: { name: 'FAST_CHARGING', label: 'Fast Charging' },
+};
+const BATTERY_CHARGING_SETTINGS_MODE_ENUM = {
+  0: { name: 'CHARGE_TIME_OPTIMIZED_CHARGING', label: 'Charge-time Optimized' },
+  1: { name: 'BATTERY_LIFETIME_OPTIMIZED_CHARGING', label: 'Battery-lifetime Optimized' },
 };
 
 // --- ConnectModule (Flow decompile additions) ---
@@ -351,6 +448,34 @@ const FIELD_TYPES = {
   739: { label: "Bootmanager firmware version string", kind: "string" }, // Flow decompile, confidence: high — mirrors Battery's BOOTMANAGER_SOFTWARE_VERSION (same field, Battery2 instance) — matches sibling *_SOFTWARE_VERSION string fields
   742: { label: "Reset command", kind: 'enum', enumTable: BATTERY2_RESET_SETTINGS_ENUM }, // Flow decompile, confidence: high — mirrors Battery's RESET_SETTINGS (same field, Battery2 instance) — ResetSettingsParamsEnumType, single-value enum
   743: { label: "OEM component-lock enable toggle", kind: "bool" }, // Flow decompile, confidence: medium — mirrors Battery's OEM_COMPONENT_LOCK_ENABLE (same field, Battery2 instance) — distinct from OemComponentLockConfiguration submessage
+  // Field-number-verified submessage decoders, mirroring Battery's (same field, Battery2 instance).
+  706: { label: 'Feature properties, release 4', kind: 'submessage', fields: [
+    { num: 1, name: 'centralInformationVisualization', kind: 'bool' },
+    { num: 2, name: 'preventShutdown', kind: 'bool' },
+    { num: 3, name: 'serviceCharge', kind: 'bool' },
+  ] },
+  717: { label: 'Static feature-capability flags', kind: 'submessage', fields: [
+    { num: 1, name: 'powerCycleIssueList', kind: 'bool' },
+    { num: 2, name: 'systemDerating', kind: 'bool' },
+    { num: 4, name: 'energyReserveV3', kind: 'bool' },
+    { num: 5, name: 'improvedSocCalculation', kind: 'bool' },
+    { num: 6, name: 'shortButtonPressChargeSleep', kind: 'bool' },
+    { num: 7, name: 'issueHealing', kind: 'bool' },
+    { num: 8, name: 'improvedCurrentMonitor', kind: 'bool' },
+    { num: 9, name: 'onboardDataCollection', kind: 'bool' },
+    { num: 10, name: 'chargingModeConfigurable', kind: 'bool' },
+    { num: 11, name: 'ccfWithoutReboot', kind: 'bool' },
+    { num: 12, name: 'oemComponentLockingSupport', kind: 'bool' },
+    { num: 13, name: 'chargingLimitConfigurable', kind: 'bool' },
+    { num: 14, name: 'dsoApprovalForIssueSnapshotDataCollection', kind: 'bool' },
+  ] },
+  737: { label: 'Harmful-event counters', kind: 'submessage', fields: [
+    { num: 1, name: 'deepDischargeCount', kind: 'uint' },
+  ] },
+  741: { label: 'Charging settings', kind: 'submessage', fields: [
+    { num: 1, name: 'chargingMode', kind: 'enum', enumTable: BATTERY_CHARGING_SETTINGS_MODE_ENUM },
+    { num: 2, name: 'chargingLimitSoc', label: 'chargingLimitSoc (%)', kind: 'uint' },
+  ] },
   // --- DriveUnit (Flow decompile additions) ---
   4129: { label: "Remote control component present", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag, same pattern as sibling *_AVAILABLE addresses
   4130: { label: "Battery 1 present", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag
@@ -408,6 +533,74 @@ const FIELD_TYPES = {
   6305: { label: "Braking intensity detection status", kind: 'enum', enumTable: DRIVEUNIT_BRAKE_DETECTION_STATUS_ENUM }, // Flow decompile, confidence: high — BrakeDetectionStatusEnumType / EnumMessage
   6306: { label: "Trigger reset of hub-cable diagnosis result", kind: "bool" }, // Flow decompile, confidence: high — Write-trigger address, companion to DIAGNOSE_HUB_CABLE (4261)
   6311: { label: "OEM enable flag for component-lock feature", kind: "bool" }, // Flow decompile, confidence: medium — Write-flag address, no dedicated message class found (distinct from OemComponentLockConfiguration submessage)
+  // Field-number-verified submessage decoders (dove into the address-only entries above) —
+  // field numbers confirmed via decompiled FIELD_NUMBER constants, not guessed.
+  4259: { label: 'Reset rider-context features', kind: 'submessage', fields: [
+    { num: 1, name: 'distractedRiderAlert', kind: 'bool' },
+  ] }, // ResetRiderContextFeatures — write-trigger message, single bool field
+  6246: { label: 'Component state', kind: 'submessage', fields: [
+    { num: 1, name: 'context', kind: 'enum', enumTable: DRIVEUNIT_COMPONENT_STATE_CONTEXT_ENUM },
+    { num: 2, name: 'systemState', kind: 'enum', enumTable: DRIVEUNIT_COMPONENT_STATE_SYSTEM_STATE_ENUM },
+    { num: 3, name: 'preChargeState', kind: 'enum', enumTable: DRIVEUNIT_COMPONENT_STATE_PRE_CHARGE_STATE_ENUM },
+  ] }, // ComponentState
+  6247: { label: 'Configured speed range', kind: 'submessage', fields: [
+    { num: 1, name: 'minimumSpeed', kind: 'uint' },
+    { num: 2, name: 'maximumSpeed', kind: 'uint' },
+  ] }, // SpeedRange
+  6250: { label: 'Walk-assist / hill-start status', kind: 'submessage', fields: [
+    { num: 1, name: 'state', kind: 'enum', enumTable: DRIVEUNIT_WALK_ASSIST_STATE_ENUM },
+    { num: 2, name: 'countdown', kind: 'uint' },
+  ] }, // WalkAssistStatus
+  6255: { label: 'Sound status', kind: 'submessage', fields: [
+    { num: 1, name: 'soundType', kind: 'enum', enumTable: DRIVEUNIT_SOUND_TYPE_ENUM },
+    { num: 2, name: 'remainingRepetitions', kind: 'uint' },
+  ] }, // SoundStatus
+  6280: { label: 'Trick/jump detection status', kind: 'submessage', fields: [
+    { num: 2, name: 'activityState', kind: 'enum', enumTable: DRIVEUNIT_TRICK_ACTIVITY_STATE_ENUM },
+    { num: 4, name: 'duration', kind: 'uint' },
+    { num: 5, name: 'distance', kind: 'uint' },
+    { num: 6, name: 'height', kind: 'uint' },
+    { num: 7, name: 'pitchAngle', kind: 'uint' },
+    { num: 8, name: 'rollAngle', kind: 'uint' },
+    { num: 9, name: 'yawAngle', kind: 'uint' },
+  ] }, // TrickDetectionStatus — trickType(1)/startTimestamp(3) omitted: trickType's enum values weren't confirmed, startTimestamp is a 64-bit field this project's varint-only field parser doesn't attempt
+  6283: { label: 'Per-mode assist limits', kind: 'submessage', fields: [
+    { num: 1, name: 'maximumSpeed', kind: 'uint' },
+    { num: 2, name: 'maximumMotorPower', kind: 'uint' },
+    { num: 3, name: 'maximumMotorTorque', kind: 'uint' },
+    { num: 4, name: 'maximumMotorAssistance', kind: 'uint' },
+  ] }, // AssistModeLimits — field 5 (motorAssistanceApplication, a factor map) omitted, too complex for this generic decoder
+  6287: { label: 'Drivetrain chain state', kind: 'submessage', fields: [
+    { num: 1, name: 'chainMovement', kind: 'enum', enumTable: DRIVEUNIT_CHAIN_MOVEMENT_ENUM },
+    { num: 2, name: 'chainLoad', kind: 'enum', enumTable: DRIVEUNIT_CHAIN_LOAD_ENUM },
+  ] }, // ChainState
+  6291: { label: 'Predicted speed-tuning (derestriction) confidence', kind: 'submessage', fields: [
+    { num: 1, name: 'confidencePredictor', kind: 'uint' },
+    { num: 2, name: 'confidencePredictorMax', kind: 'uint' },
+    { num: 3, name: 'tuningDetectedFlag', kind: 'bool' },
+  ] }, // SpeedTuningPredicted
+  6292: { label: 'Crash detection status', kind: 'submessage', fields: [
+    { num: 1, name: 'crashClass', kind: 'enum', enumTable: DRIVEUNIT_CRASH_CLASS_ENUM },
+    { num: 2, name: 'crashStatus', kind: 'enum', enumTable: DRIVEUNIT_CRASH_STATUS_ENUM },
+  ] }, // CrashDetectionStatus
+  6293: { label: 'Crash detection configuration', kind: 'submessage', fields: [
+    { num: 1, name: 'featureActivationFlag', kind: 'bool' },
+    { num: 2, name: 'soundActivationFlag', kind: 'bool' },
+  ] }, // CrashDetectionConfig
+  6307: { label: 'Tuning detection configuration', kind: 'submessage', fields: [
+    { num: 1, name: 'configuration', kind: 'enum', enumTable: DRIVEUNIT_TUNING_DETECTION_CONFIG_TYPE_ENUM },
+  ] }, // TuningDetectionConfig — field 2 (serialNumber) is itself a nested submessage, omitted
+  6308: { label: 'Per-mode assist limits (v2)', kind: 'submessage', fields: [
+    { num: 1, name: 'maximumSpeed', kind: 'uint' },
+    { num: 2, name: 'maximumMotorPower', kind: 'uint' },
+    { num: 3, name: 'maximumMotorTorque', kind: 'uint' },
+    { num: 4, name: 'maximumMotorAssistance', kind: 'uint' },
+  ] }, // AssistModeLimitsV2 — field 5 (motorApplication, a characteristic map) omitted
+  6309: { label: 'Estimated IMU mounting angle', kind: 'submessage', fields: [
+    { num: 1, name: 'pitch', kind: 'uint' },
+    { num: 2, name: 'roll', kind: 'uint' },
+    { num: 3, name: 'status', kind: 'enum', enumTable: DRIVEUNIT_MOUNTING_ANGLE_ESTIMATION_STATUS_ENUM },
+  ] }, // MountingAngleEstimationInformation
   // --- Battery (Flow decompile additions) ---
   142: { label: "Prepare-for-shutdown flag", kind: "bool" }, // Flow decompile, confidence: medium — matches FEATURE_PROPERTIES naming pattern of shutdown-lifecycle bools
   143: { label: "Veto/deny shutdown flag", kind: "bool" }, // Flow decompile, confidence: medium — paired with PREPARE_SHUTDOWN/PREVENT_SHUTDOWN lifecycle
@@ -444,6 +637,38 @@ const FIELD_TYPES = {
   227: { label: "Bootmanager firmware version string", kind: "string" }, // Flow decompile, confidence: high — matches sibling *_SOFTWARE_VERSION string fields
   230: { label: "Reset command", kind: 'enum', enumTable: BATTERY_RESET_SETTINGS_ENUM }, // Flow decompile, confidence: high — ResetSettingsParamsEnumType, single-value enum
   231: { label: "OEM component-lock enable toggle", kind: "bool" }, // Flow decompile, confidence: medium — distinct from OemComponentLockConfiguration submessage
+  // Field-number-verified submessage decoders (dove into the address-only entries above).
+  194: { label: 'Feature properties, release 4', kind: 'submessage', fields: [
+    { num: 1, name: 'centralInformationVisualization', kind: 'bool' },
+    { num: 2, name: 'preventShutdown', kind: 'bool' },
+    { num: 3, name: 'serviceCharge', kind: 'bool' },
+  ] }, // BatteryFeaturePropertiesRelease4
+  205: { label: 'Static feature-capability flags', kind: 'submessage', fields: [
+    { num: 1, name: 'powerCycleIssueList', kind: 'bool' },
+    { num: 2, name: 'systemDerating', kind: 'bool' },
+    { num: 4, name: 'energyReserveV3', kind: 'bool' },
+    { num: 5, name: 'improvedSocCalculation', kind: 'bool' },
+    { num: 6, name: 'shortButtonPressChargeSleep', kind: 'bool' },
+    { num: 7, name: 'issueHealing', kind: 'bool' },
+    { num: 8, name: 'improvedCurrentMonitor', kind: 'bool' },
+    { num: 9, name: 'onboardDataCollection', kind: 'bool' },
+    { num: 10, name: 'chargingModeConfigurable', kind: 'bool' },
+    { num: 11, name: 'ccfWithoutReboot', kind: 'bool' },
+    { num: 12, name: 'oemComponentLockingSupport', kind: 'bool' },
+    { num: 13, name: 'chargingLimitConfigurable', kind: 'bool' },
+    { num: 14, name: 'dsoApprovalForIssueSnapshotDataCollection', kind: 'bool' },
+  ] }, // BatteryStaticFeatureProperties — field 3 (systemTotalEnergyForRider) omitted, type unconfirmed
+  225: { label: 'Harmful-event counters', kind: 'submessage', fields: [
+    { num: 1, name: 'deepDischargeCount', kind: 'uint' },
+  ] }, // HarmfulEvents — fields 2-10 (reservedEvent2..10) are unused reserved slots, omitted
+  228: { label: 'Live charging information', kind: 'submessage', fields: [
+    { num: 1, name: 'targetSocForCharging', label: 'targetSocForCharging (%)', kind: 'uint' },
+    { num: 2, name: 'chargingMode', kind: 'enum', enumTable: BATTERY_CHARGING_INFORMATION_MODE_ENUM },
+  ] }, // ChargingInformation
+  229: { label: 'Charging settings', kind: 'submessage', fields: [
+    { num: 1, name: 'chargingMode', kind: 'enum', enumTable: BATTERY_CHARGING_SETTINGS_MODE_ENUM },
+    { num: 2, name: 'chargingLimitSoc', label: 'chargingLimitSoc (%)', kind: 'uint' },
+  ] }, // ChargingSettings
   // --- ConnectModule (Flow decompile additions) ---
   2825: { label: "Component data-model/schema version", kind: 'uint' }, // Flow decompile, confidence: high — shared plumbing scalar
   2848: { label: "Hidden/easter-egg text value", kind: "string" }, // Flow decompile, confidence: high — EasterEgg{value}
@@ -456,6 +681,11 @@ const FIELD_TYPES = {
   2871: { label: "Free-form debug/diagnostic component state text", kind: "string" }, // Flow decompile, confidence: high — DebugComponentState{value}, same wrapper pattern as EasterEgg
   2872: { label: "Trigger to (re)fetch remote configuration from backend", kind: "bool" }, // Flow decompile, confidence: medium — paired with REMOTE_CONFIGURATION_DATA/SETTINGS neighbors
   2875: { label: "Signed unlock command result", kind: 'enum', enumTable: CONNECTMODULE_UNLOCK_COMPONENT_ENUM }, // Flow decompile, confidence: high — UnlockComponentResult + UnlockResultEnumType
+  2869: { label: 'Static feature-capability flags', kind: 'submessage', fields: [
+    { num: 1, name: 'powerCycleIssueList', kind: 'bool' },
+    { num: 2, name: 'componentLockingSupport', kind: 'bool' },
+    { num: 3, name: 'issueHealing', kind: 'bool' },
+  ] }, // ConnectModuleStaticFeatureProperties — field-number-verified
   // --- AntiLockBrakeSystem (Flow decompile additions) ---
   2318: { label: "Sample/prototype hardware marker", kind: "bool" }, // Flow decompile, confidence: high — standard cross-component boolean flag
   2329: { label: "Factory end-of-line test completion flag", kind: "bool" }, // Flow decompile, confidence: high — complements OVERALL_ASSEMBLY_TEST_RESULT
@@ -468,6 +698,18 @@ const FIELD_TYPES = {
   2354: { label: "Hidden/diagnostic string", kind: "string" }, // Flow decompile, confidence: high — EasterEgg{value}
   2355: { label: "Feature-capability flag (release 4)", kind: "bool" }, // Flow decompile, confidence: high — AntiLockBrakeSystemFeaturePropertiesRelease4OrBuilder — single field: centralInformationVisualization
   2360: { label: "Result of component-unlock (anti-theft/service) operation", kind: 'enum', enumTable: ANTILOCKBRAKESYSTEM_UNLOCK_COMPONENT_ENUM }, // Flow decompile, confidence: high — UnlockComponentResult / UnlockResultEnumType
+  2357: { label: 'Static feature-capability flags', kind: 'submessage', fields: [
+    { num: 1, name: 'powerCycleIssueList', kind: 'bool' },
+    { num: 2, name: 'isInertialMeasurementUnitSystem', kind: 'bool' },
+    { num: 3, name: 'lastBrakeEventWithBrakeType', kind: 'bool' },
+    { num: 4, name: 'onboardDataCollection', kind: 'bool' },
+    { num: 5, name: 'dsoApprovalForIssueSnapshotDataCollection', kind: 'bool' },
+    { num: 6, name: 'issueHealing', kind: 'bool' },
+  ] }, // AntiLockBrakeSystemStaticFeatureProperties — field-number-verified
+  2362: { label: 'Configured bike category', kind: 'submessage', fields: [
+    { num: 1, name: 'category', kind: 'enum', enumTable: BIKE_CATEGORY_ENUM },
+    { num: 2, name: 'checksum', kind: 'uint' },
+  ] }, // BikeCategoryConfiguration — field-number-verified against a real capture (category=TREKKING matched this bike's actual eTrekking category)
   // --- HeadUnit (Flow decompile additions) ---
   3098: { label: "Which issue severities the head unit can visualize", kind: "uint32List" }, // Flow decompile, confidence: high — VisualizableIssueTypesOrBuilder, repeated IssueTypeEnum
   3340: { label: "Protocol/data-model version of head unit", kind: "string" }, // Flow decompile, confidence: medium — inferred from sibling SoftwareVersion/ShortVersion shape
@@ -570,6 +812,24 @@ const FIELD_TYPES = {
   8984: { label: "ABS modes currently available/selectable", kind: "uint32List" }, // Flow decompile, confidence: medium — AbsModeEnumType; array-wrapper mirrors icon list
   8985: { label: "Currently active ABS mode", kind: 'uint' }, // Flow decompile, confidence: high — AbsModeEnumMessage / AbsModeEnumType; ordinal-to-mode mapping (ABS_MODE1..5) not individually confirmed, kept as raw uint rather than guessed enum
   8993: { label: "Signal/running lamp legally/functionally required", kind: "bool" }, // Flow decompile, confidence: medium — no class/usage found outside enum; paired with SIGNAL_LAMP_CONTROL
+  8610: { label: 'Automatic bike-light configuration', kind: 'submessage', fields: [
+    { num: 1, name: 'enabled', kind: 'bool' },
+    { num: 2, name: 'illuminanceOn', kind: 'uint' },
+    { num: 3, name: 'illuminanceOff', kind: 'uint' },
+    { num: 4, name: 'timeOff', kind: 'uint' },
+  ] }, // AutomaticBikeLightConfiguration — field-number-verified
+  8651: { label: 'Power-management status', kind: 'submessage', fields: [
+    { num: 1, name: 'maximumCurrent', label: 'maximumCurrent (mA)', kind: 'uint' },
+    { num: 2, name: 'powerProfile', kind: 'uint' },
+  ] }, // PowerManagementInformation — field-number-verified
+  8789: { label: 'Aggregate brake-event counters', kind: 'submessage', fields: [
+    { num: 1, name: 'amountOfNormalBrakeEvents', kind: 'uint' },
+    { num: 2, name: 'amountOfAbsInterventionEvents', kind: 'uint' },
+  ] }, // BrakeEvents — field-number-verified
+  8982: { label: 'ABS runtime capability flags', kind: 'submessage', fields: [
+    { num: 1, name: 'absModes', kind: 'bool' },
+    { num: 2, name: 'brakeStatistics', kind: 'bool' },
+  ] }, // XAbsDynamicFeatureProperties — field-number-verified
   // --- MobileApp (Flow decompile additions) ---
   16513: { label: "UI priority level", kind: 'uint' }, // Flow decompile, confidence: high — raw priority index, no scaling; PayloadKt.java maps to Uint8Message
   16517: { label: "Current altitude", kind: 'uint', unit: "m" }, // Flow decompile, confidence: high — Int16NullableMessage, no scale factor

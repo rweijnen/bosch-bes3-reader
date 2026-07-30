@@ -77,6 +77,7 @@
     batteryCycles: $('batteryCycles'),
     batteryEnergy: $('batteryEnergy'),
     batteryTemp: $('batteryTemp'),
+    batteryModel: $('batteryModel'),
     driveUnitGrid: $('driveUnitGrid'),
     drivetrainGrid: $('drivetrainGrid'),
     usageGrid: $('usageGrid'),
@@ -1256,6 +1257,11 @@
     els.batteryCycles.textContent = displayOf('Battery', 'NUMBER_OF_FULL_CHARGE_CYCLES');
     els.batteryEnergy.textContent = displayOf('Battery', 'REMAINING_ENERGY');
     els.batteryTemp.textContent = displayOf('Battery', 'PRESENT_PACK_TEMPERATURE');
+    const batteryProductName = displayOf('Battery', 'PRODUCT_NAME', '');
+    const batteryProductCode = displayOf('Battery', 'PRODUCT_CODE', '');
+    els.batteryModel.textContent = batteryProductName && batteryProductCode
+      ? `${batteryProductName} (${batteryProductCode})`
+      : (batteryProductName || batteryProductCode || '');
     const cert = valueOf('Battery', 'DEVICE_CERTIFICATE');
     els.batteryCertBtn.style.display = cert ? '' : 'none';
 
