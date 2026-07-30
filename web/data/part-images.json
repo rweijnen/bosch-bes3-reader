@@ -1,0 +1,80 @@
+{
+  "_comment": "Product photos bundled inside Bosch's own Flow app (config.xxxhdpi.apk resource split), extracted with the repo owner's explicit go-ahead since these are plain product photography, not creative art. Keys are matched against a component's PRODUCT_CODE, longest key first, exact match preferred over prefix match — see partImageFor() in app.js. Two drive-unit prefixes (BDU374, BDU384) each cover two visually distinct product lines in Flow's own asset set (e.g. Cargo Line vs Performance Line CX) and Flow disambiguates on a full code we don't have two confirmed samples for yet, so only the single exact code we've actually seen on real hardware is wired in here; the sibling files are still shipped in web/parts/ for future refinement.",
+  "AntiLockBrakeSystem": {
+    "BAS3311": "ic_bas3311_abs.webp",
+    "BAS35": "ic_bas35_abs_pro.webp"
+  },
+  "Battery": {
+    "BBP324": "ic_bbp324_compact_tube_400.webp",
+    "BBP334": "ic_bbp334_power_pack_400_rack.webp",
+    "BBP335": "ic_bbp335_power_pack_500_rack.webp",
+    "BBP354": "ic_bbp354_power_pack_400.webp",
+    "BBP355": "ic_bbp355_power_pack_545.webp",
+    "BBP356": "ic_bbp356_power_pack_600.webp",
+    "BBP357": "ic_bbp357_power_pack_725.webp",
+    "BBP358": "ic_bbp358_power_pack_800.webp",
+    "BBP362": "ic_bbp362_power_more_250.webp",
+    "BBP375": "ic_bbp375_power_tube500.webp",
+    "BBP376": "ic_bbp376_power_tube625.webp",
+    "BBP377": "ic_bbp377_power_tube750.webp",
+    "BBP383": "ic_bbp383_power_tube360.webp",
+    "BBP385": "ic_bbp385_power_tube_540.webp",
+    "BBP386": "ic_bbp386_power_tube600.webp",
+    "BBP387": "ic_bbp387_power_tube720.webp",
+    "BBP388": "ic_bbp388_power_tube800.webp"
+  },
+  "Battery2": {
+    "BBP324": "ic_bbp324_compact_tube_400.webp",
+    "BBP334": "ic_bbp334_power_pack_400_rack.webp",
+    "BBP335": "ic_bbp335_power_pack_500_rack.webp",
+    "BBP354": "ic_bbp354_power_pack_400.webp",
+    "BBP355": "ic_bbp355_power_pack_545.webp",
+    "BBP356": "ic_bbp356_power_pack_600.webp",
+    "BBP357": "ic_bbp357_power_pack_725.webp",
+    "BBP358": "ic_bbp358_power_pack_800.webp",
+    "BBP362": "ic_bbp362_power_more_250.webp",
+    "BBP375": "ic_bbp375_power_tube500.webp",
+    "BBP376": "ic_bbp376_power_tube625.webp",
+    "BBP377": "ic_bbp377_power_tube750.webp",
+    "BBP383": "ic_bbp383_power_tube360.webp",
+    "BBP385": "ic_bbp385_power_tube_540.webp",
+    "BBP386": "ic_bbp386_power_tube600.webp",
+    "BBP387": "ic_bbp387_power_tube720.webp",
+    "BBP388": "ic_bbp388_power_tube800.webp"
+  },
+  "ConnectModule": {
+    "BCM3100": "ic_bcm3100_connect_module.webp",
+    "BCM3101": "ic_bcm3101_connect_module.webp"
+  },
+  "DriveUnit": {
+    "BDU306": "ic_bdu306_hub_line_motor.webp",
+    "BDU314": "ic_bdu314_performance_line_sx.webp",
+    "BDU332": "ic_bdu332_active_line.webp",
+    "BDU334": "ic_bdu334_active_line_plus.webp",
+    "BDU336": "ic_bdu336_performance_line.webp",
+    "BDU338": "ic_bdu338_performance_line_sport.webp",
+    "BDU344": "ic_bdu344_active_line_plus.webp",
+    "BDU346": "ic_bdu346_performance_line.webp",
+    "BDU347": "ic_bdu347_performance_line_px.webp",
+    "BDU348": "ic_bdu348_performance_line_sport.webp",
+    "BDU3741": "ic_bdu374_performance_line_cx.webp",
+    "BDU376": "ic_bdu376_performance_line_cx_race.webp",
+    "BDU378": "ic_bdu378_performance_line_speed.webp",
+    "BDU386": "ic_bdu386_performance_line_cxr.webp",
+    "BDU388": "ic_bdu388_performance_line_speed.webp"
+  },
+  "HeadUnit": {
+    "BHU32000": "ic_bhu32000_intuvia_100.webp",
+    "BHU3210": "ic_bhu3210_intuvia_200.webp",
+    "BHU3500": "ic_bhu3500_purion_400.webp",
+    "BHU3600": "ic_bhu3600_kiox_300.webp"
+  },
+  "RemoteControl": {
+    "BRC3100": "ic_brc3100_system_controller.webp",
+    "BRC3200": "ic_brc3200_kiox_400.webp",
+    "BRC3300": "ic_brc3300_mini_remote.webp",
+    "BRC3600": "ic_brc3600_led_remote.webp",
+    "BRC3610": "ic_brc3610_led_controller_frame.webp",
+    "BRC3800": "ic_brc3800_purion_200.webp"
+  }
+}

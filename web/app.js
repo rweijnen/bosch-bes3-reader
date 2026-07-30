@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-30.3';
+  const APP_VERSION = '2026-07-30.4';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -81,10 +81,13 @@
     batteryEnergy: $('batteryEnergy'),
     batteryTemp: $('batteryTemp'),
     batteryModel: $('batteryModel'),
+    batteryPhoto: $('batteryPhoto'),
     driveUnitGrid: $('driveUnitGrid'),
+    driveUnitPhoto: $('driveUnitPhoto'),
     drivetrainGrid: $('drivetrainGrid'),
     usageGrid: $('usageGrid'),
     remoteGrid: $('remoteGrid'),
+    remoteControlPhoto: $('remoteControlPhoto'),
     assistModeHistogram: $('assistModeHistogram'),
     writeExperiments: $('writeExperiments'),
     assistModeModalBackdrop: $('assistModeModalBackdrop'),
@@ -857,6 +860,47 @@
     return modelCacheLoading;
   }
 
+  // Part photos bundled inside Bosch's own Flow app (extracted with the repo owner's explicit
+  // go-ahead — plain product photography, not creative art) — see web/data/part-images.json for
+  // provenance and matching rules. Loaded once, same pattern as the bike-model cache above.
+  let partImageCache = null;
+  let partImageCacheLoading = null;
+  function loadPartImages() {
+    if (partImageCache) return Promise.resolve(partImageCache);
+    if (partImageCacheLoading) return partImageCacheLoading;
+    partImageCacheLoading = fetch('web/data/part-images.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { partImageCache = data || {}; return partImageCache; })
+      .catch(() => { partImageCache = {}; return partImageCache; });
+    return partImageCacheLoading;
+  }
+
+  // Exact code match wins (needed for the two drive-unit prefixes that cover more than one
+  // product line); otherwise the longest matching prefix, since shorter prefixes are also
+  // valid substrings of longer real codes (e.g. 'BBP375' would spuriously match a hypothetical
+  // 'BBP3750').
+  function partImageFor(component, productCode, table) {
+    if (!productCode || !table || !table[component]) return null;
+    const entries = table[component];
+    if (entries[productCode]) return 'web/parts/' + entries[productCode];
+    const prefixes = Object.keys(entries).sort((a, b) => b.length - a.length);
+    const hit = prefixes.find((p) => productCode.startsWith(p));
+    return hit ? 'web/parts/' + entries[hit] : null;
+  }
+
+  function renderPartPhoto(imgEl, component, productCode) {
+    if (!productCode) { imgEl.style.display = 'none'; return; }
+    loadPartImages().then((table) => {
+      // Bail if the dashboard has moved on to a different bike/read since this lookup started.
+      if (valueOf(component, 'PRODUCT_CODE') !== productCode) return;
+      const src = partImageFor(component, productCode, table);
+      if (!src) { imgEl.style.display = 'none'; return; }
+      imgEl.src = src;
+      imgEl.alt = `${component} ${productCode}`;
+      imgEl.style.display = '';
+    });
+  }
+
   function renderBikePhoto() {
     const gtin = valueOf('DriveUnit', 'OEM_BIKE_MODEL_ID');
     const showFallback = () => {
@@ -1269,6 +1313,7 @@
     els.batteryModel.textContent = batteryProductName && batteryProductCode
       ? `${batteryProductName} (${batteryProductCode})`
       : (batteryProductName || batteryProductCode || '');
+    renderPartPhoto(els.batteryPhoto, 'Battery', batteryProductCode);
     const cert = valueOf('Battery', 'DEVICE_CERTIFICATE');
     els.batteryCertBtn.style.display = cert ? '' : 'none';
 
@@ -1287,6 +1332,7 @@
     kvRow(els.batteryDetailGrid, 'Deactivation', displayOf('Battery', 'COMPONENT_DEACTIVATION_PROOF'));
 
     els.driveUnitGrid.innerHTML = '';
+    renderPartPhoto(els.driveUnitPhoto, 'DriveUnit', displayOf('DriveUnit', 'PRODUCT_CODE', ''));
     kvRow(els.driveUnitGrid, 'Product code', displayOf('DriveUnit', 'PRODUCT_CODE'));
     kvRow(els.driveUnitGrid, 'Part number', displayOf('DriveUnit', 'PART_NUMBER'));
     kvRow(els.driveUnitGrid, 'Hardware', displayOf('DriveUnit', 'HARDWARE_VERSION'));
@@ -1341,6 +1387,7 @@
     kvRow(els.usageGrid, 'Running hours (motor support)', motorSupportSeconds == null ? '—' : `${(motorSupportSeconds / 3600).toFixed(1)} h`);
 
     els.remoteGrid.innerHTML = '';
+    renderPartPhoto(els.remoteControlPhoto, 'RemoteControl', displayOf('RemoteControl', 'PRODUCT_CODE', ''));
     // Rider-set nickname, read from the remote/head-unit side rather than the drive unit —
     // distinct from PRODUCT_NAME (the fixed model name) and OEM_BIKE_ID (a manufacturer code).
     kvRow(els.remoteGrid, 'Bike name', displayOf('RemoteControl', 'BIKE_NAME'));

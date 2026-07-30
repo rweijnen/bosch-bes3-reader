@@ -96,6 +96,10 @@
   .bike-photo { width: 180px; max-height: 110px; object-fit: contain; border-radius: 6px; background: #f2f1ee; padding: 8px; border: 1px solid #00000014; box-sizing: border-box; }
   .bike-photo-caption { font: 500 11px 'IBM Plex Mono', monospace; color: var(--faint); text-align: center; max-width: 180px; }
   #bikeIconFallback { width: 170px; }
+  .card-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  /* Same "printed photo on white paper" treatment as .bike-photo, just sized for a card header
+     thumbnail instead of the bigger corner illustration. */
+  .part-photo { width: 52px; height: 52px; object-fit: contain; border-radius: 6px; background: #f2f1ee; padding: 4px; border: 1px solid #00000014; box-sizing: border-box; flex-shrink: 0; }
   .meta-item { display: flex; flex-direction: column; }
   .meta-item span:first-child { font-size: 11px; color: var(--faint); }
   .meta-item span:last-child { font: 500 13px 'IBM Plex Mono', monospace; }
@@ -330,7 +334,10 @@
         </div>
         <div class="card battery-card">
           <button id="batteryCertBtn" type="button" class="battery-cert-icon-btn" style="display:none;" title="View device certificate" aria-label="View device certificate">&#128274;</button>
-          <span class="card-label">BATTERY</span>
+          <div class="card-header-row">
+            <span class="card-label">BATTERY</span>
+            <img id="batteryPhoto" class="part-photo" style="display:none;" alt="" />
+          </div>
           <span id="batteryModel" class="battery-model"></span>
           <div class="soc-row">
             <span class="soc-value"><span id="batterySoc">&mdash;</span><span class="soc-unit" id="batterySocUnit"></span></span>
@@ -349,7 +356,10 @@
 
       <div class="data-grid">
         <div class="card data-card">
-          <span class="card-label">DRIVE UNIT</span>
+          <div class="card-header-row">
+            <span class="card-label">DRIVE UNIT</span>
+            <img id="driveUnitPhoto" class="part-photo" style="display:none;" alt="" />
+          </div>
           <div class="kv-grid" id="driveUnitGrid"></div>
         </div>
         <div class="card data-card">
@@ -366,7 +376,10 @@
           <div id="assistModeHistogram" class="histogram histogram-compact" style="display:none;"></div>
         </div>
         <div class="card data-card">
-          <span class="card-label">REMOTE</span>
+          <div class="card-header-row">
+            <span class="card-label">REMOTE</span>
+            <img id="remoteControlPhoto" class="part-photo" style="display:none;" alt="" />
+          </div>
           <div class="kv-grid" id="remoteGrid"></div>
         </div>
       </div>
