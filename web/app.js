@@ -32,6 +32,9 @@
     statusDot: $('statusDot'),
     statusLabel: $('statusLabel'),
     progressText: $('progressText'),
+    sweepProgress: $('sweepProgress'),
+    sweepProgressFill: $('sweepProgressFill'),
+    sweepProgressText: $('sweepProgressText'),
     cancelBtn: $('cancelBtn'),
     disconnectBtn: $('disconnectBtn'),
     readAgainBtn: $('readAgainBtn'),
@@ -131,6 +134,11 @@
   // screen — a post-read disconnect (usually the bike sleeping) is not a failure.
   let disconnectedAfterRead = false;
   let loadedFromFile = false; // true when the dashboard is showing a previously exported report, not a live read
+  // False from the moment a sweep starts until every address (priority AND background) plus
+  // per-mode ride stats have been read. Write-experiment buttons stay disabled the whole time —
+  // acting on a field before its own read (and everything it might gate on) has landed is how
+  // stale-state bugs happen.
+  let sweepFullyLoaded = false;
 
   // ---------- disclaimer (first run) ----------
   const ACK_KEY = 'bes3-risk-ack';
@@ -416,21 +424,9 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  // Fields worth painting first, so the dashboard fills in immediately instead of
-  // after a full ~2 min sweep. Ordered most-interesting-first; the rest backfill.
-  const PRIORITY = [
-    ['DriveUnit', 'SERIAL_NUMBER'], ['DriveUnit', 'PRODUCT_CODE'], ['DriveUnit', 'PRODUCT_NAME'],
-    ['DriveUnit', 'PRODUCT_LINE'], ['DriveUnit', 'SOFTWARE_VERSION'], ['DriveUnit', 'HARDWARE_VERSION'],
-    ['DriveUnit', 'BOOTLOADER_SOFTWARE_VERSION'], ['DriveUnit', 'BIKE_ID'], ['DriveUnit', 'BIKE_CATEGORY'],
-    ['DriveUnit', 'MAXIMUM_LEGAL_BIKE_SPEED'], ['DriveUnit', 'MAXIMUM_ASSISTANCE_SPEED'],
-    ['DriveUnit', 'REGIO_SPEED_CONFIGURATION'], ['DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_OEM'],
-    ['DriveUnit', 'TUNING_DETECTION'], ['DriveUnit', 'ODOMETER'], ['DriveUnit', 'POWER_ON_TIME'],
-    ['DriveUnit', 'GEARING_SYSTEM'], ['DriveUnit', 'PRESENT_PCB_TEMPERATURE'],
-    ['DriveUnit', 'OEM_BIKE_ID'], ['DriveUnit', 'OEM_BRAND_NAME'],
-    ['Battery', 'STATE_OF_CHARGE'], ['Battery', 'STATE_OF_HEALTH'], ['Battery', 'PRODUCT_CODE'],
-    ['Battery', 'PRODUCT_NAME'], ['Battery', 'NUMBER_OF_FULL_CHARGE_CYCLES'],
-    ['Battery', 'REMAINING_ENERGY'], ['Battery', 'PRESENT_PACK_TEMPERATURE'],
-  ];
+  // Which fields to read first is now data, not code: each address that feeds a UI element
+  // carries `priority: true` directly in addresses.js. Flipping a field's read order is a
+  // one-line data change there — no app.js edit, no separate list to keep in sync.
 
   // Always present on a Smart System bike — exempt from the absent-component skip.
   const CORE_COMPONENTS = new Set(['DriveUnit', 'Battery', 'RemoteControl']);
@@ -700,7 +696,7 @@
     }
 
     for (const entry of assistModeStats) {
-      if (phase !== 'connecting' || !transport) return;
+      if (!transport) return; // disconnected mid-read — `phase` is deliberately already 'connected' here
       try {
         const r = await rpcCallWithConfigId(ASSIST_MODE_STATS_ADDR, entry.configId, decodeAssistModeStatistics);
         if (!r) entry.status = 'timeout';
@@ -712,7 +708,7 @@
       }
 
       if (UDAM_VALUES_ADDR) {
-        if (phase !== 'connecting' || !transport) return;
+        if (!transport) return; // disconnected mid-read — `phase` is deliberately already 'connected' here
         try {
           const u = await rpcCallWithConfigId(UDAM_VALUES_ADDR, entry.configId, decodeUdamParams);
           if (u && !u.declined) entry.udam = u;
@@ -720,7 +716,7 @@
       }
 
       if (UDAM_LIMITS_ADDR) {
-        if (phase !== 'connecting' || !transport) return;
+        if (!transport) return; // disconnected mid-read — `phase` is deliberately already 'connected' here
         try {
           const l = await rpcCallWithConfigId(UDAM_LIMITS_ADDR, entry.configId, decodeUdamLimits);
           if (l && !l.declined) entry.udamLimits = l;
@@ -1183,6 +1179,7 @@
       btn.type = 'button';
       btn.className = exp.isRealWrite ? 'histogram-reset-btn' : 'histogram-change-btn secondary';
       if (state === 'pending') { btn.textContent = 'Sending…'; btn.disabled = true; }
+      else if (!sweepFullyLoaded) { btn.textContent = 'Loading…'; btn.disabled = true; }
       else if (exp.isRealWrite && gated === false) { btn.textContent = state === 'failed' ? 'Denied — retry anyway?' : 'Attempt anyway (locked)'; }
       else if (state === 'done') { btn.textContent = exp.isRealWrite ? 'Set ✓' : 'Sent — see value/log'; }
       else if (state === 'failed') { btn.textContent = 'No response — retry?'; }
@@ -1206,6 +1203,7 @@
     tryAllBtn.type = 'button';
     tryAllBtn.className = 'histogram-change-btn secondary';
     if (startModeTryAllResults === 'running') { tryAllBtn.textContent = 'Testing…'; tryAllBtn.disabled = true; }
+    else if (!sweepFullyLoaded) { tryAllBtn.textContent = 'Loading…'; tryAllBtn.disabled = true; }
     else { tryAllBtn.textContent = 'Try all values'; }
     tryAllBtn.addEventListener('click', async () => {
       if (await appConfirm(
@@ -1330,6 +1328,8 @@
     const odometerM = valueOf('DriveUnit', 'ODOMETER');
     kvRow(els.usageGrid, 'Odometer (total)', odometerM == null ? '—' : `${(odometerM / 1000).toFixed(1)} km`);
     kvRow(els.usageGrid, 'Power-on time', displayOf('DriveUnit', 'POWER_ON_TIME'));
+    const motorSupportSeconds = valueOf('DriveUnit', 'POWER_ON_TIME_WITH_MOTOR_SUPPORT');
+    kvRow(els.usageGrid, 'Running hours (motor support)', motorSupportSeconds == null ? '—' : `${(motorSupportSeconds / 3600).toFixed(1)} h`);
 
     els.remoteGrid.innerHTML = '';
     // Rider-set nickname, read from the remote/head-unit side rather than the drive unit —
@@ -1818,6 +1818,7 @@
       phase = 'connected';
       disconnectedAfterRead = true;
       loadedFromFile = true;
+      sweepFullyLoaded = true; // no live sweep is running against a loaded report — nothing to wait on
       renderChooser();
       renderPhase();
       renderDashboard();
@@ -1860,6 +1861,7 @@
 
     method = transportKind === 'ble-mcsp' ? 'ble-mcsp' : 'usb';
     abortRequested = false;
+    sweepFullyLoaded = false;
     phase = 'connecting';
     renderPhase();
     els.connectingTitle.textContent = transportKind === 'ble-mcsp'
@@ -1902,19 +1904,25 @@
         if (e.readable === true) all.push({ component, ...e });
       }
     }
-    const priIndex = new Map(PRIORITY.map(([c, n], i) => [c + '.' + n, i]));
-    const readable = all.slice().sort((a, b) => {
-      const pa = priIndex.has(a.component + '.' + a.name) ? priIndex.get(a.component + '.' + a.name) : Infinity;
-      const pb = priIndex.has(b.component + '.' + b.name) ? priIndex.get(b.component + '.' + b.name) : Infinity;
-      return pa - pb;
-    });
+    // Stable sort (spec-guaranteed in modern JS): priority entries keep their addresses.js
+    // order among themselves, same for the rest — no separate index/rank needed.
+    const readable = all.slice().sort((a, b) => (b.priority ? 1 : 0) - (a.priority ? 1 : 0));
+    const priorityCount = readable.filter((e) => e.priority).length;
 
     const results = [];
     const compStats = {};
     let done = 0;
     let aborted = false;
+    // Once the priority batch (everything the dashboard actually renders) is in, switch to the
+    // dashboard screen right away and keep reading the rest of the sweep in the background —
+    // rather than making the user stare at a progress bar for a ~2 min full sweep before seeing
+    // anything. `transport` (not `phase`) is the loop's stay-alive check from here on, since we
+    // deliberately flip `phase` to 'connected' mid-sweep; handleDisconnect() already treats a
+    // disconnect during phase 'connected' as "keep the dashboard, mark it stale", which is
+    // exactly right for a disconnect during this background backfill too.
+    let revealed = false;
     for (const entry of readable) {
-      if (phase !== 'connecting') return; // disconnected mid-sweep
+      if (!transport) return; // disconnected mid-sweep
       if (abortRequested) { aborted = true; break; }
 
       const cs = compStats[entry.component] || (compStats[entry.component] = { ok: 0, timeouts: 0 });
@@ -1953,22 +1961,50 @@
       }
       results.push({ ...entry, status, detail, decoded, typed });
       done++;
-      els.connectingBar.style.width = Math.round((done / readable.length) * 100) + '%';
-      els.connectingSub.textContent = `${done}/${readable.length} points`;
-      if (done <= PRIORITY.length || done % 15 === 0) {
+
+      if (!revealed && done >= priorityCount) {
+        revealed = true;
         lastResults = results;
+        phase = 'connected';
+        renderPhase();
+        renderDashboard();
+        if (done < readable.length) {
+          els.sweepProgress.style.display = 'flex';
+        }
+      }
+      if (!revealed) {
+        els.connectingBar.style.width = Math.round((done / Math.max(1, priorityCount)) * 100) + '%';
+        els.connectingSub.textContent = `${done}/${priorityCount} points`;
+      } else {
+        const backTotal = Math.max(1, readable.length - priorityCount);
+        const backDone = done - priorityCount;
+        els.sweepProgressFill.style.width = Math.round((backDone / backTotal) * 100) + '%';
+        els.sweepProgressText.textContent = `Loading more… ${backDone}/${backTotal}`;
+        if (done % 10 === 0 || done === readable.length) {
+          lastResults = results;
+          renderDashboard();
+        }
       }
       await sleep(10);
     }
 
-    if (!aborted && phase === 'connecting') {
-      els.connectingSub.textContent = 'reading per-mode ride statistics…';
+    if (!revealed) {
+      // Aborted/disconnected before the priority batch finished — still reveal what we have
+      // rather than leaving the connecting screen up with no way forward.
+      lastResults = results;
+      phase = 'connected';
+      renderPhase();
+    }
+
+    if (!aborted && transport) {
+      els.sweepProgress.style.display = 'flex';
+      els.sweepProgressText.textContent = 'reading per-mode ride statistics…';
       try { await readAllAssistModeStats(); } catch (_) {}
     }
 
     lastResults = results;
-    phase = 'connected';
-    renderPhase();
+    sweepFullyLoaded = true;
+    els.sweepProgress.style.display = 'none';
     const okCount = results.filter((r) => r.status === 'ok').length;
     const noResp = results.filter((r) => r.status === 'timeout' || r.status === 'error').length;
     const skippedCount = results.filter((r) => r.status === 'skipped').length;

@@ -40,6 +40,10 @@
   .status-dot { width: 8px; height: 8px; border-radius: 50%; }
   .status-label { font: 500 12px 'IBM Plex Mono', monospace; color: var(--muted); letter-spacing: 0.04em; }
   .progress-text { font: 400 12px 'IBM Plex Mono', monospace; color: var(--faint); }
+  .sweep-progress { display: flex; align-items: center; gap: 8px; margin: 0 auto; }
+  .sweep-progress-track { width: 120px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .sweep-progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.15s linear; }
+  .sweep-progress-text { font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); white-space: nowrap; }
   .header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
   .icon-btn { background: none; border: 1px solid var(--border2); border-radius: 6px; width: 36px; height: 36px; color: var(--muted); font-size: 16px; cursor: pointer; }
   .primary-btn { background: var(--accent); color: var(--accent-ink); border: none; font: 600 13px 'IBM Plex Sans', sans-serif; padding: 10px 18px; border-radius: 6px; cursor: pointer; }
@@ -222,6 +226,10 @@
       <span id="statusLabel" class="status-label mono">NOT CONNECTED</span>
     </div>
     <span id="progressText" class="progress-text" style="display:none;"></span>
+    <div id="sweepProgress" class="sweep-progress" style="display:none;" title="Background read still filling in less-common fields — the dashboard above is already live">
+      <div class="sweep-progress-track"><div id="sweepProgressFill" class="sweep-progress-fill"></div></div>
+      <span id="sweepProgressText" class="sweep-progress-text"></span>
+    </div>
     <div class="header-actions">
       <button id="debugLogBtn" class="icon-btn" title="Export a debug log (raw protocol bytes, phase transitions, errors) — useful when reporting a connection problem">&#128203;</button>
       <button id="themeToggle" class="icon-btn" title="Toggle light/dark">&#9680;</button>
