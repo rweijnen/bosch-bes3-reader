@@ -6,6 +6,11 @@
   // silently keep serving a stale bundle.
   const APP_VERSION = '2026-07-30.1';
 
+  // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
+  // depends on). Lets loadReportFile() below tell an old export apart from the current shape
+  // instead of silently mis-rendering when a field it expects (like rawValue) is missing.
+  const REPORT_FORMAT_VERSION = 1;
+
   const { ALL_ADDRESSES } = window.Bes3Addresses;
   const {
     MessageType, buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
@@ -32,6 +37,8 @@
     readAgainBtn: $('readAgainBtn'),
 
     chooserScreen: $('chooserScreen'),
+    loadReportLink: $('loadReportLink'),
+    loadReportInput: $('loadReportInput'),
     pickUsbBtn: $('pickUsbBtn'),
     pickBleBtn: $('pickBleBtn'),
     methodBlurb: $('methodBlurb'),
@@ -55,7 +62,9 @@
     dashboard: $('dashboard'),
     bikeName: $('bikeName'),
     bikeId: $('bikeId'),
+    bikeOemId: $('bikeOemId'),
     bikeSerial: $('bikeSerial'),
+    bikeBrand: $('bikeBrand'),
     bikeCategory: $('bikeCategory'),
     bikeIconFallback: $('bikeIconFallback'),
     bikePhotoWrap: $('bikePhotoWrap'),
@@ -85,6 +94,10 @@
     certModalTitle: $('certModalTitle'),
     certModalBody: $('certModalBody'),
     certModalClose: $('certModalClose'),
+    appDialogBackdrop: $('appDialogBackdrop'),
+    appDialogTitle: $('appDialogTitle'),
+    appDialogMessage: $('appDialogMessage'),
+    appDialogActions: $('appDialogActions'),
     rawToggle: $('rawToggle'),
     rawSummary: $('rawSummary'),
     rawBody: $('rawBody'),
@@ -116,6 +129,7 @@
   // screen). Lets us keep the dashboard instead of wiping back to the start
   // screen — a post-read disconnect (usually the bike sleeping) is not a failure.
   let disconnectedAfterRead = false;
+  let loadedFromFile = false; // true when the dashboard is showing a previously exported report, not a live read
 
   // ---------- disclaimer (first run) ----------
   const ACK_KEY = 'bes3-risk-ack';
@@ -186,7 +200,7 @@
       els.statusDot.style.background = 'var(--muted)';
       els.statusDot.style.boxShadow = 'none';
       els.statusDot.style.animation = 'none';
-      els.statusLabel.textContent = 'DISCONNECTED · SHOWING LAST READ';
+      els.statusLabel.textContent = loadedFromFile ? 'OFFLINE · LOADED FROM REPORT FILE' : 'DISCONNECTED · SHOWING LAST READ';
     } else if (phase === 'connected') {
       els.statusDot.style.background = 'var(--good)';
       els.statusDot.style.boxShadow = '0 0 6px var(--good)';
@@ -484,10 +498,15 @@
   // test) — traced why: AssistModePositionEnum only has generic
   // ASSIST_MODE_POSITION0..4 values, and no jar in this project (DiagnosticTool
   // 3 or Flow) contains a name/color lookup keyed off it — that mapping is a
-  // client-side-only UI convention inside Flow, not bike-reported data. So
-  // this histogram uses its own fixed design palette and generic position
-  // labels instead of asserting a "real" name/color that isn't actually
-  // sourced from the bike.
+  // client-side-only UI convention inside Flow, not bike-reported data. Real
+  // names DO come from the bike (ASSIST_MODE_SHORT_NAMES/LONG_NAMES below), and
+  // real colors turned out to as well — from a different address entirely
+  // (ASSIST_MODE_COLORS, see below) that was simply never wired up until a
+  // real capture showed the fixed design palette didn't match what the
+  // rider's own bike/app displays for AUTO (orange here vs. purple on the
+  // bike). ASSIST_MODE_PALETTE now only serves as a fallback for whichever
+  // slots ASSIST_MODE_COLORS doesn't cover, and for generic position labels
+  // when the name reads don't line up.
   const ASSIST_MODE_STATS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'GET_ASSIST_MODE_STATISTICS') || {}).addr;
   const ACTIVE_ASSIST_MODES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ACTIVE_ASSIST_MODES') || {}).addr;
   // Real bike-reported mode names — NOT the per-mode GET_ASSIST_MODE_INFORMATION
@@ -498,6 +517,16 @@
   // (AssistModeShortNames/AssistModeLongNames, both `repeated string value=1`).
   const ASSIST_MODE_SHORT_NAMES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_SHORT_NAMES') || {}).addr;
   const ASSIST_MODE_LONG_NAMES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_LONG_NAMES') || {}).addr;
+  // Real bike-reported per-mode colors — see messageTypes.js's FIELD_TYPES[6158] comment for
+  // how the byte layout was inferred and verified (AUTO decoded to purple, matching what the
+  // rider's own Flow app/head unit shows). Falls back to ASSIST_MODE_PALETTE below when this
+  // read fails or the entry count doesn't line up, same fallback strategy as the name reads above.
+  const ASSIST_MODE_COLORS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_COLORS') || {}).addr;
+  // Real, live, bike-computed per-mode range estimate — confirmed via Flow's own decompile
+  // (DriveUnitAddresses.REACHABLE_RANGE, addr 6231) to be the actual source behind Flow's
+  // "range estimate" screen, not a client-side formula. Same alignment/fallback strategy as
+  // the name/color reads above.
+  const REACHABLE_RANGE_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'REACHABLE_RANGE') || {}).addr;
   // Per-mode assist parameters (assist level / max speed / acceleration
   // response) — same ConfigId argument as the stats RPC above. Read-only.
   const UDAM_VALUES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'READ_UDAM_VALUES') || {}).addr;
@@ -638,6 +667,36 @@
         }
       } catch (_) { /* leave generic labels */ }
     }
+    if (ASSIST_MODE_COLORS_ADDR) {
+      try {
+        const colorRes = await readOne(ASSIST_MODE_COLORS_ADDR);
+        if (colorRes && !colorRes.declined && colorRes.payload) {
+          const typed = decodeTyped(ASSIST_MODE_COLORS_ADDR, colorRes.payload);
+          const colors = typed ? typed.value : [];
+          if (dlog) dlog.log('assist-rpc', 'ASSIST_MODE_COLORS decoded', JSON.stringify(colors));
+          if (colors.length === assistModeStats.length) {
+            colors.forEach((c, i) => { assistModeStats[i].color = c.hex; });
+          } else if (colors.length === assistModeStats.length - 1) {
+            colors.forEach((c, i) => { assistModeStats[i + 1].color = c.hex; });
+          }
+        }
+      } catch (_) { /* leave the design-palette colors already assigned above */ }
+    }
+    if (REACHABLE_RANGE_ADDR) {
+      try {
+        const rangeRes = await readOne(REACHABLE_RANGE_ADDR);
+        if (rangeRes && !rangeRes.declined && rangeRes.payload) {
+          const typed = decodeTyped(REACHABLE_RANGE_ADDR, rangeRes.payload);
+          const ranges = typed ? typed.value : [];
+          if (dlog) dlog.log('assist-rpc', 'REACHABLE_RANGE decoded', JSON.stringify(ranges));
+          if (ranges.length === assistModeStats.length) {
+            ranges.forEach((km, i) => { assistModeStats[i].reachableRangeKm = km; });
+          } else if (ranges.length === assistModeStats.length - 1) {
+            ranges.forEach((km, i) => { assistModeStats[i + 1].reachableRangeKm = km; });
+          }
+        }
+      } catch (_) { /* leave range unset — histogram just omits it for this mode */ }
+    }
 
     for (const entry of assistModeStats) {
       if (phase !== 'connecting' || !transport) return;
@@ -675,7 +734,7 @@
   // behind its own confirmation dialog (see index.html/renderAssistModeHistogram).
   async function resetUdamValuesForMode(entry) {
     if (!RESET_UDAM_VALUES_ADDR || !transport) {
-      window.alert('Not connected to the bike anymore — reconnect (Read again) and try the reset again.');
+      await appAlert('Not connected to the bike anymore — reconnect (Read again) and try the reset again.');
       return { ok: false, error: 'not connected' };
     }
     entry.resetState = 'pending';
@@ -710,11 +769,11 @@
   // automatically; only from the change UI's own confirmation dialog.
   async function setUdamValuesForMode(entry, changes) {
     if (!SET_UDAM_VALUES_PARAMETERS_ADDR || !transport) {
-      window.alert('Not connected to the bike anymore — reconnect (Read again) and try again.');
+      await appAlert('Not connected to the bike anymore — reconnect (Read again) and try again.');
       return { ok: false, error: 'not connected' };
     }
     if (!entry.udam) {
-      window.alert('No current settings read for this mode yet — cannot build a safe write.');
+      await appAlert('No current settings read for this mode yet — cannot build a safe write.');
       return { ok: false, error: 'no current udam' };
     }
     const merged = { ...entry.udam, ...changes };
@@ -754,6 +813,14 @@
     if (!r || r.status !== 'ok') return fallback ?? '—';
     const d = r.typed || r.decoded;
     return d ? d.display : fallback ?? '—';
+  }
+  // The raw enum name=ordinal pair (e.g. "TREKKING=2"), for a hover tooltip next to a
+  // human-friendly kv-row value — undefined when the decoder has no technical detail to add.
+  function technicalOf(component, name) {
+    const r = findResult(component, name);
+    if (!r || r.status !== 'ok') return undefined;
+    const d = r.typed || r.decoded;
+    return d ? d.technical : undefined;
   }
   function valueOf(component, name) {
     const r = findResult(component, name);
@@ -806,7 +873,7 @@
     });
   }
 
-  function kvRow(container, label, value, writable) {
+  function kvRow(container, label, value, writable, technical) {
     const l = document.createElement('span');
     l.textContent = label;
     if (writable) {
@@ -822,8 +889,51 @@
     }
     const v = document.createElement('span');
     v.textContent = value;
+    // Raw enum name=ordinal (or similar wire-level detail) on hover only — the row itself
+    // stays human-friendly; the technical value is one hover away, not shown inline.
+    if (technical) v.title = technical;
     container.appendChild(l);
     container.appendChild(v);
+  }
+
+  // Themed replacement for window.alert()/window.confirm() — native browser dialogs can't be
+  // styled and look out of place against this app's own dark/light theme. Both resolve a Promise
+  // instead of blocking synchronously, so every call site awaits them from an async function/
+  // handler instead of relying on alert()/confirm()'s synchronous return value.
+  let appDialogResolve = null;
+  function appDialog({ title, message, buttons }) {
+    return new Promise((resolve) => {
+      // A dialog opened while one is already open would leak the previous resolve() — clicking
+      // Escape/backdrop isn't wired up here, but a stray double-open still shouldn't hang a caller.
+      if (appDialogResolve) appDialogResolve(false);
+      appDialogResolve = resolve;
+      els.appDialogTitle.textContent = title;
+      els.appDialogMessage.textContent = message;
+      els.appDialogActions.innerHTML = '';
+      for (const btn of buttons) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = btn.primary ? 'primary-btn' : 'ghost-btn';
+        b.textContent = btn.label;
+        b.addEventListener('click', () => {
+          els.appDialogBackdrop.style.display = 'none';
+          appDialogResolve = null;
+          resolve(btn.value);
+        });
+        els.appDialogActions.appendChild(b);
+      }
+      els.appDialogBackdrop.style.display = 'flex';
+    });
+  }
+  function appAlert(message, title) {
+    return appDialog({ title: title || 'Notice', message, buttons: [{ label: 'OK', value: true, primary: true }] });
+  }
+  function appConfirm(message, title) {
+    return appDialog({
+      title: title || 'Confirm',
+      message,
+      buttons: [{ label: 'Cancel', value: false }, { label: 'OK', value: true, primary: true }],
+    });
   }
 
   const START_ASSIST_MODE_LAST_USED = 1;
@@ -914,19 +1024,16 @@
   ];
   const experimentState = {}; // id -> null | 'pending' | 'done' | 'failed' ("done" = got a response, not "it worked")
 
-  async function attemptWriteExperiment(id) {
-    const exp = WRITE_EXPERIMENTS.find((e) => e.id === id);
-    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === exp.addrName) || {}).addr;
-    if (!addr || !transport) {
-      window.alert('Not connected to the bike anymore — reconnect (Read again) and try again.');
-      return;
-    }
-    experimentState[id] = 'pending';
-    renderWriteExperiments();
-    const payload = exp.buildPayload();
+  // Shared by attemptWriteExperiment and attemptTryAllStartModeValues — sends one WRITE, waits
+  // for a genuine sequence-matched WRITE_RESPONSE, then re-reads the address regardless of
+  // outcome. An ack (even SUCCESS) does not by itself tell us what the bike now reports — real
+  // hardware precedent: START_ASSIST_MODE_CONFIGURATION got a genuine, sequence-matched ack yet
+  // a later fresh read still showed the old value — so every caller re-reads rather than assumes.
+  async function writeAndReadBack(addr, payload, tag) {
     const dlog = window.Bes3DebugLog;
-    const tag = `write-${id}`;
     if (dlog) dlog.log(tag, 'payload before write', payload);
+    let ok = false;
+    let statusName = null;
     transportBusy = true;
     try {
       let done = false;
@@ -954,35 +1061,85 @@
             continue;
           }
           done = true;
-          experimentState[id] = parsed.ok ? 'done' : 'failed';
+          ok = parsed.ok;
+          statusName = parsed.statusName;
           if (dlog) dlog.log(tag, `<- WRITE_RESPONSE ok=${parsed.ok} status=${parsed.statusName}`);
           break;
         }
       }
-      if (!done) experimentState[id] = 'failed';
     } catch (err) {
-      experimentState[id] = 'failed';
       if (dlog) dlog.log(tag, 'write failed', err.message);
+      statusName = 'error';
     } finally {
       transportBusy = false;
     }
-    // Re-read regardless of outcome and update the shown value in place — same reasoning
-    // throughout this project: an ack (or even a clean rejection) doesn't by itself tell us what
-    // the bike now reports; a WRITE_RESPONSE/SUCCESS ack in particular does NOT guarantee the
-    // value actually stuck (real hardware precedent: START_ASSIST_MODE_CONFIGURATION got a
-    // genuine, sequence-matched ack yet a later fresh read still showed the old value).
+    let readBack = null;
     try {
       const r = await readOne(addr);
       if (dlog) dlog.log(tag, 'post-write re-read result', r);
       if (r && !r.declined && r.payload) {
-        const idx = lastResults.findIndex((x) => x.component === 'DriveUnit' && x.name === exp.addrName);
-        const typed = decodeTyped(addr, r.payload);
-        if (dlog) dlog.log(tag, 'post-write re-read decoded', typed);
-        if (idx >= 0) { lastResults[idx].status = 'ok'; lastResults[idx].typed = typed; lastResults[idx].decoded = typed; }
+        readBack = decodeTyped(addr, r.payload);
+        if (dlog) dlog.log(tag, 'post-write re-read decoded', readBack);
       }
     } catch (err) {
       if (dlog) dlog.log(tag, 'post-write re-read failed', err.message);
     }
+    return { ok, statusName, readBack };
+  }
+
+  async function attemptWriteExperiment(id) {
+    const exp = WRITE_EXPERIMENTS.find((e) => e.id === id);
+    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === exp.addrName) || {}).addr;
+    if (!addr || !transport) {
+      await appAlert('Not connected to the bike anymore — reconnect (Read again) and try again.');
+      return;
+    }
+    experimentState[id] = 'pending';
+    renderWriteExperiments();
+    const payload = exp.buildPayload();
+    const { ok, readBack } = await writeAndReadBack(addr, payload, `write-${id}`);
+    experimentState[id] = ok ? 'done' : 'failed';
+    if (readBack) {
+      const idx = lastResults.findIndex((x) => x.component === 'DriveUnit' && x.name === exp.addrName);
+      if (idx >= 0) { lastResults[idx].status = 'ok'; lastResults[idx].typed = readBack; lastResults[idx].decoded = readBack; }
+    }
+    renderDashboard();
+  }
+
+  // Diagnostic sweep requested after real hardware showed writing LAST_USED got a SUCCESS ack
+  // that didn't stick: is that gate (OEM configurable=false) blocking every possible value
+  // equally, or does it only affect some? Writes each non-zero START_ASSIST_MODE_CONFIGURATION
+  // enum value in turn, re-reading immediately after each, so one connected session settles it
+  // instead of clicking the single-value button repeatedly.
+  let startModeTryAllResults = null; // null | 'running' | [{ordinal, name, label, ok, statusName, stuck}]
+
+  async function attemptTryAllStartModeValues() {
+    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'START_ASSIST_MODE_CONFIGURATION') || {}).addr;
+    if (!addr || !transport) {
+      await appAlert('Not connected to the bike anymore — reconnect (Read again) and try again.');
+      return;
+    }
+    const enumTable = FIELD_TYPES[6180].enumTable;
+    const ordinals = Object.keys(enumTable).map(Number).filter((n) => n !== 0).sort((a, b) => a - b);
+    startModeTryAllResults = 'running';
+    renderWriteExperiments();
+    const results = [];
+    for (const ordinal of ordinals) {
+      const entry = enumTable[ordinal];
+      const payload = encodeEnumArg(ordinal);
+      const { ok, statusName, readBack } = await writeAndReadBack(addr, payload, `write-startMode-tryAll-${entry.name}`);
+      const stuck = !!(readBack && readBack.value === entry.name);
+      results.push({ ordinal, name: entry.name, label: entry.label, ok, statusName, stuck });
+      if (readBack) {
+        const idx = lastResults.findIndex((x) => x.component === 'DriveUnit' && x.name === 'START_ASSIST_MODE_CONFIGURATION');
+        if (idx >= 0) { lastResults[idx].status = 'ok'; lastResults[idx].typed = readBack; lastResults[idx].decoded = readBack; }
+      }
+      startModeTryAllResults = results.slice(); // progressive update — render after each value, not just at the end
+      renderWriteExperiments();
+    }
+    const dlog = window.Bes3DebugLog;
+    if (dlog) dlog.log('write-startMode-tryAll', 'summary', JSON.stringify(results));
+    startModeTryAllResults = results;
     renderDashboard();
   }
 
@@ -1017,6 +1174,7 @@
         done.textContent = 'already set';
         row.append(label, value, done);
         els.writeExperiments.appendChild(row);
+        if (exp.id === 'startMode') renderStartModeTryAllBlock();
         continue;
       }
 
@@ -1028,20 +1186,59 @@
       else if (state === 'done') { btn.textContent = exp.isRealWrite ? 'Set ✓' : 'Sent — see value/log'; }
       else if (state === 'failed') { btn.textContent = 'No response — retry?'; }
       else { btn.textContent = exp.isRealWrite ? 'Set to last-used' : 'Send probe'; }
-      btn.addEventListener('click', () => {
-        if (window.confirm(exp.confirmText(gated))) attemptWriteExperiment(exp.id);
+      btn.addEventListener('click', async () => {
+        if (await appConfirm(exp.confirmText(gated))) attemptWriteExperiment(exp.id);
       });
 
       row.append(label, value, btn);
       els.writeExperiments.appendChild(row);
+      if (exp.id === 'startMode') renderStartModeTryAllBlock();
     }
+  }
+
+  // Shared by both branches above (the "already set" early-exit and the normal button path) —
+  // the try-all-values diagnostic is useful regardless of whether last-used happens to be set.
+  function renderStartModeTryAllBlock() {
+    const tryAllRow = document.createElement('div');
+    tryAllRow.className = 'write-experiment-tryall-row';
+    const tryAllBtn = document.createElement('button');
+    tryAllBtn.type = 'button';
+    tryAllBtn.className = 'histogram-change-btn secondary';
+    if (startModeTryAllResults === 'running') { tryAllBtn.textContent = 'Testing…'; tryAllBtn.disabled = true; }
+    else { tryAllBtn.textContent = 'Try all values'; }
+    tryAllBtn.addEventListener('click', async () => {
+      if (await appConfirm(
+        'Write EVERY possible Start mode (6180) value in turn, re-reading after each?\n\n' +
+        'Sends up to 6 separate WRITE frames back-to-back (last-used, plus positions 0-4), ' +
+        'each immediately followed by a re-read to check whether it actually stuck. Purely ' +
+        'diagnostic — finds out whether the "locked by manufacturer" gate blocks every value ' +
+        'equally or only some. Every result is logged, not assumed.'
+      )) attemptTryAllStartModeValues();
+    });
+    tryAllRow.appendChild(tryAllBtn);
+    if (Array.isArray(startModeTryAllResults)) {
+      const results = document.createElement('div');
+      results.className = 'write-experiment-tryall-results';
+      for (const r of startModeTryAllResults) {
+        const item = document.createElement('span');
+        item.className = 'write-experiment-tryall-item' + (r.stuck ? ' good' : r.ok ? '' : ' bad');
+        item.textContent = `${r.label}: ${r.ok ? (r.stuck ? 'stuck' : 'ack, no change') : (r.statusName || 'no response')}`;
+        results.appendChild(item);
+      }
+      tryAllRow.appendChild(results);
+    }
+    els.writeExperiments.appendChild(tryAllRow);
   }
 
   function renderDashboard() {
     els.bikeName.textContent = displayOf('DriveUnit', 'PRODUCT_NAME');
     els.bikeId.textContent = displayOf('DriveUnit', 'BIKE_ID');
+    els.bikeOemId.textContent = displayOf('DriveUnit', 'OEM_BIKE_ID');
     els.bikeSerial.textContent = displayOf('DriveUnit', 'SERIAL_NUMBER');
+    els.bikeBrand.textContent = displayOf('DriveUnit', 'OEM_BRAND_NAME');
     els.bikeCategory.textContent = displayOf('DriveUnit', 'BIKE_CATEGORY');
+    const bikeCategoryTechnical = technicalOf('DriveUnit', 'BIKE_CATEGORY');
+    if (bikeCategoryTechnical) els.bikeCategory.title = bikeCategoryTechnical;
     renderBikePhoto();
 
     const soc = valueOf('Battery', 'STATE_OF_CHARGE');
@@ -1083,6 +1280,7 @@
     kvRow(els.driveUnitGrid, 'Software', displayOf('DriveUnit', 'SOFTWARE_VERSION'));
     kvRow(els.driveUnitGrid, 'Bootloader', displayOf('DriveUnit', 'BOOTLOADER_SOFTWARE_VERSION'));
     kvRow(els.driveUnitGrid, 'Product line', displayOf('DriveUnit', 'PRODUCT_LINE'));
+    kvRow(els.driveUnitGrid, 'Manufacturing date', displayOf('DriveUnit', 'MANUFACTURING_DATE'));
     kvRow(els.driveUnitGrid, 'PCB temp', displayOf('DriveUnit', 'PRESENT_PCB_TEMPERATURE'));
 
     els.drivetrainGrid.innerHTML = '';
@@ -1092,8 +1290,10 @@
     kvRow(els.drivetrainGrid, 'Wheel circ. (OEM)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_OEM'));
     kvRow(els.drivetrainGrid, 'Wheel circ. (user)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_USER'));
     kvRow(els.drivetrainGrid, 'Max motor torque', displayOf('DriveUnit', 'MAXIMUM_AVAILABLE_MOTOR_TORQUE'));
-    kvRow(els.drivetrainGrid, 'Region / speed class', displayOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'));
-    kvRow(els.drivetrainGrid, 'Start mode', displayOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION'));
+    kvRow(els.drivetrainGrid, 'Light', displayOf('DriveUnit', 'BIKE_LIGHT'), true);
+    kvRow(els.drivetrainGrid, 'Light available', displayOf('DriveUnit', 'BIKE_LIGHT_AVAILABLE'), true);
+    kvRow(els.drivetrainGrid, 'Region / speed class', displayOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'), false, technicalOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'));
+    kvRow(els.drivetrainGrid, 'Start mode', displayOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION'), false, technicalOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION'));
     const tuning = findResult('DriveUnit', 'TUNING_DETECTION');
     const tv = tuning && tuning.status === 'ok' && tuning.typed ? tuning.typed.value : null;
     const tuningLabel =
@@ -1124,16 +1324,17 @@
     const odometerM = valueOf('DriveUnit', 'ODOMETER');
     kvRow(els.usageGrid, 'Odometer (total)', odometerM == null ? '—' : `${(odometerM / 1000).toFixed(1)} km`);
     kvRow(els.usageGrid, 'Power-on time', displayOf('DriveUnit', 'POWER_ON_TIME'));
-    kvRow(els.usageGrid, 'OEM bike ID', displayOf('DriveUnit', 'OEM_BIKE_ID'));
-    kvRow(els.usageGrid, 'OEM brand', displayOf('DriveUnit', 'OEM_BRAND_NAME'));
 
     els.remoteGrid.innerHTML = '';
+    // Rider-set nickname, read from the remote/head-unit side rather than the drive unit —
+    // distinct from PRODUCT_NAME (the fixed model name) and OEM_BIKE_ID (a manufacturer code).
+    kvRow(els.remoteGrid, 'Bike name', displayOf('RemoteControl', 'BIKE_NAME'));
     // All of these are declared writable in Bosch's own RemoteControl adapter (see the ✎ marker
     // and its tooltip / README) — read-only display here, no write UI built for any of them yet;
     // none have had their write path traced/tested the way START_ASSIST_MODE_CONFIGURATION has.
     kvRow(els.remoteGrid, 'Language', displayOf('RemoteControl', 'LANGUAGE'), true);
-    kvRow(els.remoteGrid, 'Units', displayOf('RemoteControl', 'UNITS'), true);
-    kvRow(els.remoteGrid, 'Time format', displayOf('RemoteControl', 'TIME_FORMAT'), true);
+    kvRow(els.remoteGrid, 'Units', displayOf('RemoteControl', 'UNITS'), true, technicalOf('RemoteControl', 'UNITS'));
+    kvRow(els.remoteGrid, 'Time format', displayOf('RemoteControl', 'TIME_FORMAT'), true, technicalOf('RemoteControl', 'TIME_FORMAT'));
     kvRow(els.remoteGrid, 'Time (bike clock)', displayOf('RemoteControl', 'TIME'), true);
     kvRow(els.remoteGrid, 'LED colors', displayOf('RemoteControl', 'LED_COLORS'), true);
     kvRow(els.remoteGrid, 'Service due', displayOf('RemoteControl', 'SERVICE_DUE'), true);
@@ -1177,6 +1378,19 @@
       row.appendChild(value);
       els.assistModeHistogram.appendChild(row);
 
+      // Bike-computed range estimate for this mode — same value Flow's own "range estimate"
+      // screen shows, confirmed via decompile (DriveUnitAddresses.REACHABLE_RANGE, addr 6231).
+      // Not shown for off/walk mode (the bike doesn't report one) or when unread/misaligned.
+      if (entry.reachableRangeKm != null) {
+        const rangeRow = document.createElement('div');
+        rangeRow.className = 'histogram-settings-row';
+        const rangeText = document.createElement('span');
+        rangeText.className = 'histogram-settings-summary';
+        rangeText.textContent = `Estimated range: ~${entry.reachableRangeKm} km`;
+        rangeRow.appendChild(rangeText);
+        els.assistModeHistogram.appendChild(rangeRow);
+      }
+
       // Per-mode assist settings (UDAM values) + the one write this tool
       // performs. Only shown once we actually have UDAM data for this mode.
       if (entry.udam) {
@@ -1212,8 +1426,8 @@
         } else {
           resetBtn.textContent = 'Reset to default';
         }
-        resetBtn.addEventListener('click', () => {
-          const confirmed = window.confirm(
+        resetBtn.addEventListener('click', async () => {
+          const confirmed = await appConfirm(
             `Reset "${entry.label}" to Bosch factory defaults?\n\n` +
             `This resets ONLY this mode's assist level, max speed, and ` +
             `acceleration response back to the bike's factory settings — the ` +
@@ -1377,7 +1591,7 @@
       saveBtn.className = 'histogram-change-btn';
       saveBtn.textContent = entry.setState === 'pending' ? 'Saving…' : 'Save changes';
       saveBtn.disabled = true; // nothing changed yet
-      saveBtn.addEventListener('click', () => {
+      saveBtn.addEventListener('click', async () => {
         const changes = {};
         const lines = [];
         editableInputs.forEach(({ input, key, fromDisplay, original }) => {
@@ -1390,7 +1604,7 @@
           }
         });
         if (!lines.length) return; // save button is disabled in this case anyway
-        const confirmed = window.confirm(
+        const confirmed = await appConfirm(
           `Change "${entry.label}" settings?\n\n` +
           lines.join('\n') + '\n\n' +
           `Only these fields change — everything else in this mode's ` +
@@ -1462,7 +1676,9 @@
       }
       const valCell = document.createElement('span');
       if (r.status === 'ok') {
-        valCell.textContent = (r.typed || r.decoded).display;
+        const d = r.typed || r.decoded;
+        valCell.textContent = d.display;
+        if (d.technical) valCell.title = d.technical;
       } else if (r.status === 'timeout') {
         valCell.textContent = '(no response / timeout)';
       } else if (r.status === 'declined') {
@@ -1489,6 +1705,7 @@
     const report = {
       generatedAt: new Date().toISOString(),
       tool: 'bosch-bes3-reader',
+      reportVersion: REPORT_FORMAT_VERSION,
       results: lastResults.map((r) => ({
         component: r.component,
         name: r.name,
@@ -1498,7 +1715,19 @@
         // Statically writable per Bosch's own code — not a live check of this bike, see the
         // matching UI tooltip / README for the important caveat (start-assist-mode precedent).
         writable: !!r.writable,
-        value: r.status === 'ok' ? (r.typed || r.decoded).display : null,
+        // The exported report keeps the full technical detail (e.g. "eTrekking [TREKKING=2]")
+        // even though the live UI now shows only the human-friendly label with that same
+        // detail moved to a hover tooltip — this file is a technical record, not a dashboard.
+        value: r.status === 'ok'
+          ? (() => {
+              const d = r.typed || r.decoded;
+              return d.technical ? `${d.display} [${d.technical}]` : d.display;
+            })()
+          : null,
+        // The underlying typed value (number/bool/string/plain object), not just its display
+        // string — lets "load a saved report" (below) reconstruct a dashboard that behaves
+        // like a live read (percentages, gates, etc.) instead of only showing text.
+        rawValue: r.status === 'ok' ? (r.typed || r.decoded).value : null,
       })),
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
@@ -1512,6 +1741,97 @@
     URL.revokeObjectURL(url);
   });
 
+  // Reusable offline path: view any previously exported report — same dashboard, same cards,
+  // no bike or transport required. Doesn't need a live connection at all; the existing "not
+  // connected" guard on every write button already prevents write experiments from doing
+  // anything harmful against this loaded, disconnected state.
+  function buildResultsFromReport(report) {
+    const results = [];
+    for (const r of report.results || []) {
+      const addr = parseInt(r.address, 16);
+      if (!r.component || !r.name || Number.isNaN(addr)) continue; // skip anything unparseable
+      let typed = null;
+      if (r.status === 'ok') {
+        // rawValue is the real typed value (number/bool/string/plain object) — added alongside
+        // this load-from-file feature (REPORT_FORMAT_VERSION 1). A report exported without it
+        // has only the display STRING to fall back to (e.g. "88 %" instead of the number 88),
+        // which breaks any downstream computation (SoC bar fill, odometer km conversion, gate
+        // checks) — loadReportFile() below warns the user up front when that's the case, rather
+        // than silently mis-rendering.
+        const value = Object.prototype.hasOwnProperty.call(r, 'rawValue') ? r.rawValue : r.value;
+        typed = { label: r.name, display: r.value, value };
+      }
+      results.push({
+        component: r.component,
+        name: r.name,
+        addr,
+        readable: true,
+        writable: !!r.writable,
+        status: r.status,
+        detail: r.status === 'ok' ? '' : 'unknown — loaded from file',
+        decoded: typed,
+        typed,
+      });
+    }
+    return results;
+  }
+
+  function loadReportFile(file) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let report;
+      try {
+        report = JSON.parse(reader.result);
+      } catch (err) {
+        await appAlert('Could not parse that file as JSON: ' + err.message);
+        return;
+      }
+      if (!report || !Array.isArray(report.results)) {
+        await appAlert('That doesn\'t look like a BES3 Reader export — expected a "results" array.');
+        return;
+      }
+      if (report.reportVersion !== REPORT_FORMAT_VERSION) {
+        const proceed = await appConfirm(
+          `This report was exported by an older/different version of the tool (missing or ` +
+          `mismatched reportVersion — expected ${REPORT_FORMAT_VERSION}, got ${report.reportVersion ?? 'none'}).\n\n` +
+          `It's missing the real typed values this loader needs, so numbers will fall back to ` +
+          `their display text (e.g. "88 %" instead of 88) — things like the battery bar and ` +
+          `odometer conversion won't render correctly.\n\nLoad it anyway?`
+        );
+        if (!proceed) return;
+      }
+      lastResults = buildResultsFromReport(report);
+      // Not part of the exported report (it's a separate RPC sweep, not an address read) — the
+      // assist-mode histogram simply stays empty for a loaded file, same as it would for any
+      // bike where that RPC sweep hasn't run yet.
+      assistModeStats = [];
+      for (const key of Object.keys(experimentState)) delete experimentState[key];
+      startModeTryAllResults = null;
+      transport = null;
+      method = 'usb';
+      phase = 'connected';
+      disconnectedAfterRead = true;
+      loadedFromFile = true;
+      renderChooser();
+      renderPhase();
+      renderDashboard();
+      const dlog = window.Bes3DebugLog;
+      if (dlog) dlog.log('app', `loaded report from file: ${file.name}`, `${lastResults.length} entries, generated ${report.generatedAt || 'unknown time'}`);
+    };
+    reader.onerror = () => appAlert('Could not read that file.');
+    reader.readAsText(file);
+  }
+
+  els.loadReportLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    els.loadReportInput.click();
+  });
+  els.loadReportInput.addEventListener('change', () => {
+    const file = els.loadReportInput.files && els.loadReportInput.files[0];
+    if (file) loadReportFile(file);
+    els.loadReportInput.value = '';
+  });
+
   // transportKind: 'usb' (normal path) | 'ble-mcsp' (experimental full read
   // over BLE, reusing the reverse-engineered MessageBus protocol instead of
   // Bosch's official Live Data Interface — see transport-webble-mcsp.js).
@@ -1519,8 +1839,10 @@
   // dashboard/raw-table code is unaware which transport was used.
   async function runSweep(transportKind) {
     disconnectedAfterRead = false;
+    loadedFromFile = false;
     assistModeStats = [];
     for (const key of Object.keys(experimentState)) delete experimentState[key];
+    startModeTryAllResults = null;
     let device;
     try {
       device = transportKind === 'ble-mcsp'

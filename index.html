@@ -62,6 +62,9 @@
   .warn-box { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; background: color-mix(in oklab, var(--danger) 12%, transparent); border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent); border-radius: 8px; }
   .warn-box span.txt { font: 400 12px/1.5 'IBM Plex Sans', sans-serif; color: var(--text); }
   .method-req { font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); text-align: center; }
+  .load-report-row { font: 400 11.5px 'IBM Plex Sans', sans-serif; color: var(--faint); text-align: center; margin-top: 2px; }
+  .load-report-row a { color: var(--accent); text-decoration: none; }
+  .load-report-row a:hover { text-decoration: underline; }
 
   .status-card { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 32px 28px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; animation: fadein 0.3s ease; }
   .spinner { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--border2); border-top-color: var(--accent); animation: spin 0.9s linear infinite; }
@@ -74,21 +77,29 @@
   .hero-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; }
   .card-label { font: 500 11px 'IBM Plex Mono', monospace; color: var(--accent); letter-spacing: 0.1em; }
-  .bike-card { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  /* The bike icon/photo used to sit beside the fields as an equal flex sibling, which capped
+     how much width the fields got. It's now a small decorative thumbnail tucked in the bottom-left
+     corner instead, so the fields above it can use the card's full width. */
+  .bike-card { display: flex; flex-direction: column; gap: 6px; position: relative; min-height: 260px; }
   .bike-name { font: 700 26px 'Space Grotesk', sans-serif; }
-  .bike-meta-row { display: flex; gap: 20px; margin-top: 6px; flex-wrap: wrap; }
-  .bike-photo-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; }
+  .bike-meta-grid { margin-top: 6px; }
+  .bike-icon-corner { position: absolute; left: 24px; bottom: 20px; opacity: 0.85; }
+  .bike-photo-wrap.bike-icon-corner { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   /* Catalog photos are shot on a white studio background baked into the
      pixels — theming the frame just creates a mismatched edge against it.
      Treat it like a printed photo on white paper instead: fixed light mat,
      same in both themes. */
-  .bike-photo { width: 200px; max-height: 120px; object-fit: contain; border-radius: 6px; background: #f2f1ee; padding: 8px; border: 1px solid #00000014; box-sizing: border-box; }
-  .bike-photo-caption { font: 500 11px 'IBM Plex Mono', monospace; color: var(--faint); text-align: center; max-width: 200px; }
+  .bike-photo { width: 180px; max-height: 110px; object-fit: contain; border-radius: 6px; background: #f2f1ee; padding: 8px; border: 1px solid #00000014; box-sizing: border-box; }
+  .bike-photo-caption { font: 500 11px 'IBM Plex Mono', monospace; color: var(--faint); text-align: center; max-width: 180px; }
+  #bikeIconFallback { width: 170px; }
   .meta-item { display: flex; flex-direction: column; }
   .meta-item span:first-child { font-size: 11px; color: var(--faint); }
   .meta-item span:last-child { font: 500 13px 'IBM Plex Mono', monospace; }
 
-  .battery-card { display: flex; flex-direction: column; gap: 12px; }
+  .battery-card { display: flex; flex-direction: column; gap: 12px; position: relative; }
+  .battery-cert-icon-btn { position: absolute; top: 20px; right: 24px; width: 26px; height: 26px; background: none; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .battery-cert-icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .battery-detail-grid { margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--border); }
   .soc-row { display: flex; align-items: baseline; gap: 12px; }
   .soc-value { font: 700 40px 'Space Grotesk', sans-serif; }
   .soc-unit { font-size: 20px; color: var(--muted); }
@@ -128,6 +139,8 @@
   .write-experiment-value { color: var(--text); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
   .write-experiment-value.good { color: var(--good); }
   .write-experiment-real .write-experiment-label { color: var(--text); font-weight: 600; }
+  .write-experiment-tryall-row { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding: 4px 0 4px; }
+  .write-experiment-tryall-results { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font: 400 10.5px 'IBM Plex Mono', monospace; color: var(--faint); }
   .histogram-reset-btn { font: 500 10.5px 'IBM Plex Sans', sans-serif; color: var(--accent); background: none; border: 1px solid var(--border2); border-radius: 5px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
   .histogram-reset-btn:disabled { color: var(--faint); cursor: default; opacity: 0.7; }
   .histogram-label-clickable { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
@@ -155,8 +168,10 @@
   .assist-modal-body .amf-unit { text-align: left; color: var(--faint); }
   .cert-modal-body { display: grid; grid-template-columns: 100px 1fr; align-items: start; gap: 8px 10px; font: 400 11.5px 'IBM Plex Mono', monospace; color: var(--faint); max-width: 480px; }
   .cert-modal-body .cert-value { color: var(--text); word-break: break-all; }
-  .battery-cert-btn { margin-top: 10px; width: 100%; }
   .assist-modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .app-dialog-box { max-width: 440px; }
+  .app-dialog-message { font: 400 13px/1.55 'IBM Plex Sans', sans-serif; color: var(--text); white-space: pre-wrap; }
+  .app-dialog-actions { justify-content: flex-end; }
 
   .section-head { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
   .section-head .line { flex: 1; height: 1px; background: var(--border); }
@@ -254,6 +269,8 @@
           </label>
           <button id="connectMainBtn" class="primary-btn" style="width:100%; padding:13px;">Connect &amp; Read</button>
           <span id="methodReq" class="method-req"></span>
+          <span class="load-report-row">or <a href="#" id="loadReportLink">view a previously exported report (.json)</a> &mdash; offline, no bike needed</span>
+          <input type="file" id="loadReportInput" accept="application/json,.json" style="display:none;">
         </div>
       </div>
     </div>
@@ -283,26 +300,27 @@
     <div id="dashboard" class="dashboard" style="display:none;">
       <div class="hero-grid">
         <div class="card bike-card">
-          <div style="display: flex; flex-direction: column; gap: 6px;">
-            <span class="card-label">BIKE</span>
-            <span id="bikeName" class="bike-name">&mdash;</span>
-            <div class="bike-meta-row">
-              <div class="meta-item"><span>Bike ID</span><span id="bikeId">&mdash;</span></div>
-              <div class="meta-item"><span>Serial</span><span id="bikeSerial">&mdash;</span></div>
-              <div class="meta-item"><span>Category</span><span id="bikeCategory">&mdash;</span></div>
-            </div>
+          <span class="card-label">BIKE</span>
+          <span id="bikeName" class="bike-name">&mdash;</span>
+          <div class="kv-grid bike-meta-grid">
+            <span>Bike ID</span><span id="bikeId">&mdash;</span>
+            <span>OEM bike ID</span><span id="bikeOemId">&mdash;</span>
+            <span>Serial</span><span id="bikeSerial">&mdash;</span>
+            <span>Brand</span><span id="bikeBrand">&mdash;</span>
+            <span>Category</span><span id="bikeCategory">&mdash;</span>
           </div>
-          <svg id="bikeIconFallback" viewBox="0 0 200 120" style="width: 200px; min-width: 160px; color: var(--border2);" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+          <svg id="bikeIconFallback" class="bike-icon-corner" viewBox="0 0 200 120" style="color: var(--border2);" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
             <circle cx="48" cy="85" r="28"></circle><circle cx="152" cy="85" r="28"></circle>
             <path d="M48 85 L88 38 L138 38 L152 85 M88 38 L100 85 L138 38 M100 85 L48 85 M84 30 L98 30 M88 38 L86 30 M138 38 L142 26 M136 26 L150 28"></path>
             <circle cx="100" cy="85" r="9" fill="var(--panel)" stroke="var(--accent)"></circle>
           </svg>
-          <div id="bikePhotoWrap" class="bike-photo-wrap" style="display:none;">
+          <div id="bikePhotoWrap" class="bike-photo-wrap bike-icon-corner" style="display:none;">
             <img id="bikePhoto" class="bike-photo" alt="" />
             <span id="bikePhotoCaption" class="bike-photo-caption"></span>
           </div>
         </div>
         <div class="card battery-card">
+          <button id="batteryCertBtn" type="button" class="battery-cert-icon-btn" style="display:none;" title="View device certificate" aria-label="View device certificate">&#128274;</button>
           <span class="card-label">BATTERY</span>
           <div class="soc-row">
             <span class="soc-value"><span id="batterySoc">&mdash;</span><span class="soc-unit" id="batterySocUnit"></span></span>
@@ -315,7 +333,7 @@
             <div class="meta-item"><span>Remaining energy</span><span id="batteryEnergy">&mdash;</span></div>
             <div class="meta-item"><span>Temp</span><span id="batteryTemp">&mdash;</span></div>
           </div>
-          <button id="batteryCertBtn" type="button" class="histogram-change-btn secondary battery-cert-btn" style="display:none;">View device certificate</button>
+          <div class="kv-grid battery-detail-grid" id="batteryDetailGrid"></div>
         </div>
       </div>
 
@@ -340,10 +358,6 @@
         <div class="card data-card">
           <span class="card-label">REMOTE</span>
           <div class="kv-grid" id="remoteGrid"></div>
-        </div>
-        <div class="card data-card">
-          <span class="card-label">BATTERY DETAIL</span>
-          <div class="kv-grid" id="batteryDetailGrid"></div>
         </div>
       </div>
 
@@ -447,6 +461,18 @@
       <button id="certModalClose" type="button" class="assist-modal-close">&times;</button>
     </div>
     <div id="certModalBody" class="cert-modal-body"></div>
+  </div>
+</div>
+
+<!-- Generic replacement for window.alert()/window.confirm() — native browser dialogs look
+     jarring against this app's own theme and can't be styled. See app.js's appAlert/appConfirm. -->
+<div id="appDialogBackdrop" class="assist-modal-backdrop" style="display:none;">
+  <div class="assist-modal-box app-dialog-box">
+    <div class="assist-modal-header">
+      <span id="appDialogTitle"></span>
+    </div>
+    <div id="appDialogMessage" class="app-dialog-message"></div>
+    <div id="appDialogActions" class="assist-modal-actions app-dialog-actions"></div>
   </div>
 </div>
 

@@ -110,7 +110,499 @@ const TIME_FORMAT_ENUM = {
 // bare scalar type, verified empty-for-false against a real capture),
 // generalized to other bit-widths of the same no-wrapper pattern. Reasonable,
 // but a notch below the byte-confirmed fields above it.
+
+// --- DriveUnit (Flow decompile additions) ---
+const DRIVEUNIT_SHIFT_RECOMMENDATION_ENUM = {
+  0: { name: "NO_SHIFT_RECOMMENDED", label: "No Shift Recommended" },
+  1: { name: "SHIFT_UP_RECOMMENDED", label: "Shift Up Recommended" },
+  2: { name: "SHIFT_DOWN_RECOMMENDED", label: "Shift Down Recommended" },
+};
+const DRIVEUNIT_WALK_ASSIST_TIP_ENUM = {
+  0: { name: "WALK_ASSIST_AND_HILL_TIP_OFF", label: "Walk Assist And Hill Tip Off" },
+  1: { name: "WALK_ASSIST_TIP_RECOMMENDED", label: "Walk Assist Tip Recommended" },
+  2: { name: "HILL_START_TIP_RECOMMENDED", label: "Hill Start Tip Recommended" },
+};
+const DRIVEUNIT_ROTOR_POSITION_CALIBRATION_RESULT_ENUM = {
+  0: { name: "NOT_STARTED", label: "Not Started" },
+  1: { name: "RUNNING", label: "Running" },
+  2: { name: "SUCCESSFUL", label: "Successful" },
+  3: { name: "FAILURE", label: "Failure" },
+};
+const DRIVEUNIT_BRAKE_DETECTION_STATUS_ENUM = {
+  0: { name: "NOT_AVAILABLE", label: "Not Available" },
+  1: { name: "NO_BRAKING_DETECTED", label: "No Braking Detected" },
+  2: { name: "NORMAL_BRAKING_DETECTED", label: "Normal Braking Detected" },
+  3: { name: "STRONG_BRAKING_DETECTED", label: "Strong Braking Detected" },
+};
+
+// --- Battery (Flow decompile additions) ---
+const BATTERY_SHUTDOWN_STATE_ENUM = {
+  0: { name: "NOT_RUNNING", label: "Not Running" },
+  1: { name: "RUNNING", label: "Running" },
+  2: { name: "FINISHED", label: "Finished" },
+};
+const BATTERY_RESET_SETTINGS_ENUM = {
+  0: { name: "RESET_ALL", label: "Reset All" },
+};
+
+// --- ConnectModule (Flow decompile additions) ---
+const CONNECTMODULE_BATTERY_CHARGING_STATUS_ENUM = {
+  0: { name: "NOT_CHARGING", label: "Not Charging" },
+  1: { name: "CHARGING", label: "Charging" },
+  2: { name: "CHARGE_FULL", label: "Charge Full" },
+};
+const CONNECTMODULE_BACKEND_ENVIRONMENT_ENUM = {
+  0: { name: "DEV", label: "Dev" },
+  1: { name: "Q_A", label: "Q A" },
+  2: { name: "STAGE", label: "Stage" },
+  3: { name: "PROD", label: "Prod" },
+};
+const CONNECTMODULE_UNLOCK_COMPONENT_ENUM = {
+  0: { name: "UNKNOWN", label: "Unknown" },
+  1: { name: "SUCCESS", label: "Success" },
+  2: { name: "UNKNOWN_ERROR", label: "Unknown Error" },
+  3: { name: "IDENTIFIER_ERROR", label: "Identifier Error" },
+  4: { name: "EXPIRATION_ERROR", label: "Expiration Error" },
+  5: { name: "FRESHNESS_ERROR", label: "Freshness Error" },
+  6: { name: "SIGNATURE_ERROR", label: "Signature Error" },
+};
+
+// --- AntiLockBrakeSystem (Flow decompile additions) ---
+const ANTILOCKBRAKESYSTEM_OVERALL_ASSEMBLY_TEST_RESULT_ENUM = {
+  0: { name: "FAILED", label: "Failed" },
+  1: { name: "PASSED", label: "Passed" },
+  2: { name: "PENDING", label: "Pending" },
+  3: { name: "INCOMPLETE", label: "Incomplete" },
+  4: { name: "NOT_APPLICABLE", label: "Not Applicable" },
+};
+const ANTILOCKBRAKESYSTEM_WHEEL_SPEED_SENSOR_ASSEMBLY_TEST_RESULT_ENUM = {
+  0: { name: "FAILED", label: "Failed" },
+  1: { name: "PASSED", label: "Passed" },
+  2: { name: "PENDING", label: "Pending" },
+  3: { name: "INCOMPLETE", label: "Incomplete" },
+  4: { name: "NOT_APPLICABLE", label: "Not Applicable" },
+};
+const ANTILOCKBRAKESYSTEM_UNLOCK_COMPONENT_ENUM = {
+  0: { name: "UNKNOWN", label: "Unknown" },
+  1: { name: "SUCCESS", label: "Success" },
+  2: { name: "UNKNOWN_ERROR", label: "Unknown Error" },
+  3: { name: "IDENTIFIER_ERROR", label: "Identifier Error" },
+  4: { name: "EXPIRATION_ERROR", label: "Expiration Error" },
+  5: { name: "FRESHNESS_ERROR", label: "Freshness Error" },
+  6: { name: "SIGNATURE_ERROR", label: "Signature Error" },
+};
+
+// --- HeadUnit (Flow decompile additions) ---
+const HEADUNIT_STATUSBAR_CUSTOMIZATION_ENUM = {
+  0: { name: "SOC", label: "Soc" },
+  1: { name: "CLOCK", label: "Clock" },
+  2: { name: "BIKE_SPEED", label: "Bike Speed" },
+  3: { name: "E_SHIFT_INFO", label: "E Shift Info" },
+};
+const HEADUNIT_KEY_DEVICE_ENUM = {
+  0: { name: "UNKNOWN", label: "Unknown" },
+  1: { name: "ACTIVE", label: "Active" },
+  2: { name: "INACTIVE", label: "Inactive" },
+  3: { name: "NOT_SUPPORTED", label: "Not Supported" },
+  4: { name: "TOKEN_CONTAINER_NOT_FOUND", label: "Token Container Not Found" },
+  5: { name: "UNLOCK_ERROR", label: "Unlock Error" },
+};
+const HEADUNIT_SET_AS_KEY_DEVICE_ENUM = {
+  0: { name: "UNKNOWN", label: "Unknown" },
+  1: { name: "UNKNOWN_ERROR", label: "Unknown Error" },
+  2: { name: "SUCCESS", label: "Success" },
+  3: { name: "NOT_SUPPORTED", label: "Not Supported" },
+  4: { name: "TOKEN_CONTAINER_NOT_FOUND", label: "Token Container Not Found" },
+  5: { name: "PERSISTENCE_ERROR", label: "Persistence Error" },
+};
+const HEADUNIT_UNLOCK_COMPONENT_ENUM = {
+  0: { name: "UNKNOWN", label: "Unknown" },
+  1: { name: "SUCCESS", label: "Success" },
+  2: { name: "UNKNOWN_ERROR", label: "Unknown Error" },
+  3: { name: "IDENTIFIER_ERROR", label: "Identifier Error" },
+  4: { name: "EXPIRATION_ERROR", label: "Expiration Error" },
+  5: { name: "FRESHNESS_ERROR", label: "Freshness Error" },
+  6: { name: "SIGNATURE_ERROR", label: "Signature Error" },
+};
+
+// --- RemoteControl (Flow decompile additions) ---
+const REMOTECONTROL_ACTIVE_UI_COMPONENT_ENUM = {
+  0: { name: "REMOTE_CONTROL_UI_COMPONENT", label: "Remote Control Ui Component" },
+  1: { name: "HEAD_UNIT_UI_COMPONENT", label: "Head Unit Ui Component" },
+  2: { name: "MOBILE_APP_UI_COMPONENT", label: "Mobile App Ui Component" },
+};
+const REMOTECONTROL_UI_CONTROL_ENUM = {
+  0: { name: "UP", label: "Up" },
+  1: { name: "DOWN", label: "Down" },
+  2: { name: "LEFT", label: "Left" },
+  3: { name: "RIGHT", label: "Right" },
+  4: { name: "SCROLL_UP", label: "Scroll Up" },
+  5: { name: "SCROLL_DOWN", label: "Scroll Down" },
+  6: { name: "SCROLL_LEFT", label: "Scroll Left" },
+  7: { name: "SCROLL_RIGHT", label: "Scroll Right" },
+  8: { name: "CONFIRM", label: "Confirm" },
+  9: { name: "CONTEXT_MENU", label: "Context Menu" },
+  10: { name: "FAVORITE_SCREEN", label: "Favorite Screen" },
+};
+const REMOTECONTROL_DYNAMIC_UI_CONTROL_STATE_ENUM = {
+  0: { name: "NORMAL", label: "Normal" },
+  1: { name: "ADDITIONAL_MENU_CONTROL", label: "Additional Menu Control" },
+  2: { name: "GAMING_MODE", label: "Gaming Mode" },
+};
+const REMOTECONTROL_STATUSBAR_CUSTOMIZATION_ENUM = {
+  0: { name: "SOC", label: "Soc" },
+  1: { name: "CLOCK", label: "Clock" },
+  2: { name: "BIKE_SPEED", label: "Bike Speed" },
+  3: { name: "E_SHIFT_INFO", label: "E Shift Info" },
+};
+const REMOTECONTROL_SNOOZE_STATE_ENUM = {
+  0: { name: "SNOOZE_OFF", label: "Snooze Off" },
+  1: { name: "SNOOZE_ON_UNTIL_POWER_BUTTON_PRESS", label: "Snooze On Until Power Button Press" },
+  2: { name: "SNOOZE_ON_UNTIL_ANY_BUTTON_PRESS", label: "Snooze On Until Any Button Press" },
+};
+const REMOTECONTROL_HEART_RATE_STATUS_ENUM = {
+  0: { name: "DEVICE_UNAVAILABLE", label: "Device Unavailable" },
+  1: { name: "DEVICE_SET_UP", label: "Device Set Up" },
+  2: { name: "DEVICE_CONNECTED", label: "Device Connected" },
+};
+const REMOTECONTROL_UNLOCK_COMPONENT_ENUM = {
+  0: { name: "UNKNOWN", label: "Unknown" },
+  1: { name: "SUCCESS", label: "Success" },
+  2: { name: "UNKNOWN_ERROR", label: "Unknown Error" },
+  3: { name: "IDENTIFIER_ERROR", label: "Identifier Error" },
+  4: { name: "EXPIRATION_ERROR", label: "Expiration Error" },
+  5: { name: "FRESHNESS_ERROR", label: "Freshness Error" },
+  6: { name: "SIGNATURE_ERROR", label: "Signature Error" },
+};
+const REMOTECONTROL_E_SHIFT_OPERATION_MODE_REQUEST_ENUM = {
+  0: { name: "INVALID", label: "Invalid" },
+  1: { name: "NORMAL", label: "Normal" },
+  2: { name: "STANDBY", label: "Standby" },
+  3: { name: "SERVICE", label: "Service" },
+  4: { name: "FINE_ADJUSTMENT", label: "Fine Adjustment" },
+};
+const REMOTECONTROL_CURRENT_E_SHIFT_OPERATION_MODE_ENUM = {
+  0: { name: "INVALID", label: "Invalid" },
+  1: { name: "NORMAL", label: "Normal" },
+  2: { name: "STANDBY", label: "Standby" },
+  3: { name: "SERVICE", label: "Service" },
+  4: { name: "FINE_ADJUSTMENT", label: "Fine Adjustment" },
+};
+const REMOTECONTROL_FINE_ADJUSTMENT_STEP_REQUEST_ENUM = {
+  0: { name: "DOWN", label: "Down" },
+  1: { name: "UP", label: "Up" },
+};
+const REMOTECONTROL_SHIFT_MODE_ENUM = {
+  0: { name: "UNINITIALIZED", label: "Uninitialized" },
+  1: { name: "MANUAL", label: "Manual" },
+  2: { name: "AUTOMATIC", label: "Automatic" },
+  3: { name: "MANUAL_PLUS", label: "Manual Plus" },
+};
+const REMOTECONTROL_BLE_HEART_RATE_STATUS_ENUM = {
+  0: { name: "DEVICE_UNAVAILABLE", label: "Device Unavailable" },
+  1: { name: "DEVICE_SET_UP", label: "Device Set Up" },
+  2: { name: "DEVICE_CONNECTED", label: "Device Connected" },
+};
+const REMOTECONTROL_AUTOMATIC_ACTIVITY_RESET_ENUM = {
+  0: { name: "TWO_HOURS_WITHOUT_BIKE_MOVEMENT", label: "Two Hours Without Bike Movement" },
+  1: { name: "FOUR_HOURS_WITHOUT_BIKE_MOVEMENT", label: "Four Hours Without Bike Movement" },
+  2: { name: "MIDNIGHT", label: "Midnight" },
+  3: { name: "SEVEN_DAYS_AFTER_START_OF_ACTIVITY", label: "Seven Days After Start Of Activity" },
+};
+
+// --- MobileApp (Flow decompile additions) ---
+const MOBILEAPP_HEART_RATE_STATUS_ENUM = {
+  0: { name: "DEVICE_UNAVAILABLE", label: "Device Unavailable" },
+  1: { name: "DEVICE_SET_UP", label: "Device Set Up" },
+  2: { name: "DEVICE_CONNECTED", label: "Device Connected" },
+};
+const MOBILEAPP_NAVIGATION_CURRENT_STATUS_ENUM = {
+  0: { name: "NO_NAVIGATION", label: "No Navigation" },
+  1: { name: "ONGOING", label: "Ongoing" },
+  2: { name: "DESTINATION_REACHED", label: "Destination Reached" },
+};
+
+
+// --- Battery2 (Flow decompile additions) ---
+const BATTERY2_RESET_SETTINGS_ENUM = {
+  0: { name: "RESET_ALL", label: "Reset All" },
+};
+
 const FIELD_TYPES = {
+  // --- Battery2 (Flow decompile additions) ---
+  688: { label: "Full charge cycles counted on-bike", kind: 'normFactor', factor: 10, unit: "cycles" }, // Flow decompile, confidence: medium — mirrors Battery's NUMBER_OF_FULL_CHARGE_CYCLES_ON_BIKE (same field, Battery2 instance) — Room model exposes as Float; scaled uint fits nullable-float semantics
+  689: { label: "Full charge cycles counted off-bike", kind: 'normFactor', factor: 10, unit: "cycles" }, // Flow decompile, confidence: medium — mirrors Battery's NUMBER_OF_FULL_CHARGE_CYCLES_OFF_BIKE (same field, Battery2 instance) — same as above
+  692: { label: "Total energy delivered", kind: 'uint', unit: "Wh" }, // Flow decompile, confidence: medium — mirrors Battery's TOTAL_ENERGY (same field, Battery2 instance) — Energy measurement wrapper base-converts to Wh; RoomComponent$Battery.totalEnergy
+  695: { label: "Time spent cell-balancing", kind: 'uint', unit: "s" }, // Flow decompile, confidence: low — mirrors Battery's TIME_IN_BALANCING (same field, Battery2 instance) — unit unconfirmed (s or min)
+  701: { label: "Data model / schema version", kind: 'uint' }, // Flow decompile, confidence: high — mirrors Battery's DATA_MODEL_VERSION (same field, Battery2 instance) — consistent generic version counter across all components
+  705: { label: "Discharge duration", kind: 'uint', unit: "s" }, // Flow decompile, confidence: low — mirrors Battery's DISCHARGE_DURATION (same field, Battery2 instance) — unit unconfirmed
+  708: { label: "Charging active (per-instance)", kind: "bool" }, // Flow decompile, confidence: high — mirrors Battery's INSTANCE_CHARGING_ACTIVE (same field, Battery2 instance) — mirrors CHARGING_ACTIVE at instance scope
+  709: { label: "Remaining energy for rider (instance)", kind: 'uint', unit: "Wh" }, // Flow decompile, confidence: medium — mirrors Battery's INSTANCE_REMAINING_ENERGY_FOR_RIDER (same field, Battery2 instance) — Energy measurement, instance-scoped
+  710: { label: "Maximum allowed discharge current (instance)", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — mirrors Battery's INSTANCE_MAXIMUM_ALLOWED_DISCHARGE_CURRENT (same field, Battery2 instance) — current-scaling pattern, instance-scoped
+  711: { label: "Maximum allowed reverse current (instance)", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — mirrors Battery's INSTANCE_MAXIMUM_ALLOWED_REVERSE_CURRENT (same field, Battery2 instance) — current-scaling pattern, instance-scoped
+  712: { label: "Present discharge current (instance)", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — mirrors Battery's INSTANCE_PRESENT_DISCHARGE_CURRENT (same field, Battery2 instance) — current-scaling pattern, instance-scoped
+  713: { label: "Light-reserve threshold reached (instance)", kind: "bool" }, // Flow decompile, confidence: high — mirrors Battery's INSTANCE_LIGHT_RESERVE_STATE (same field, Battery2 instance) — instance-scoped mirror of addr 182
+  714: { label: "State of charge for rider (instance)", kind: 'uint', unit: "%" }, // Flow decompile, confidence: high — mirrors Battery's INSTANCE_STATE_OF_CHARGE_FOR_RIDER (same field, Battery2 instance) — instance-scoped mirror of addr 188
+  715: { label: "Maximum allowed charge current (instance)", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — mirrors Battery's INSTANCE_MAXIMUM_ALLOWED_CHARGE_CURRENT (same field, Battery2 instance) — current-scaling pattern, instance-scoped
+  718: { label: "Easter-egg text/code", kind: "string" }, // Flow decompile, confidence: high — mirrors Battery's EASTER_EGG (same field, Battery2 instance) — EasterEgg{value:string}, field 1
+  720: { label: "Dual-battery mode enabled", kind: "bool" }, // Flow decompile, confidence: medium — mirrors Battery's DUAL_BATTERY_MODE (same field, Battery2 instance) — no dedicated proto class found, generic bool assumed
+  730: { label: "Energy reserve (instance)", kind: 'uint', unit: "Wh" }, // Flow decompile, confidence: medium — mirrors Battery's INSTANCE_ENERGY_RESERVE (same field, Battery2 instance) — Energy measurement, instance-scoped
+  738: { label: "Total capacity", kind: 'uint', unit: "Ah" }, // Flow decompile, confidence: medium — mirrors Battery's TOTAL_CAPACITY (same field, Battery2 instance) — Charge measurement wrapper, base-converts to Ah
+  739: { label: "Bootmanager firmware version string", kind: "string" }, // Flow decompile, confidence: high — mirrors Battery's BOOTMANAGER_SOFTWARE_VERSION (same field, Battery2 instance) — matches sibling *_SOFTWARE_VERSION string fields
+  742: { label: "Reset command", kind: 'enum', enumTable: BATTERY2_RESET_SETTINGS_ENUM }, // Flow decompile, confidence: high — mirrors Battery's RESET_SETTINGS (same field, Battery2 instance) — ResetSettingsParamsEnumType, single-value enum
+  743: { label: "OEM component-lock enable toggle", kind: "bool" }, // Flow decompile, confidence: medium — mirrors Battery's OEM_COMPONENT_LOCK_ENABLE (same field, Battery2 instance) — distinct from OemComponentLockConfiguration submessage
+  // --- DriveUnit (Flow decompile additions) ---
+  4129: { label: "Remote control component present", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag, same pattern as sibling *_AVAILABLE addresses
+  4130: { label: "Battery 1 present", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag
+  4131: { label: "Battery 1 present, in bootloader mode", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag (bootloader variant)
+  4132: { label: "Head unit present", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag
+  4133: { label: "Head unit present, in bootloader mode", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag (bootloader variant)
+  4134: { label: "Connect module present", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag
+  4135: { label: "Connect module present, in bootloader mode", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag (bootloader variant)
+  4136: { label: "ABS present", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag
+  4137: { label: "ABS present, in bootloader mode", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag (bootloader variant)
+  4138: { label: "Battery 2 present", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag
+  4139: { label: "Battery 2 present, in bootloader mode", kind: "bool" }, // Flow decompile, confidence: high — Component-presence flag (bootloader variant)
+  4248: { label: "Reset user-adjusted rear wheel circumference to default", kind: "bool" }, // Flow decompile, confidence: medium — Write-trigger address, no dedicated message class found
+  4251: { label: "Request/trigger time-until-derating computation", kind: "bool" }, // Flow decompile, confidence: low — Write-trigger address; result likely surfaced via a different (not-listed) address
+  4252: { label: "Limit motor assistance until next power cycle", kind: "bool" }, // Flow decompile, confidence: medium — Write-flag address, no dedicated message class found
+  4254: { label: "Trigger reset of learned gear ratios", kind: "bool" }, // Flow decompile, confidence: medium — Write-trigger address
+  4260: { label: "Trigger start of rotor position calibration", kind: "bool" }, // Flow decompile, confidence: high — Write-trigger; result reported via ROTOR_POSITION_CALIBRATION_RESULT (6304)
+  6154: { label: "Trigger: switch to next-higher assist mode", kind: "bool" }, // Flow decompile, confidence: medium — Write-trigger address, no dedicated message class found
+  6155: { label: "Trigger: switch to next-lower assist mode", kind: "bool" }, // Flow decompile, confidence: medium — Write-trigger address, no dedicated message class found
+  6160: { label: "Data model / schema version", kind: 'uint' }, // Flow decompile, confidence: high — Plain int version counter, consistent across all components
+  6164: { label: "Instantaneous rider (pedal) torque", kind: 'uint', unit: "Nm" }, // Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar per Bosch BES3 convention
+  6165: { label: "Instantaneous motor torque", kind: 'uint', unit: "Nm" }, // Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar
+  6170: { label: "Bike detected as not driving (motor cut-off state)", kind: "bool" }, // Flow decompile, confidence: high — Confirmed via EbikeDriveUnit.isNotDriving boolean field
+  6174: { label: "Currently applied instantaneous assist factor", kind: 'normFactor', factor: 10, unit: "%" }, // Flow decompile, confidence: medium — Likely scaled percentage factor akin to assistanceLevel fields (Room AssistMode.assistanceLevel* are Float)
+  6218: { label: "Total riding time excluding stops", kind: 'uint', unit: "s" }, // Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar counter
+  6219: { label: "Notification: bike about to enter energy-reserve mode", kind: "bool" }, // Flow decompile, confidence: medium — Paired trigger/event flag with ENERGY_RESERVE (6230)
+  6224: { label: "Recommended gear-shift direction", kind: 'enum', enumTable: DRIVEUNIT_SHIFT_RECOMMENDATION_ENUM }, // Flow decompile, confidence: high — ShiftRecommendationEnumType / ShiftRecommendationEnumMessage
+  6230: { label: "Currently operating in energy-reserve (low battery protection) mode", kind: "bool" }, // Flow decompile, confidence: medium — Companion state flag to ENTERING_ENERGY_RESERVE
+  6234: { label: "Rider pedal cadence", kind: 'uint', unit: "rpm" }, // Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar
+  6235: { label: "Rider (pedal) power", kind: 'uint', unit: "W" }, // Flow decompile, confidence: high — Confirmed via EbikeDriveUnit.riderPower:Power(measurement.Power wraps double inWatts); wire field is plain int watts (cf. MaximumAvailableMotorPowerOrBuilder int fields)
+  6236: { label: "Motor cadence", kind: 'uint', unit: "rpm" }, // Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar, mirrors RIDER_CADENCE
+  6237: { label: "Motor output power", kind: 'uint', unit: "W" }, // Flow decompile, confidence: high — Confirmed via EbikeDriveUnit.motorPower:Power
+  6244: { label: "Boot manager firmware version string", kind: "string" }, // Flow decompile, confidence: high — Matches string-typed *_SOFTWARE_VERSION pattern (e.g. bootloaderSoftwareVersion field in RoomComponent$DriveUnit)
+  6245: { label: "Bike detected as stationary", kind: "bool" }, // Flow decompile, confidence: high — Confirmed via EbikeDriveUnit.isNotMoving boolean field
+  6258: { label: "Companion app usable in rider's current region", kind: "bool" }, // Flow decompile, confidence: medium — Regional feature-availability flag, no dedicated message class
+  6259: { label: "Navigation feature usable in rider's current region", kind: "bool" }, // Flow decompile, confidence: medium — Regional feature-availability flag, no dedicated message class
+  6265: { label: "Easter-egg text string", kind: "string" }, // Flow decompile, confidence: high — EasterEgg protobuf message: getValue():String (same shape on every component)
+  6266: { label: "Feature-properties bitset, release 4", kind: "bool" }, // Flow decompile, confidence: medium — DriveUnitFeaturePropertiesRelease4 message currently has a single boolean field (centralInformationVisualization); treat as bool but may grow more fields in future firmware
+  6270: { label: "Bike configured as speed pedelec (S-Pedelec/25mph class)", kind: "bool" }, // Flow decompile, confidence: high — Confirmed via RoomComponent$DriveUnit.isSpeedPedelec and EbikeDriveUnit.isSpeedPedelec boolean fields
+  6271: { label: "Prohibit motor assistance", kind: "bool" }, // Flow decompile, confidence: medium — Write-flag address, no dedicated message class found (cf. MotorSupportProhibitionRequest on RemoteControl, different address)
+  6274: { label: "Predicted pedal dead-center crank-angle/timestamp samples", kind: "uint32List" }, // Flow decompile, confidence: high — DeadCenterTimestamps protobuf message: repeated int32 value
+  6275: { label: "Motor assistance currently active", kind: "bool" }, // Flow decompile, confidence: medium — State flag, no dedicated message class found
+  6277: { label: "Configured maximum motor power limit", kind: 'uint', unit: "W" }, // Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar, unit inferred from Power convention
+  6278: { label: "Configured maximum motor torque limit", kind: 'uint', unit: "Nm" }, // Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar
+  6279: { label: "Continuous (sustained) motor torque rating", kind: 'uint', unit: "Nm" }, // Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar, parallels MotorPowerConfiguration.continuousRatedMotorPower pattern
+  6282: { label: "Automatic assist mode feature available", kind: "bool" }, // Flow decompile, confidence: high — Simple availability flag, naming pattern consistent with other *_AVAILABLE bools
+  6284: { label: "Configured max battery discharge current", kind: 'uint', unit: "A" }, // Flow decompile, confidence: medium — Domain model exposes as nullable Double (maximumConfiguredDischargeCurrent); wire type/scale not directly confirmed
+  6285: { label: "Rear cassette rotational speed", kind: 'uint', unit: "rpm" }, // Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar
+  6286: { label: "Walk-assist/hill-start tip to show rider", kind: 'enum', enumTable: DRIVEUNIT_WALK_ASSIST_TIP_ENUM }, // Flow decompile, confidence: high — WalkAssistTipEnumType / WalkAssistTipEnumMessage
+  6288: { label: "Motor interaction ramp-down timing config", kind: 'uint', unit: "ms" }, // Flow decompile, confidence: medium — MotorInteractionConfiguration protobuf message: single optional int field motorRampDownTime
+  6295: { label: "Request to reduce battery input (charge) current", kind: "bool" }, // Flow decompile, confidence: medium — Write-flag address, no dedicated message class found
+  6301: { label: "Motor's own distance/rotation odometer", kind: 'uint', unit: "m" }, // Flow decompile, confidence: medium — Parallels ODOMETER (Length-typed) but for the motor unit specifically; no dedicated message wrapper confirmed
+  6303: { label: "Current sensor-measured roll mounting angle", kind: 'uint', unit: "°" }, // Flow decompile, confidence: medium — Companion scalar to ESTIMATED_MOUNTING_ANGLE_INFORMATION's estimatedMountingAngleRoll int field
+  6304: { label: "Result of rotor position calibration", kind: 'enum', enumTable: DRIVEUNIT_ROTOR_POSITION_CALIBRATION_RESULT_ENUM }, // Flow decompile, confidence: high — RotorPositionCalibrationResultEnumType / EnumMessage
+  6305: { label: "Braking intensity detection status", kind: 'enum', enumTable: DRIVEUNIT_BRAKE_DETECTION_STATUS_ENUM }, // Flow decompile, confidence: high — BrakeDetectionStatusEnumType / EnumMessage
+  6306: { label: "Trigger reset of hub-cable diagnosis result", kind: "bool" }, // Flow decompile, confidence: high — Write-trigger address, companion to DIAGNOSE_HUB_CABLE (4261)
+  6311: { label: "OEM enable flag for component-lock feature", kind: "bool" }, // Flow decompile, confidence: medium — Write-flag address, no dedicated message class found (distinct from OemComponentLockConfiguration submessage)
+  // --- Battery (Flow decompile additions) ---
+  142: { label: "Prepare-for-shutdown flag", kind: "bool" }, // Flow decompile, confidence: medium — matches FEATURE_PROPERTIES naming pattern of shutdown-lifecycle bools
+  143: { label: "Veto/deny shutdown flag", kind: "bool" }, // Flow decompile, confidence: medium — paired with PREPARE_SHUTDOWN/PREVENT_SHUTDOWN lifecycle
+  147: { label: "Maximum allowed discharge current", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — Uint16NormFactor10Message pattern for current fields
+  148: { label: "Present discharge current", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — same current-scaling pattern
+  149: { label: "Remaining charging time", kind: 'uint', unit: "min" }, // Flow decompile, confidence: medium — plain uint16 duration, likely minutes
+  167: { label: "Maximum allowed reverse current", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — current-scaling pattern
+  176: { label: "Full charge cycles counted on-bike", kind: 'normFactor', factor: 10, unit: "cycles" }, // Flow decompile, confidence: medium — Room model exposes as Float; scaled uint fits nullable-float semantics
+  177: { label: "Full charge cycles counted off-bike", kind: 'normFactor', factor: 10, unit: "cycles" }, // Flow decompile, confidence: medium — same as above
+  180: { label: "Total energy delivered", kind: 'uint', unit: "Wh" }, // Flow decompile, confidence: medium — Energy measurement wrapper base-converts to Wh; RoomComponent$Battery.totalEnergy
+  182: { label: "Light-reserve threshold reached", kind: "bool" }, // Flow decompile, confidence: high — RoomComponent$Battery.isLightReserveReached direct match
+  183: { label: "Time spent cell-balancing", kind: 'uint', unit: "s" }, // Flow decompile, confidence: low — unit unconfirmed (s or min)
+  188: { label: "System state of charge for rider", kind: 'uint', unit: "%" }, // Flow decompile, confidence: high — rider-facing SoC percentage, uint8 range 0-100
+  189: { label: "Data model / schema version", kind: 'uint' }, // Flow decompile, confidence: high — consistent generic version counter across all components
+  192: { label: "Trigger service-charge request", kind: "bool" }, // Flow decompile, confidence: medium — command trigger, no payload fields found
+  193: { label: "Discharge duration", kind: 'uint', unit: "s" }, // Flow decompile, confidence: low — unit unconfirmed
+  195: { label: "Prevent-shutdown flag", kind: "bool" }, // Flow decompile, confidence: high — matches BatteryFeaturePropertiesRelease4.preventShutdown_ field
+  196: { label: "Charging active (per-instance)", kind: "bool" }, // Flow decompile, confidence: high — mirrors CHARGING_ACTIVE at instance scope
+  197: { label: "Remaining energy for rider (instance)", kind: 'uint', unit: "Wh" }, // Flow decompile, confidence: medium — Energy measurement, instance-scoped
+  198: { label: "Maximum allowed discharge current (instance)", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — current-scaling pattern, instance-scoped
+  199: { label: "Maximum allowed reverse current (instance)", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — current-scaling pattern, instance-scoped
+  200: { label: "Present discharge current (instance)", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — current-scaling pattern, instance-scoped
+  201: { label: "Light-reserve threshold reached (instance)", kind: "bool" }, // Flow decompile, confidence: high — instance-scoped mirror of addr 182
+  202: { label: "State of charge for rider (instance)", kind: 'uint', unit: "%" }, // Flow decompile, confidence: high — instance-scoped mirror of addr 188
+  203: { label: "Maximum allowed charge current (instance)", kind: 'normFactor', factor: 10, unit: "A" }, // Flow decompile, confidence: medium — current-scaling pattern, instance-scoped
+  206: { label: "Easter-egg text/code", kind: "string" }, // Flow decompile, confidence: high — EasterEgg{value:string}, field 1
+  208: { label: "Dual-battery mode enabled", kind: "bool" }, // Flow decompile, confidence: medium — no dedicated proto class found, generic bool assumed
+  209: { label: "Battery shutdown progress", kind: 'enum', enumTable: BATTERY_SHUTDOWN_STATE_ENUM }, // Flow decompile, confidence: high — BatteryShutdownStateEnumType confirmed
+  211: { label: "Time until derating", kind: 'uint', unit: "s" }, // Flow decompile, confidence: medium — TimeUntilDerating{value:int32}, unit likely seconds
+  213: { label: "Continuous pack power", kind: 'uint', unit: "W" }, // Flow decompile, confidence: medium — RoomComponent field name match, likely watts
+  217: { label: "System total energy for rider", kind: 'uint', unit: "Wh" }, // Flow decompile, confidence: medium — Energy measurement
+  218: { label: "Energy reserve (instance)", kind: 'uint', unit: "Wh" }, // Flow decompile, confidence: medium — Energy measurement, instance-scoped
+  226: { label: "Total capacity", kind: 'uint', unit: "Ah" }, // Flow decompile, confidence: medium — Charge measurement wrapper, base-converts to Ah
+  227: { label: "Bootmanager firmware version string", kind: "string" }, // Flow decompile, confidence: high — matches sibling *_SOFTWARE_VERSION string fields
+  230: { label: "Reset command", kind: 'enum', enumTable: BATTERY_RESET_SETTINGS_ENUM }, // Flow decompile, confidence: high — ResetSettingsParamsEnumType, single-value enum
+  231: { label: "OEM component-lock enable toggle", kind: "bool" }, // Flow decompile, confidence: medium — distinct from OemComponentLockConfiguration submessage
+  // --- ConnectModule (Flow decompile additions) ---
+  2825: { label: "Component data-model/schema version", kind: 'uint' }, // Flow decompile, confidence: high — shared plumbing scalar
+  2848: { label: "Hidden/easter-egg text value", kind: "string" }, // Flow decompile, confidence: high — EasterEgg{value}
+  2855: { label: "Activates the Connect Module (BCM) with backend/connectivity", kind: "bool" }, // Flow decompile, confidence: medium — no dedicated class; positional + BikeProtectSettingsViewModel context
+  2856: { label: "Trigger to send connection-acknowledge ping to Bosch backend", kind: "bool" }, // Flow decompile, confidence: medium — inferred command trigger, part of backend registration workflow
+  2859: { label: "Boot-manager firmware version string", kind: "string" }, // Flow decompile, confidence: high — sibling of BOOTLOADER/HARDWARE/SOFTWARE_VERSION String fields
+  2864: { label: "Command to disable/clear transportation (shipping) mode", kind: "bool" }, // Flow decompile, confidence: medium — beside TRANSPORTATION_MODE_CONFIGURATION
+  2866: { label: "Battery charging status", kind: 'enum', enumTable: CONNECTMODULE_BATTERY_CHARGING_STATUS_ENUM }, // Flow decompile, confidence: high — BatteryChargingStatusEnumType
+  2870: { label: "Selected backend environment", kind: 'enum', enumTable: CONNECTMODULE_BACKEND_ENVIRONMENT_ENUM }, // Flow decompile, confidence: high — BackendEnvironmentEnumType
+  2871: { label: "Free-form debug/diagnostic component state text", kind: "string" }, // Flow decompile, confidence: high — DebugComponentState{value}, same wrapper pattern as EasterEgg
+  2872: { label: "Trigger to (re)fetch remote configuration from backend", kind: "bool" }, // Flow decompile, confidence: medium — paired with REMOTE_CONFIGURATION_DATA/SETTINGS neighbors
+  2875: { label: "Signed unlock command result", kind: 'enum', enumTable: CONNECTMODULE_UNLOCK_COMPONENT_ENUM }, // Flow decompile, confidence: high — UnlockComponentResult + UnlockResultEnumType
+  // --- AntiLockBrakeSystem (Flow decompile additions) ---
+  2318: { label: "Sample/prototype hardware marker", kind: "bool" }, // Flow decompile, confidence: high — standard cross-component boolean flag
+  2329: { label: "Factory end-of-line test completion flag", kind: "bool" }, // Flow decompile, confidence: high — complements OVERALL_ASSEMBLY_TEST_RESULT
+  2334: { label: "Aggregate pass/fail of all component self-tests", kind: 'enum', enumTable: ANTILOCKBRAKESYSTEM_OVERALL_ASSEMBLY_TEST_RESULT_ENUM }, // Flow decompile, confidence: high — TestResultEnumType
+  2342: { label: "Schema version number of this component", kind: 'uint' }, // Flow decompile, confidence: medium — generic plumbing field, no dedicated class
+  2346: { label: "Combined wheel-speed-sensor factory test result", kind: 'enum', enumTable: ANTILOCKBRAKESYSTEM_WHEEL_SPEED_SENSOR_ASSEMBLY_TEST_RESULT_ENUM }, // Flow decompile, confidence: high — TestResultEnumType (merged result of front/rear sensor tests)
+  2351: { label: "Duration of most recent (hard-)brake event", kind: 'uint' }, // Flow decompile, confidence: medium — no dedicated ABS "BrakeDuration" message class; scale/unit (ms vs s) not recoverable from decompile
+  2352: { label: "Distance traveled during/for most recent brake event", kind: 'uint' }, // Flow decompile, confidence: medium — no dedicated "BrakeDistance" class found; scale/unit (m vs cm) not recoverable
+  2353: { label: "Boot-manager firmware version string", kind: "string" }, // Flow decompile, confidence: high — SoftwareVersion{value}
+  2354: { label: "Hidden/diagnostic string", kind: "string" }, // Flow decompile, confidence: high — EasterEgg{value}
+  2355: { label: "Feature-capability flag (release 4)", kind: "bool" }, // Flow decompile, confidence: high — AntiLockBrakeSystemFeaturePropertiesRelease4OrBuilder — single field: centralInformationVisualization
+  2360: { label: "Result of component-unlock (anti-theft/service) operation", kind: 'enum', enumTable: ANTILOCKBRAKESYSTEM_UNLOCK_COMPONENT_ENUM }, // Flow decompile, confidence: high — UnlockComponentResult / UnlockResultEnumType
+  // --- HeadUnit (Flow decompile additions) ---
+  3098: { label: "Which issue severities the head unit can visualize", kind: "uint32List" }, // Flow decompile, confidence: high — VisualizableIssueTypesOrBuilder, repeated IssueTypeEnum
+  3340: { label: "Protocol/data-model version of head unit", kind: "string" }, // Flow decompile, confidence: medium — inferred from sibling SoftwareVersion/ShortVersion shape
+  3341: { label: "Boot-manager firmware version string", kind: "string" }, // Flow decompile, confidence: medium — SoftwareVersion{value}; sibling BOOTLOADER_SOFTWARE_VERSION confirmed as plain String
+  3342: { label: "Hidden/diagnostic string", kind: "string" }, // Flow decompile, confidence: high — EasterEggOrBuilder
+  3351: { label: "Trigger command to reset internal head-unit state", kind: "bool" }, // Flow decompile, confidence: low — naming convention only, no dedicated class
+  3352: { label: "Which metric shown in status bar", kind: 'enum', enumTable: HEADUNIT_STATUSBAR_CUSTOMIZATION_ENUM }, // Flow decompile, confidence: high — StatusbarCustomizationEnumMessageOrBuilder
+  3355: { label: "Status of phone-as-key-device pairing", kind: 'enum', enumTable: HEADUNIT_KEY_DEVICE_ENUM }, // Flow decompile, confidence: high — KeyDeviceStatusEnumMessageOrBuilder
+  3356: { label: "Result of setting this phone as key device", kind: 'enum', enumTable: HEADUNIT_SET_AS_KEY_DEVICE_ENUM }, // Flow decompile, confidence: high — SetAsKeyDeviceResponseEnumMessageOrBuilder
+  3359: { label: "Freshness/anti-replay nonce for unlock-token generation", kind: 'uint' }, // Flow decompile, confidence: high — NonceOrBuilder; ties to UnlockResultEnum.FRESHNESS_ERROR
+  3361: { label: "Id selecting a view-stripe/category configuration", kind: 'uint' }, // Flow decompile, confidence: medium — CategoryConfigurationIdOrBuilder
+  3363: { label: "Tile ids the app wants streamed", kind: "uint32List" }, // Flow decompile, confidence: high — FeatureStreamingTilesOfInterestOrBuilder, repeated int32
+  3367: { label: "Request for a category's configuration keyed by id", kind: 'uint' }, // Flow decompile, confidence: medium — inferred from CategoryConfigurationIdOrBuilder
+  3369: { label: "Selects which configuration id to display now", kind: 'uint' }, // Flow decompile, confidence: medium — no dedicated class found
+  3375: { label: "Currently selected option ids across option groups", kind: "uint32List" }, // Flow decompile, confidence: high — FeatureStreamingOptionStripeOrBuilder, repeated int32
+  3465: { label: "Result of a component-unlock attempt", kind: 'enum', enumTable: HEADUNIT_UNLOCK_COMPONENT_ENUM }, // Flow decompile, confidence: high — UnlockComponentResultOrBuilder + UnlockResultEnumType
+  // --- RemoteControl (Flow decompile additions) ---
+  8209: { label: "Active UI priority", kind: 'uint' }, // Flow decompile, confidence: medium — Priority of the currently-active UI, used for UI arbitration (byte value, scale seen in UiType.priority)
+  8210: { label: "Active UI component", kind: 'enum', enumTable: REMOTECONTROL_ACTIVE_UI_COMPONENT_ENUM }, // Flow decompile, confidence: high — Identifies which UI currently owns control
+  8247: { label: "CPU load history", kind: "uint32List" }, // Flow decompile, confidence: high — ArrayOf10CpuLoad, recent CPU load samples (10 slots)
+  8257: { label: "Available buttons bitmask", kind: 'uint' }, // Flow decompile, confidence: low — likely bitmask of present button keycodes, no dedicated class found
+  8263: { label: "UI control command", kind: 'enum', enumTable: REMOTECONTROL_UI_CONTROL_ENUM }, // Flow decompile, confidence: medium — UiControlCommandEnum has 15 values, only a subset confirmed - ordinal order not fully verified
+  8264: { label: "Request dynamic UI control", kind: "bool" }, // Flow decompile, confidence: low — requests activation of dynamic UI control mode
+  8265: { label: "Dynamic UI control state", kind: 'enum', enumTable: REMOTECONTROL_DYNAMIC_UI_CONTROL_STATE_ENUM }, // Flow decompile, confidence: high — current UI mode state
+  8273: { label: "Diagnosis program active", kind: "bool" }, // Flow decompile, confidence: high — matches RemoteControl.diagnosisProgramActive domain field
+  8298: { label: "Easter egg string", kind: "string" }, // Flow decompile, confidence: high — hidden developer string
+  8305: { label: "Data model version", kind: "string" }, // Flow decompile, confidence: high — Room column dataModelVersion TEXT
+  8307: { label: "Sample/prototype hardware marker", kind: "bool" }, // Flow decompile, confidence: low — flags pre-production/sample hardware
+  8340: { label: "CAN time-sync enabled", kind: "bool" }, // Flow decompile, confidence: low — whether CAN-bus time sync is enabled
+  8353: { label: "UI priority (own)", kind: 'uint' }, // Flow decompile, confidence: medium — this component's own advertised UI priority (byte value, 0-80 scale)
+  8357: { label: "Welcome light pattern finished", kind: "bool" }, // Flow decompile, confidence: low — startup light pattern completed
+  8358: { label: "Dismiss error pattern (command)", kind: "bool" }, // Flow decompile, confidence: low — clears currently displayed error light pattern
+  8359: { label: "Error pattern active", kind: "bool" }, // Flow decompile, confidence: low — error light/signal pattern currently active
+  8360: { label: "Critical error pattern active", kind: "bool" }, // Flow decompile, confidence: low — critical-severity error light pattern active
+  8361: { label: "Request +/- button control by active UI", kind: "bool" }, // Flow decompile, confidence: medium — requests +/- buttons be handed to active UI
+  8362: { label: "+/- button control granted", kind: "bool" }, // Flow decompile, confidence: high — matches RemoteControl.plusMinusButtonControlByActiveUi domain field
+  8364: { label: "Visualizable issue severity types", kind: "uint32List" }, // Flow decompile, confidence: high — repeated IssueTypeEnum (IM_INFORMATION,IM_WARNING,IM_ERROR,IM_CRITICAL_ERROR) — a list, not a single enum value; shows as raw ordinals for now
+  8368: { label: "Status-bar customization selection", kind: 'enum', enumTable: REMOTECONTROL_STATUSBAR_CUSTOMIZATION_ENUM }, // Flow decompile, confidence: high — selects what ride-screen status bar shows
+  8372: { label: "Bike-supported UI languages", kind: "string" }, // Flow decompile, confidence: high — repeated Language{value:string} e.g. "en","de"
+  8375: { label: "Tile IDs app wants streamed", kind: "uint32List" }, // Flow decompile, confidence: medium — repeated int32 (TileIdEnumType values)
+  8376: { label: "Selected category-configuration id", kind: 'uint' }, // Flow decompile, confidence: high — UByte (0-255)
+  8381: { label: "Request to display a category-configuration id", kind: 'uint' }, // Flow decompile, confidence: low — no direct call-site found; inferred
+  8382: { label: "Persist current view-stripe configuration", kind: "bool" }, // Flow decompile, confidence: high — bool ack, no payload; confirmed via DisplayConfigurationDatapoints
+  8430: { label: "Device mid software-installation flag", kind: "bool" }, // Flow decompile, confidence: low — no dedicated class found; naming implies boolean state flag
+  8443: { label: "Kick off installation report for update-set", kind: "uuid" }, // Flow decompile, confidence: high — carries update-set UUID for install report
+  8460: { label: "Current display/remote snooze mode", kind: 'enum', enumTable: REMOTECONTROL_SNOOZE_STATE_ENUM }, // Flow decompile, confidence: high — matches RemoteControl.SnoozeState domain enum
+  8461: { label: "Exit snooze mode command", kind: "bool" }, // Flow decompile, confidence: low — stateless "wake now" trigger
+  8462: { label: "Live heart-rate reading", kind: 'uint', unit: "bpm" }, // Flow decompile, confidence: high — HeartRate domain model: heartRate is raw Integer bpm
+  8463: { label: "Heart-rate sensor connection status", kind: 'enum', enumTable: REMOTECONTROL_HEART_RATE_STATUS_ENUM }, // Flow decompile, confidence: high — mirrored by RemoteControl.HeartRateStatus domain enum
+  8465: { label: "Reason system/head unit woke up", kind: 'uint' }, // Flow decompile, confidence: medium — SystemWakeUpReasonEnum has 13 gapped/deprecated ordinals, unsafe to auto-generate as enum — needs manual decompile check
+  8466: { label: "Eco/range-extend control mode active", kind: "bool" }, // Flow decompile, confidence: high — 2-value enum (OFF/ACTIVE), semantically boolean
+  8467: { label: "Command to toggle bike light on/off", kind: "bool" }, // Flow decompile, confidence: low — zero other references in decompiled tree; possibly unused/reflection-dispatched
+  8469: { label: "Result of component-unlock attempt", kind: 'enum', enumTable: REMOTECONTROL_UNLOCK_COMPONENT_ENUM }, // Flow decompile, confidence: high — request=signed UnlockTokenContainer, response=UnlockComponentResult enum
+  8489: { label: "All active issue IDs", kind: "uint32List" }, // Flow decompile, confidence: high — ListOfIssueIds, code-confirmed ReadableSubscribableDataPoint<ListOfIssueIds>
+  8531: { label: "Acknowledge an issue by ID", kind: 'uint' }, // Flow decompile, confidence: high — IssueId{value:uint32} -> Unit, code-confirmed CallableDataPoint<IssueId,Unit>
+  8552: { label: "Automatic down-shift recommended", kind: "bool" }, // Flow decompile, confidence: medium — no dedicated message; likely a downshift-hint flag
+  8556: { label: "E-shift device available via CAN bus", kind: "bool" }, // Flow decompile, confidence: medium — CAN has only one device so a plain bool suffices
+  8559: { label: "Requested e-shift operation mode", kind: 'enum', enumTable: REMOTECONTROL_E_SHIFT_OPERATION_MODE_REQUEST_ENUM }, // Flow decompile, confidence: high — requests gear device switch operation mode
+  8560: { label: "Current e-shift operation mode", kind: 'enum', enumTable: REMOTECONTROL_CURRENT_E_SHIFT_OPERATION_MODE_ENUM }, // Flow decompile, confidence: high — reports gear device's current operating mode
+  8561: { label: "Fine-adjustment step direction request", kind: 'enum', enumTable: REMOTECONTROL_FINE_ADJUSTMENT_STEP_REQUEST_ENUM }, // Flow decompile, confidence: high — requests a single micro-adjustment step of derailleur
+  8562: { label: "Current fine-adjustment step index", kind: 'uint' }, // Flow decompile, confidence: medium — no dedicated wrapper found; step counter paired with FINE_ADJUSTMENT_STEP_REQUEST
+  8563: { label: "Current/requested shift mode", kind: 'enum', enumTable: REMOTECONTROL_SHIFT_MODE_ENUM }, // Flow decompile, confidence: high — matches EShift.ShiftMode domain enum 1:1
+  8564: { label: "Manual override target gear feedback", kind: 'uint' }, // Flow decompile, confidence: high — reports rider manual override gear during AUTOMATIC shift mode
+  8570: { label: "E-shift ready-to-shutdown handshake", kind: "bool" }, // Flow decompile, confidence: medium — gates power-down until gear device confirms safe state
+  8603: { label: "Lock/alarm sound enabled setting", kind: "bool" }, // Flow decompile, confidence: high — matches RoomComponent RemoteControl.systemLockIsLockSoundEnabled
+  8644: { label: "USB port has power present (VBUS detected)", kind: "bool" }, // Flow decompile, confidence: medium — no dedicated proto class; generic bool pattern
+  8648: { label: "Device actively drawing charge current from USB port", kind: "bool" }, // Flow decompile, confidence: medium — same generic-bool pattern as USB_POWER_AVAILABLE
+  8652: { label: "Max current the BRC HMI/display port may source/sink", kind: 'uint', unit: "mA" }, // Flow decompile, confidence: low — scale unconfirmed; no dedicated wrapper
+  8705: { label: "Paired mobile app (Flow) currently connected", kind: "bool" }, // Flow decompile, confidence: medium — generic bool wrapper pattern
+  8742: { label: "Issue severities visualizable on BLE-central peripheral", kind: "uint32List" }, // Flow decompile, confidence: low — repeated IssueTypeEnum, internal issue-visualization plumbing
+  8744: { label: "Heart rate from paired BLE strap", kind: 'uint', unit: "bpm" }, // Flow decompile, confidence: medium — mirrors AVERAGE_HEART_RATE plain-scalar convention
+  8745: { label: "BLE heart-rate sensor connection status", kind: 'enum', enumTable: REMOTECONTROL_BLE_HEART_RATE_STATUS_ENUM }, // Flow decompile, confidence: high — also persisted as RemoteControl.HeartRateStatus
+  8746: { label: "Readiness of paired BLE electronic shifter", kind: "bool" }, // Flow decompile, confidence: medium — corroborated by BLE_SHIFTER peripheral profile
+  8769: { label: "Ride/activity session identifier", kind: 'uint' }, // Flow decompile, confidence: low — opaque uint id, no direct consumer found in app code
+  8770: { label: "Unix timestamp when current activity started", kind: 'uint', unit: "s" }, // Flow decompile, confidence: low — seconds since epoch, no direct app consumer found
+  8771: { label: "Moving time of current ride excluding stops", kind: 'uint', unit: "s" }, // Flow decompile, confidence: high — confirmed as display tile REMOTE_CONTROL_DURATION_WITHOUT_STOPS_OF_ACTIVITY
+  8772: { label: "Timezone/UTC offset at activity start", kind: 'uint', unit: "min" }, // Flow decompile, confidence: low — minutes offset from UTC (inferred); sibling TIME_ZONE/LOCAL_TIME_OFFSET use same representation
+  8773: { label: "Bike odometer reading at activity start", kind: 'uint', unit: "m" }, // Flow decompile, confidence: low — analogous to DriveUnit ODOMETER bare-uint convention
+  8774: { label: "Average speed of ride activity", kind: 'uint', unit: "km/h" }, // Flow decompile, confidence: high — ActivityService.java proto field average_speed
+  8776: { label: "Average pedal cadence of ride activity", kind: 'uint', unit: "rpm" }, // Flow decompile, confidence: high — ActivityService.java proto field average_cadence
+  8777: { label: "Maximum pedal cadence of ride activity", kind: 'uint', unit: "rpm" }, // Flow decompile, confidence: high — ActivityService.java proto field maximum_cadence
+  8778: { label: "Average rider (pedal) power of ride activity", kind: 'uint', unit: "W" }, // Flow decompile, confidence: high — ActivityService.java proto field average_rider_power
+  8779: { label: "Maximum rider (pedal) power of ride activity", kind: 'uint', unit: "W" }, // Flow decompile, confidence: high — ActivityService.java proto field maximum_rider_power
+  8780: { label: "Average heart rate of ride activity", kind: 'uint', unit: "bpm" }, // Flow decompile, confidence: high — ActivityService.java proto field average_heart_rate
+  8781: { label: "Maximum heart rate of ride activity", kind: 'uint', unit: "bpm" }, // Flow decompile, confidence: high — ActivityService.java proto field maximum_heart_rate
+  8782: { label: "Rider energy consumed over ride activity", kind: 'uint', unit: "Wh" }, // Flow decompile, confidence: high — ActivityService.java proto field energy_consumed
+  8783: { label: "Reset/clear current activity/ride session", kind: "bool" }, // Flow decompile, confidence: medium — void-RPC pattern; distinguished from enum-based AUTOMATIC_ACTIVITY_RESET
+  8784: { label: "Automatic activity-reset trigger condition", kind: 'enum', enumTable: REMOTECONTROL_AUTOMATIC_ACTIVITY_RESET_ENUM }, // Flow decompile, confidence: high — condition under which app-tracked ride auto-ends
+  8785: { label: "Calories consumed during activity", kind: 'uint', unit: "kcal" }, // Flow decompile, confidence: high — CaloriesConsumedSampleProvider.java wraps Flow<UShort>
+  8786: { label: "Per-assist-mode total usage duration", kind: "uint32List" }, // Flow decompile, confidence: medium — seconds per mode, array; BikeDataSupplier.getAssistModeUsage()
+  8787: { label: "Per-assist-mode usage duration while motor actively assisting", kind: "uint32List" }, // Flow decompile, confidence: medium — motor-active subset of usage time
+  8788: { label: "Rider's share of total propulsion energy", kind: 'uint', unit: "%" }, // Flow decompile, confidence: high — RiderEnergyShareSampleProvider.java wraps Flow<UByte>
+  8832: { label: "Debug command to trigger display screenshot", kind: "bool" }, // Flow decompile, confidence: low — no class/usage found outside enum declaration
+  8842: { label: "Generic free-text string to show on bike display", kind: "string" }, // Flow decompile, confidence: low — no dedicated class found; likely plain string wrapper
+  8843: { label: "Reset/clear display tile values", kind: "bool" }, // Flow decompile, confidence: low — internal UI plumbing trigger
+  8965: { label: "Third-party device (accessory/trailer motor) drawing full power", kind: "bool" }, // Flow decompile, confidence: medium — no class/usage found outside enum; name implies boolean status flag
+  8980: { label: "Duration of most recent brake event", kind: 'uint', unit: "ms" }, // Flow decompile, confidence: medium — displayed as ABS brake-duration tile; generic scalar wrapper
+  8981: { label: "Distance traveled during most recent brake event", kind: 'uint' }, // Flow decompile, confidence: medium — meters/cm unconfirmed; displayed as ABS brake-distance tile
+  8983: { label: "Icon IDs for currently available ABS modes", kind: "uint32List" }, // Flow decompile, confidence: high — ArrayOf5AbsModeIconsOrBuilder + AbsModeIconEnumType
+  8984: { label: "ABS modes currently available/selectable", kind: "uint32List" }, // Flow decompile, confidence: medium — AbsModeEnumType; array-wrapper mirrors icon list
+  8985: { label: "Currently active ABS mode", kind: 'uint' }, // Flow decompile, confidence: high — AbsModeEnumMessage / AbsModeEnumType; ordinal-to-mode mapping (ABS_MODE1..5) not individually confirmed, kept as raw uint rather than guessed enum
+  8993: { label: "Signal/running lamp legally/functionally required", kind: "bool" }, // Flow decompile, confidence: medium — no class/usage found outside enum; paired with SIGNAL_LAMP_CONTROL
+  // --- MobileApp (Flow decompile additions) ---
+  16513: { label: "UI priority level", kind: 'uint' }, // Flow decompile, confidence: high — raw priority index, no scaling; PayloadKt.java maps to Uint8Message
+  16517: { label: "Current altitude", kind: 'uint', unit: "m" }, // Flow decompile, confidence: high — Int16NullableMessage, no scale factor
+  16518: { label: "Maximum altitude reached", kind: 'uint', unit: "m" }, // Flow decompile, confidence: high — Int16NullableMessage, same wrapper as ALTITUDE
+  16519: { label: "Cumulative ascent", kind: 'uint', unit: "m" }, // Flow decompile, confidence: high — Uint16Message, no scaling
+  16520: { label: "Cumulative descent", kind: 'uint', unit: "m" }, // Flow decompile, confidence: high — Uint16Message, same wrapper as ASCENT
+  16521: { label: "Phone/system state of charge", kind: 'uint', unit: "%" }, // Flow decompile, confidence: high — Uint8Message, no scaling
+  16522: { label: "Road slope", kind: 'uint', unit: "%" }, // Flow decompile, confidence: high — Int8Message, signed; corroborated by DefaultGetRoadSlopePercentage.java
+  16523: { label: "Current country (ISO code)", kind: "string" }, // Flow decompile, confidence: high — Country.java, string field, e.g. "DE"
+  16529: { label: "Mobile app software version", kind: "string" }, // Flow decompile, confidence: high — SoftwareVersion.java, string field
+  16530: { label: "Message-bus data model version", kind: "string" }, // Flow decompile, confidence: medium — inferred by analogy to sibling version wrapper
+  16531: { label: "Message-bus business logic version", kind: "string" }, // Flow decompile, confidence: medium — inferred by naming/positional analogy in same proto family
+  16532: { label: "Heart rate", kind: 'uint', unit: "bpm" }, // Flow decompile, confidence: medium — generic Uint8Message wrapper; HeartRateSampleProvider.java models as plain Int
+  16533: { label: "Heart-rate sensor connection status", kind: 'enum', enumTable: MOBILEAPP_HEART_RATE_STATUS_ENUM }, // Flow decompile, confidence: high — HeartRateStatusEnumMessage
+  16534: { label: "Current navigation/guidance state", kind: 'enum', enumTable: MOBILEAPP_NAVIGATION_CURRENT_STATUS_ENUM }, // Flow decompile, confidence: high — MobileAppNavigationStatusEnumMessage
+  16535: { label: "Remaining distance to destination", kind: 'uint', unit: "m" }, // Flow decompile, confidence: low — exact wrapper width unconfirmed; RideInfoService.java feeds distanceRemaining in meters
+  16536: { label: "Estimated arrival time", kind: 'uint' }, // Flow decompile, confidence: high — epoch-based Timestamp int64, unit unconfirmed
+  16537: { label: "Time remaining until destination", kind: 'uint', unit: "s" }, // Flow decompile, confidence: high — MobileAppDuration int32, confirmed seconds via getInWholeSeconds
+  16538: { label: "Number of altitude-graph samples available/planned", kind: 'uint' }, // Flow decompile, confidence: high — AltitudeGraphNumberOfAvailableSamples, single int32
+  16541: { label: "Issue types the mobile app can visualize", kind: "uint32List" }, // Flow decompile, confidence: high — repeated IssueTypeEnum (IM_INFORMATION,IM_WARNING,IM_ERROR,IM_CRITICAL_ERROR) — a list, not a single enum value
+  16546: { label: "Predicted battery state-of-charge % at destination", kind: 'uint', unit: "%" }, // Flow decompile, confidence: high — Uint8NullableMessage; SendArrivalChargeToBhu.java feeds getBatteryPercentage()
+  16547: { label: "Whether the phone is currently charging", kind: "bool" }, // Flow decompile, confidence: high — PhoneCharging provider returns MobileDevice.Battery.isCharging()
+  16553: { label: "Bike/system initialization stage reported by mobile app", kind: 'uint' }, // Flow decompile, confidence: medium — StartupStageEnumType has 12 values (UNINITIALIZED, STAGE1-10, UNRECOGNIZED) but full ordinal list wasn't individually confirmed — kept as raw uint rather than guessed enum
+  16555: { label: "Flag indicating a CCF (bike computer) reboot is required", kind: "bool" }, // Flow decompile, confidence: high — CcfRebootRequestedOrBuilder.getCcfRebootRequiredFlag()
+  // --- CanTestNode (Flow decompile additions) ---
+  10257: { label: "Battery 1 (primary) component present", kind: "bool" }, // Flow decompile, confidence: medium — inferred bool by analogy with confirmed sibling addresses
+  10258: { label: "Drive unit (motor) present", kind: "bool" }, // Flow decompile, confidence: high — DriveUnitReader.java: remoteControl.getDriveUnitAvailable()
+  10259: { label: "Remote control / display unit present", kind: "bool" }, // Flow decompile, confidence: medium — inferred bool by naming/family analogy
+  10260: { label: "Battery 2 (secondary/dual-battery) present", kind: "bool" }, // Flow decompile, confidence: high — Battery2Reader.java: remoteControl.getBattery2Available()
+  // --- BoschDiagnoseApp (Flow decompile additions) ---
+  3649: { label: "List of available software-update-manifest resource IDs", kind: "uint32List" }, // Flow decompile, confidence: high — SoftwareUpdateManifests, single repeated uint32 value field
+  3650: { label: "List of available software-update resource IDs", kind: "uint32List" }, // Flow decompile, confidence: high — SoftwareUpdates, identical structure
+  3651: { label: "List of configuration-container resource IDs", kind: "uint32List" }, // Flow decompile, confidence: high — ConfigurationContainers, repeated uint32 value
   // --- DriveUnit ---
   6145: { label: 'Serial Number', kind: 'string' },
   6146: { label: 'Part Number', kind: 'string' },
@@ -141,6 +633,8 @@ const FIELD_TYPES = {
   6187: { label: 'Gearing System', kind: 'string' },
   6188: { label: 'eBike ID', kind: 'uuid' },
   6190: { label: 'Product Name', kind: 'string' },
+  6172: { label: 'Bike Light', kind: 'bool' }, // BikeStateWritable<Boolean> per addresses.js
+  6176: { label: 'Bike Light Available', kind: 'bool' },
   6196: { label: 'Component Locked', kind: 'bool' },
   6198: { label: 'Sample Software', kind: 'bool' },
   6210: { label: 'Maximum Assistance Speed (IBD)', kind: 'normFactor', factor: 100, unit: 'km/h' },
@@ -152,6 +646,21 @@ const FIELD_TYPES = {
   6225: { label: 'Tuning Detection', kind: 'tuningDetection' },
   6228: { label: 'Front ABS Assembled', kind: 'bool' },
   6229: { label: 'Bike Category', kind: 'enum', enumTable: BIKE_CATEGORY_ENUM },
+  // Not decompile-confirmed (this address was never wired up before — the histogram used a
+  // fixed design palette instead, see web/app.js). Inferred from the raw bytes themselves: a
+  // real capture's 20-byte payload splits cleanly into 5x 4-byte entries (one per assist mode
+  // slot, same order as ACTIVE_ASSIST_MODES, index 0 = off/walk) with no protobuf tag/length
+  // wrapper at all (confirmed by the fact this payload used to fall through to the generic
+  // raw-hex fallback rather than matching the 0x0a tag check). Read as packed ARGB bytes
+  // (alpha first, matching Android's int-color convention) the AUTO-position entry decodes to
+  // alpha 0x8f, RGB(178, 9, 255) — a vivid purple — which matches what the rider's own Flow
+  // app/head unit actually shows for AUTO, confirming both the entry alignment and byte order.
+  6158: { label: 'Assist Mode Colors', kind: 'assistModeColors' },
+  // Confirmed via Flow's own decompile (DriveUnitAddresses.REACHABLE_RANGE, addr 6231) — a real,
+  // live, bike-computed per-assist-mode range estimate (ReachableRangeType: repeated uint32, one
+  // value per mode, in km, same slot order as ACTIVE_ASSIST_MODES) — this is the actual source
+  // behind Flow's "Schatting van actieradius" (range estimate) screen, not a client-side formula.
+  6231: { label: 'Reachable Range (per mode, km)', kind: 'uint32List' },
   6238: { label: 'OEM Bike ID', kind: 'string' },
   6239: { label: 'OEM Manufacturing Location', kind: 'string' },
   6240: { label: 'OEM Manufacturing Line', kind: 'string' },
@@ -194,7 +703,7 @@ const FIELD_TYPES = {
   162: { label: 'SoC Lower Limit', kind: 'uint', unit: '%' }, // inferred — bare UByte, writable (see addresses.js)
   163: { label: 'SoC Upper Limit', kind: 'uint', unit: '%' }, // inferred — bare UByte, writable (see addresses.js)
   210: { label: 'Present FET Temperature', kind: 'normFactor', factor: 10, unit: '°C', signed: true }, // Int16NormFactor10Message, confirmed via decompile
-  215: { label: 'Delivered Ah (Lifetime)', kind: 'uint', unit: 'mAh' }, // inferred unit — bare UInt (no norm-factor wrapper), mAh is a plausible-but-NOT-independently-confirmed guess (checked against a real capture: 557064 raw / 51.2 charge cycles ≈ 10.9 Ah/cycle, a plausible per-cycle capacity — not proof)
+  215: { label: 'Delivered Ah (Lifetime)', kind: 'uint', unit: 'Ah' }, // bare UInt; unit corrected from an earlier "mAh" guess — a real capture showed 1024 (raw) alongside DELIVERED_WH_OVER_LIFETIME=36884 Wh, and 36884/1024 = 36.02 V, matching a typical Bosch PowerTube pack's nominal voltage — confirms the raw value is whole Ah, not milliamp-hours
   220: { label: 'Self-Discharging Rate', kind: 'normFactor', factor: 10 }, // Uint8NullableNormFactor10Message, confirmed via decompile — "Nullable" just means protobuf presence-tracking, decodes the same as any other NormFactor10 on the wire
   224: { label: 'Device Certificate', kind: 'certificateBytes' }, // Certificate: field1 = raw bytes (ByteString), confirmed via decompile — likely an X.509 or Bosch CVC-format cert, not parsed further (see decode comment)
   156: { label: 'Delivered Wh (Lifetime)', kind: 'uint', unit: 'Wh' }, // inferred — bare UInt
@@ -396,7 +905,7 @@ function decodeTyped(addr, payload) {
     if (meta.kind === 'tuningDetection') return { label: meta.label, display: 'flag=false, counter=0', value: { flag: false, counter: 0 } };
     if (meta.kind === 'startAssistModeOem') {
       const entry = meta.enumTable[0];
-      return { label: meta.label, display: `${entry.label} [${entry.name}=0], configurable=false`, value: { position: entry.name, configurable: false } };
+      return { label: meta.label, display: `${entry.label}, configurable=false`, technical: `${entry.name}=0`, value: { position: entry.name, configurable: false } };
     }
     // Pre-existing gap fixed here: proto3 omits an enum field entirely when its value is the
     // default (0) — same reasoning as 'bool'/'uint' above, just not handled for 'enum' until now.
@@ -405,7 +914,9 @@ function decodeTyped(addr, payload) {
     // to the real enum-0 value.
     if (meta.kind === 'enum') {
       const entry = meta.enumTable[0];
-      return { label: meta.label, display: entry ? `${entry.label} [${entry.name}=0]` : 'unknown enum value 0', value: entry ? entry.name : 0 };
+      // `display` is the human-friendly label only; `technical` carries the raw enum
+      // name=ordinal pair for callers that want it (e.g. a hover tooltip or the JSON export).
+      return { label: meta.label, display: entry ? entry.label : 'unknown enum value 0', technical: entry ? `${entry.name}=0` : undefined, value: entry ? entry.name : 0 };
     }
     // Unlike a 0-value counter or false flag, an epoch-0 timestamp (1970-01-01) is never a
     // real bike-reported clock value — showing it as a literal date would be misleading, so
@@ -416,6 +927,7 @@ function decodeTyped(addr, payload) {
     if (meta.kind === 'serviceDue') return { label: meta.label, display: '(not set)', value: { timestamp: 0, odometer: 0 } };
     if (meta.kind === 'deactivationProof') return { label: meta.label, display: 'not deactivated (no proof present)', value: { deactivated: false, signatureLength: 0 } };
     if (meta.kind === 'certificateBytes') return { label: meta.label, display: '(no certificate)', value: null };
+    if (meta.kind === 'assistModeColors') return { label: meta.label, display: '(none)', value: [] };
     return { label: meta.label, display: '(empty / default)', value: null };
   }
 
@@ -447,7 +959,8 @@ function decodeTyped(addr, payload) {
       const entry = meta.enumTable[f1.value] || meta.enumTable[String(f1.value)];
       return {
         label: meta.label,
-        display: entry ? `${entry.label} [${entry.name}=${f1.value}]` : `unknown enum value ${f1.value}`,
+        display: entry ? entry.label : `unknown enum value ${f1.value}`,
+        technical: entry ? `${entry.name}=${f1.value}` : undefined,
         value: entry ? entry.name : f1.value,
       };
     }
@@ -470,19 +983,22 @@ function decodeTyped(addr, payload) {
       const posValue = f1 && f1.wireType === 0 ? f1.value : 0;
       const entry = meta.enumTable[posValue] || meta.enumTable[String(posValue)];
       const position = entry ? entry.name : posValue;
-      const positionLabel = entry ? `${entry.label} [${entry.name}=${posValue}]` : `unknown enum value ${posValue}`;
+      const positionLabel = entry ? entry.label : `unknown enum value ${posValue}`;
       const configurable = fields[2] ? !!fields[2].value : false;
       return {
         label: meta.label,
         display: `${positionLabel}, configurable=${configurable}`,
+        technical: entry ? `${entry.name}=${posValue}` : undefined,
         value: { position, configurable },
       };
     }
     case 'unixTimestamp': {
       if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
       const seconds = zigzagDecode(f1.value); // sint64 — see file header note
-      const iso = new Date(seconds * 1000).toISOString();
-      return { label: meta.label, display: iso, value: seconds };
+      // Bike clock is reported as a plain Unix epoch (UTC instant) — displayed in the
+      // viewer's local time zone, not UTC, since that's what a rider actually cares about.
+      const local = new Date(seconds * 1000).toLocaleString();
+      return { label: meta.label, display: local, value: seconds };
     }
     case 'uint32List': {
       if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
@@ -507,7 +1023,7 @@ function decodeTyped(addr, payload) {
       }
       const odometer = fields[2] && fields[2].wireType === 0 ? fields[2].value : 0;
       const display = timestamp
-        ? `${new Date(timestamp * 1000).toISOString()}, odometer ${odometer} m`
+        ? `${new Date(timestamp * 1000).toLocaleString()}, odometer ${odometer} m`
         : `odometer ${odometer} m`;
       return { label: meta.label, display, value: { timestamp, odometer } };
     }
@@ -537,6 +1053,17 @@ function decodeTyped(addr, payload) {
         `${cvc.keyAlgorithm || 'unknown key alg'}, holder: ${cvc.holderReferenceText || '?'}, ` +
         `valid ${cvc.validFrom || '?'} to ${cvc.validUntil || '?'}`;
       return { label: meta.label, display, value: cvc };
+    }
+    case 'assistModeColors': {
+      // Raw byte array, not protobuf tag-wrapped — parse the payload param directly, not
+      // the generic `fields`/`f1` this switch normally works from (see FIELD_TYPES comment).
+      const colors = [];
+      for (let i = 0; i + 4 <= payload.length; i += 4) {
+        const a = payload[i], r = payload[i + 1], g = payload[i + 2], b = payload[i + 3];
+        const hex = '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('');
+        colors.push({ a, r, g, b, hex });
+      }
+      return { label: meta.label, display: colors.length ? colors.map((c) => c.hex).join(', ') : '(none)', value: colors };
     }
     default:
       return null;
