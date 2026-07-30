@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-30.2';
+  const APP_VERSION = '2026-07-30.3';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -139,6 +139,15 @@
   // acting on a field before its own read (and everything it might gate on) has landed is how
   // stale-state bugs happen.
   let sweepFullyLoaded = false;
+  // Tracks the address currently in flight during the sweep, so a stall-watchdog (below) can name
+  // names — a real hang on real hardware ("stuck around item 540") left nothing in the debug log to
+  // pin down, because readOne() itself never logs. A single stuck low-level USB transfer has no
+  // timeout of its own (WebUSB gives us no way to cancel one), so this can't un-stick the sweep —
+  // it only makes sure the NEXT occurrence is diagnosable and the user isn't left guessing.
+  let sweepWatchdogAddr = null;
+  let sweepWatchdogStart = 0;
+  let sweepWatchdogTimer = null;
+  let sweepWatchdogFired = false;
 
   // ---------- disclaimer (first run) ----------
   const ACK_KEY = 'bes3-risk-ack';
@@ -1921,12 +1930,23 @@
     // disconnect during phase 'connected' as "keep the dashboard, mark it stale", which is
     // exactly right for a disconnect during this background backfill too.
     let revealed = false;
+    sweepWatchdogFired = false;
+    sweepWatchdogTimer = setInterval(() => {
+      if (sweepWatchdogFired || !sweepWatchdogAddr) return;
+      const stuckMs = Date.now() - sweepWatchdogStart;
+      if (stuckMs < 8000) return;
+      sweepWatchdogFired = true;
+      if (window.Bes3DebugLog) {
+        window.Bes3DebugLog.log('sweep', 'possible transport stall', `${sweepWatchdogAddr} — no response after ${stuckMs}ms; a stuck USB transfer can't be cancelled, reconnect if this doesn't clear`);
+      }
+      if (!revealed) els.connectingSub.textContent = `stuck on ${sweepWatchdogAddr} — try reconnecting if this doesn't clear`;
+    }, 1000);
     for (const entry of readable) {
-      if (!transport) return; // disconnected mid-sweep
+      if (!transport) { clearInterval(sweepWatchdogTimer); return; } // disconnected mid-sweep
       if (abortRequested) { aborted = true; break; }
 
-      const cs = compStats[entry.component] || (compStats[entry.component] = { ok: 0, timeouts: 0 });
-      if (!CORE_COMPONENTS.has(entry.component) && cs.ok === 0 && cs.timeouts >= 3) {
+      const cs = compStats[entry.component] || (compStats[entry.component] = { ok: 0, fails: 0 });
+      if (!CORE_COMPONENTS.has(entry.component) && cs.ok === 0 && cs.fails >= 3) {
         results.push({ ...entry, status: 'skipped', detail: 'component not detected', decoded: null, typed: null });
         done++;
         continue;
@@ -1935,10 +1955,14 @@
       let result = null;
       let status = 'ok';
       let detail = '';
+      sweepWatchdogAddr = `${entry.component}.${entry.name}`;
+      sweepWatchdogStart = Date.now();
+      sweepWatchdogFired = false;
       try {
         result = await readOne(entry.addr);
       } catch (err) {
         if (/disconnect|no device|not found/i.test(err.name + ' ' + err.message)) {
+          clearInterval(sweepWatchdogTimer);
           handleDisconnect(true);
           return;
         }
@@ -1950,8 +1974,11 @@
         status = 'declined';
         detail = result.statusName;
       }
+      // A clean 'declined' is just as good a "not present" signal as a 'timeout' — a component
+      // that's genuinely absent (no ABS, no second battery, no display) answers every one of its
+      // addresses with a fast decline, and would otherwise never trip this skip since it never times out.
       if (status === 'ok') cs.ok++;
-      else if (status === 'timeout') cs.timeouts++;
+      else if (status === 'timeout' || status === 'declined') cs.fails++;
 
       let decoded = null;
       let typed = null;
@@ -1987,6 +2014,8 @@
       }
       await sleep(10);
     }
+    clearInterval(sweepWatchdogTimer);
+    sweepWatchdogAddr = null;
 
     if (!revealed) {
       // Aborted/disconnected before the priority batch finished — still reveal what we have

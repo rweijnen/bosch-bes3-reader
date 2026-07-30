@@ -1317,11 +1317,14 @@ function decodeTyped(addr, payload) {
       return { label: meta.label, display, value: cvc };
     }
     case 'assistModeColors': {
-      // Raw byte array, not protobuf tag-wrapped — parse the payload param directly, not
-      // the generic `fields`/`f1` this switch normally works from (see FIELD_TYPES comment).
+      // Field 1 is a normal length-delimited protobuf field (tag+length), same as any other
+      // submessage — the ARGB bytes are its stripped content, NOT the raw response payload.
+      // Slicing `payload` directly (as this used to) shifts every 4-byte group by the tag+length
+      // header size and silently produces wrong colors.
+      const bytes = f1 && f1.wireType === 2 ? f1.value : payload;
       const colors = [];
-      for (let i = 0; i + 4 <= payload.length; i += 4) {
-        const a = payload[i], r = payload[i + 1], g = payload[i + 2], b = payload[i + 3];
+      for (let i = 0; i + 4 <= bytes.length; i += 4) {
+        const a = bytes[i], r = bytes[i + 1], g = bytes[i + 2], b = bytes[i + 3];
         const hex = '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('');
         colors.push({ a, r, g, b, hex });
       }
