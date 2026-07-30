@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-30.4';
+  const APP_VERSION = '2026-07-30.10';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -80,13 +80,18 @@
     batteryCycles: $('batteryCycles'),
     batteryEnergy: $('batteryEnergy'),
     batteryTemp: $('batteryTemp'),
+    batteryHeadlineRow: $('batteryHeadlineRow'),
     batteryModel: $('batteryModel'),
     batteryPhoto: $('batteryPhoto'),
+    driveUnitHeadlineRow: $('driveUnitHeadlineRow'),
+    driveUnitModel: $('driveUnitModel'),
     driveUnitGrid: $('driveUnitGrid'),
     driveUnitPhoto: $('driveUnitPhoto'),
     drivetrainGrid: $('drivetrainGrid'),
     usageGrid: $('usageGrid'),
     remoteGrid: $('remoteGrid'),
+    remoteControlHeadlineRow: $('remoteControlHeadlineRow'),
+    remoteControlModel: $('remoteControlModel'),
     remoteControlPhoto: $('remoteControlPhoto'),
     assistModeHistogram: $('assistModeHistogram'),
     writeExperiments: $('writeExperiments'),
@@ -888,6 +893,14 @@
     return hit ? 'web/parts/' + entries[hit] : null;
   }
 
+  // A card's own product name sits under its generic all-caps label (see index.html comment on
+  // .part-headline-row) — but if the read didn't resolve a name (component absent / declined),
+  // there's nothing to show, so hide the row rather than leave it blank.
+  function renderPartHeadline(rowEl, textEl, name) {
+    textEl.textContent = name || '';
+    rowEl.style.display = name ? '' : 'none';
+  }
+
   function renderPartPhoto(imgEl, component, productCode) {
     if (!productCode) { imgEl.style.display = 'none'; return; }
     loadPartImages().then((table) => {
@@ -913,6 +926,7 @@
       // this lookup started (cache fetch is async).
       if (valueOf('DriveUnit', 'OEM_BIKE_MODEL_ID') !== gtin) return;
       const entry = cache.get(String(gtin));
+      if (entry && entry.brand && entry.model) els.bikeName.textContent = `${entry.brand} ${entry.model}`;
       if (!entry || !entry.imageUrl) { showFallback(); return; }
       els.bikePhoto.src = entry.imageUrl;
       els.bikePhoto.alt = `${entry.brand || ''} ${entry.model || ''}`.trim();
@@ -1283,7 +1297,12 @@
   }
 
   function renderDashboard() {
-    els.bikeName.textContent = displayOf('DriveUnit', 'PRODUCT_NAME');
+    // PRODUCT_NAME here is really the drive unit's own product line (e.g. "Performance Line CX")
+    // — identical text on any brand that happens to use the same motor, not the bike itself. Brand
+    // name is genuine bike-identifying info the drive unit already tells us directly, so it's a
+    // better default heading than the motor's name; renderBikePhoto() upgrades this further to the
+    // real brand + model whenever the bike's GTIN resolves in the catalog cache.
+    els.bikeName.textContent = displayOf('DriveUnit', 'OEM_BRAND_NAME', '') || displayOf('DriveUnit', 'PRODUCT_NAME');
     els.bikeId.textContent = displayOf('DriveUnit', 'BIKE_ID');
     els.bikeOemId.textContent = displayOf('DriveUnit', 'OEM_BIKE_ID');
     els.bikeSerial.textContent = displayOf('DriveUnit', 'SERIAL_NUMBER');
@@ -1310,14 +1329,13 @@
     els.batteryTemp.textContent = displayOf('Battery', 'PRESENT_PACK_TEMPERATURE');
     const batteryProductName = displayOf('Battery', 'PRODUCT_NAME', '');
     const batteryProductCode = displayOf('Battery', 'PRODUCT_CODE', '');
-    els.batteryModel.textContent = batteryProductName && batteryProductCode
-      ? `${batteryProductName} (${batteryProductCode})`
-      : (batteryProductName || batteryProductCode || '');
+    renderPartHeadline(els.batteryHeadlineRow, els.batteryModel, batteryProductName);
     renderPartPhoto(els.batteryPhoto, 'Battery', batteryProductCode);
     const cert = valueOf('Battery', 'DEVICE_CERTIFICATE');
     els.batteryCertBtn.style.display = cert ? '' : 'none';
 
     els.batteryDetailGrid.innerHTML = '';
+    kvRow(els.batteryDetailGrid, 'Product code', batteryProductCode);
     kvRow(els.batteryDetailGrid, 'Delivered Ah (lifetime)', displayOf('Battery', 'DELIVERED_AH_OVER_LIFETIME'));
     kvRow(els.batteryDetailGrid, 'Delivered Wh (lifetime)', displayOf('Battery', 'DELIVERED_WH_OVER_LIFETIME'));
     kvRow(els.batteryDetailGrid, 'Thermal protection', displayOf('Battery', 'DURATION_IN_THERMAL_PROTECTION'));
@@ -1331,14 +1349,17 @@
     kvRow(els.batteryDetailGrid, 'SoC limits', `${displayOf('Battery', 'SO_C_LOWER_LIMIT')} – ${displayOf('Battery', 'SO_C_UPPER_LIMIT')}`, true);
     kvRow(els.batteryDetailGrid, 'Deactivation', displayOf('Battery', 'COMPONENT_DEACTIVATION_PROOF'));
 
+    const driveUnitProductLine = displayOf('DriveUnit', 'PRODUCT_LINE', '');
+    const driveUnitProductCode = displayOf('DriveUnit', 'PRODUCT_CODE', '');
+    renderPartHeadline(els.driveUnitHeadlineRow, els.driveUnitModel, driveUnitProductLine);
+    renderPartPhoto(els.driveUnitPhoto, 'DriveUnit', driveUnitProductCode);
+
     els.driveUnitGrid.innerHTML = '';
-    renderPartPhoto(els.driveUnitPhoto, 'DriveUnit', displayOf('DriveUnit', 'PRODUCT_CODE', ''));
-    kvRow(els.driveUnitGrid, 'Product code', displayOf('DriveUnit', 'PRODUCT_CODE'));
+    kvRow(els.driveUnitGrid, 'Product code', driveUnitProductCode);
     kvRow(els.driveUnitGrid, 'Part number', displayOf('DriveUnit', 'PART_NUMBER'));
     kvRow(els.driveUnitGrid, 'Hardware', displayOf('DriveUnit', 'HARDWARE_VERSION'));
     kvRow(els.driveUnitGrid, 'Software', displayOf('DriveUnit', 'SOFTWARE_VERSION'));
     kvRow(els.driveUnitGrid, 'Bootloader', displayOf('DriveUnit', 'BOOTLOADER_SOFTWARE_VERSION'));
-    kvRow(els.driveUnitGrid, 'Product line', displayOf('DriveUnit', 'PRODUCT_LINE'));
     kvRow(els.driveUnitGrid, 'Manufacturing date', displayOf('DriveUnit', 'MANUFACTURING_DATE'));
     kvRow(els.driveUnitGrid, 'PCB temp', displayOf('DriveUnit', 'PRESENT_PCB_TEMPERATURE'));
 
@@ -1386,8 +1407,13 @@
     const motorSupportSeconds = valueOf('DriveUnit', 'POWER_ON_TIME_WITH_MOTOR_SUPPORT');
     kvRow(els.usageGrid, 'Running hours (motor support)', motorSupportSeconds == null ? '—' : `${(motorSupportSeconds / 3600).toFixed(1)} h`);
 
+    const remoteControlProductName = displayOf('RemoteControl', 'PRODUCT_NAME', '');
+    const remoteControlProductCode = displayOf('RemoteControl', 'PRODUCT_CODE', '');
+    renderPartHeadline(els.remoteControlHeadlineRow, els.remoteControlModel, remoteControlProductName);
+    renderPartPhoto(els.remoteControlPhoto, 'RemoteControl', remoteControlProductCode);
+
     els.remoteGrid.innerHTML = '';
-    renderPartPhoto(els.remoteControlPhoto, 'RemoteControl', displayOf('RemoteControl', 'PRODUCT_CODE', ''));
+    kvRow(els.remoteGrid, 'Product code', remoteControlProductCode);
     // Rider-set nickname, read from the remote/head-unit side rather than the drive unit —
     // distinct from PRODUCT_NAME (the fixed model name) and OEM_BIKE_ID (a manufacturer code).
     kvRow(els.remoteGrid, 'Bike name', displayOf('RemoteControl', 'BIKE_NAME'));

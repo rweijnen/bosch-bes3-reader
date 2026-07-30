@@ -96,17 +96,30 @@
   .bike-photo { width: 180px; max-height: 110px; object-fit: contain; border-radius: 6px; background: #f2f1ee; padding: 8px; border: 1px solid #00000014; box-sizing: border-box; }
   .bike-photo-caption { font: 500 11px 'IBM Plex Mono', monospace; color: var(--faint); text-align: center; max-width: 180px; }
   #bikeIconFallback { width: 170px; }
-  .card-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-  /* Same "printed photo on white paper" treatment as .bike-photo, just sized for a card header
-     thumbnail instead of the bigger corner illustration. */
-  .part-photo { width: 52px; height: 52px; object-fit: contain; border-radius: 6px; background: #f2f1ee; padding: 4px; border: 1px solid #00000014; box-sizing: border-box; flex-shrink: 0; }
+  /* Card headline: the part's own real name (e.g. "PowerTube 750") sits under the card's own
+     all-caps label, same font as the BIKE card's bikeName so both read as the same kind of
+     thing — a product's name. The product code (BDU3741, BBP3770) isn't repeated here; it's a
+     real "detail" and lives in the kv-grid below with its own label, like every other field. Photo
+     sits at the row's other end; a card whose read didn't resolve a photo (img stays
+     display:none) or a name (JS empties/hides the row) looks pixel-identical to one that never
+     had this treatment. */
+  .part-headline-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px; }
+  .part-headline-group { display: flex; align-items: center; gap: 8px; }
+  .part-headline { font: 700 26px 'Space Grotesk', sans-serif; color: var(--text); }
+  /* Unlike .bike-photo (a studio catalog photo with its white background baked into the pixels),
+     these part icons are transparent-alpha renders — confirmed by sampling a corner pixel — so
+     they sit directly on the card, no white mat. A plain drop-shadow reads fine on both themes;
+     an opaque light backing here was what made them look like pasted-on white stickers in dark mode. */
+  /* Fixed height, auto width (capped) rather than a fixed square — battery renders are a wide
+     576x320 canvas (a slim tube shape with a lot of transparent margin) while drive-unit/remote
+     renders are square 320x320, so a square box left the battery looking like a thin sliver. */
+  .part-photo { height: 44px; width: auto; max-width: 78px; object-fit: contain; filter: drop-shadow(0 1px 4px rgba(0,0,0,0.35)); }
   .meta-item { display: flex; flex-direction: column; }
   .meta-item span:first-child { font-size: 11px; color: var(--faint); }
   .meta-item span:last-child { font: 500 13px 'IBM Plex Mono', monospace; }
 
   .battery-card { display: flex; flex-direction: column; gap: 12px; position: relative; }
-  .battery-model { font: 500 12px 'IBM Plex Sans', sans-serif; color: var(--muted); margin-top: -6px; }
-  .battery-cert-icon-btn { position: absolute; top: 20px; right: 24px; width: 26px; height: 26px; background: none; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .battery-cert-icon-btn { width: 22px; height: 22px; background: none; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
   .battery-cert-icon-btn:hover { color: var(--accent); border-color: var(--accent); }
   .battery-detail-grid { margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--border); }
   .soc-row { display: flex; align-items: baseline; gap: 12px; }
@@ -119,7 +132,7 @@
   .battery-stats { display: flex; gap: 24px; flex-wrap: wrap; }
 
   .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
-  .data-card { display: flex; flex-direction: column; gap: 10px; }
+  .data-card { display: flex; flex-direction: column; gap: 10px; position: relative; }
   .kv-grid { display: grid; grid-template-columns: auto 1fr; gap: 7px 16px; font-size: 13px; }
   .kv-grid span:nth-child(odd) { color: var(--faint); }
   .kv-grid span:nth-child(even) { font-family: 'IBM Plex Mono', monospace; text-align: right; }
@@ -333,12 +346,14 @@
           </div>
         </div>
         <div class="card battery-card">
-          <button id="batteryCertBtn" type="button" class="battery-cert-icon-btn" style="display:none;" title="View device certificate" aria-label="View device certificate">&#128274;</button>
-          <div class="card-header-row">
-            <span class="card-label">BATTERY</span>
+          <span class="card-label">BATTERY</span>
+          <div id="batteryHeadlineRow" class="part-headline-row">
+            <span class="part-headline-group">
+              <span id="batteryModel" class="part-headline"></span>
+              <button id="batteryCertBtn" type="button" class="battery-cert-icon-btn" style="display:none;" title="View device certificate" aria-label="View device certificate">&#128274;</button>
+            </span>
             <img id="batteryPhoto" class="part-photo" style="display:none;" alt="" />
           </div>
-          <span id="batteryModel" class="battery-model"></span>
           <div class="soc-row">
             <span class="soc-value"><span id="batterySoc">&mdash;</span><span class="soc-unit" id="batterySocUnit"></span></span>
             <span class="soc-sub">state of charge</span>
@@ -356,8 +371,9 @@
 
       <div class="data-grid">
         <div class="card data-card">
-          <div class="card-header-row">
-            <span class="card-label">DRIVE UNIT</span>
+          <span class="card-label">DRIVE UNIT</span>
+          <div id="driveUnitHeadlineRow" class="part-headline-row">
+            <span id="driveUnitModel" class="part-headline"></span>
             <img id="driveUnitPhoto" class="part-photo" style="display:none;" alt="" />
           </div>
           <div class="kv-grid" id="driveUnitGrid"></div>
@@ -376,8 +392,9 @@
           <div id="assistModeHistogram" class="histogram histogram-compact" style="display:none;"></div>
         </div>
         <div class="card data-card">
-          <div class="card-header-row">
-            <span class="card-label">REMOTE</span>
+          <span class="card-label">REMOTE</span>
+          <div id="remoteControlHeadlineRow" class="part-headline-row">
+            <span id="remoteControlModel" class="part-headline"></span>
             <img id="remoteControlPhoto" class="part-photo" style="display:none;" alt="" />
           </div>
           <div class="kv-grid" id="remoteGrid"></div>
