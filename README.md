@@ -21,11 +21,21 @@ Two identical implementations sharing the same protocol code:
 - **`web/`** — runs entirely in the browser via [WebUSB](https://developer.mozilla.org/en-US/docs/Web/API/WebUSB_API). No install, no server, nothing leaves your machine. Open `index.html` in Chrome/Edge (desktop only — WebUSB isn't available on iOS/Safari).
 - **`node/`** — a CLI using the [`usb`](https://www.npmjs.com/package/usb) package (libusb), for scripting/automation.
 
-`src/addresses.js`, `src/protocol.js`, and `src/messageTypes.js` are the
-shared, transport-agnostic core (per-component address table, frame
-encoding/decoding, typed value decoding) — the exact same files are loaded by
-both the browser page and the Node CLI. Only the USB transport differs per
-platform (`node/transport-node-usb.js` vs `web/transport-webusb.js`).
+`src/address-registry.json` is the single, authoritative source for every
+known address — identity, decode behavior, provenance, and (where
+applicable) dashboard placement, all in one place (see its own `_meta`
+block for licensing — CC BY 4.0, see `LICENSE-DATA`). It's edited directly;
+`node tools/build-address-registry.mjs` regenerates the committed
+`src/address-registry.generated.js`, which the app actually loads (a plain
+JSON `fetch()` would break opening `index.html` directly via `file://`,
+since Chrome blocks that — see the script's own header comment).
+
+`src/address-registry.generated.js`, `src/protocol.js`, and
+`src/messageTypes.js` are the shared, transport-agnostic core (address
+data, frame encoding/decoding, typed value decoding) — the exact same files
+are loaded by both the browser page and the Node CLI. Only the USB
+transport differs per platform (`node/transport-node-usb.js` vs
+`web/transport-webusb.js`).
 
 Fields with a confirmed wire type (see `src/messageTypes.js`) are decoded
 precisely — e.g. `REGIO_SPEED_CONFIGURATION` resolves to a named region/speed

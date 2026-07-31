@@ -10,10 +10,19 @@
 // request shape we haven't cracked yet; those are listed separately at the
 // end rather than silently skipped.
 
-const { ALL_ADDRESSES } = require('../src/addresses');
 const { buildReadRequestFrame, buildRpcCallFrame, parseReadResponseFrame, decodeValue } = require('../src/protocol');
 const { decodeTyped } = require('../src/messageTypes');
 const { Bes3UsbTransport, findDevice } = require('./transport-node-usb');
+
+// src/addresses.js is retired — the address registry (src/address-registry.json, edited source
+// of truth) is now the single place every address is declared. Reconstructed here into the same
+// { ComponentName: [{name, addr, readable, writable}, ...] } shape addresses.js used to export,
+// so nothing below this needs to change.
+const { ADDRESS_REGISTRY } = require('../src/address-registry.generated');
+const ALL_ADDRESSES = {};
+for (const e of ADDRESS_REGISTRY.addresses) {
+  (ALL_ADDRESSES[e.component] ||= []).push({ name: e.name, addr: e.address, readable: e.readable, writable: e.writable });
+}
 
 // RemoteControlAddresses.RESET_INACTIVITY_SHUTDOWN_TIMER (8454 = 0x2106) — an
 // argument-less RPC call, not a read. The stock tool fires this continuously

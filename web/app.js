@@ -4,14 +4,23 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-31.7-registry-phase3-remaining';
+  const APP_VERSION = '2026-07-31.8-registry-phase4-retired-addressesjs';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
   // instead of silently mis-rendering when a field it expects (like rawValue) is missing.
   const REPORT_FORMAT_VERSION = 1;
 
-  const { ALL_ADDRESSES } = window.Bes3Addresses;
+  // Single named-address lookup against the registry — replaces the old
+  // `ALL_ADDRESSES.DriveUnit.find((e) => e.name === X).addr` pattern for the RPC/write-experiment
+  // address constants below, now that addresses.js is retired.
+  function addrOf(component, name) {
+    const entry = window.Bes3AddressRegistry.ADDRESS_REGISTRY.addresses.find(
+      (e) => e.component === component && e.name === name
+    );
+    return entry ? entry.address : undefined;
+  }
+
   const {
     MessageType, buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
     encodeBoolArg, encodeStartAssistModeOemArg,
@@ -521,29 +530,29 @@
   // bike). ASSIST_MODE_PALETTE now only serves as a fallback for whichever
   // slots ASSIST_MODE_COLORS doesn't cover, and for generic position labels
   // when the name reads don't line up.
-  const ASSIST_MODE_STATS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'GET_ASSIST_MODE_STATISTICS') || {}).addr;
-  const ACTIVE_ASSIST_MODES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ACTIVE_ASSIST_MODES') || {}).addr;
+  const ASSIST_MODE_STATS_ADDR = addrOf('DriveUnit', 'GET_ASSIST_MODE_STATISTICS');
+  const ACTIVE_ASSIST_MODES_ADDR = addrOf('DriveUnit', 'ACTIVE_ASSIST_MODES');
   // Real bike-reported mode names — NOT the per-mode GET_ASSIST_MODE_INFORMATION
   // RPC (tried earlier; its nameShort/nameLong don't match what Flow displays
   // and Flow doesn't use it for this). Flow's actual source is these two bulk
   // repeated-string data points, one entry per active mode in the same order
   // as ACTIVE_ASSIST_MODES — confirmed from Flow's decompiled source
   // (AssistModeShortNames/AssistModeLongNames, both `repeated string value=1`).
-  const ASSIST_MODE_SHORT_NAMES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_SHORT_NAMES') || {}).addr;
-  const ASSIST_MODE_LONG_NAMES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_LONG_NAMES') || {}).addr;
+  const ASSIST_MODE_SHORT_NAMES_ADDR = addrOf('DriveUnit', 'ASSIST_MODE_SHORT_NAMES');
+  const ASSIST_MODE_LONG_NAMES_ADDR = addrOf('DriveUnit', 'ASSIST_MODE_LONG_NAMES');
   // Real bike-reported per-mode colors — see messageTypes.js's FIELD_TYPES[6158] comment for
   // how the byte layout was inferred and verified (AUTO decoded to purple, matching what the
   // rider's own Flow app/head unit shows). Falls back to ASSIST_MODE_PALETTE below when this
   // read fails or the entry count doesn't line up, same fallback strategy as the name reads above.
-  const ASSIST_MODE_COLORS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_COLORS') || {}).addr;
+  const ASSIST_MODE_COLORS_ADDR = addrOf('DriveUnit', 'ASSIST_MODE_COLORS');
   // Real, live, bike-computed per-mode range estimate — confirmed via Flow's own decompile
   // (DriveUnitAddresses.REACHABLE_RANGE, addr 6231) to be the actual source behind Flow's
   // "range estimate" screen, not a client-side formula. Same alignment/fallback strategy as
   // the name/color reads above.
-  const REACHABLE_RANGE_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'REACHABLE_RANGE') || {}).addr;
+  const REACHABLE_RANGE_ADDR = addrOf('DriveUnit', 'REACHABLE_RANGE');
   // Per-mode assist parameters (assist level / max speed / acceleration
   // response) — same ConfigId argument as the stats RPC above. Read-only.
-  const UDAM_VALUES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'READ_UDAM_VALUES') || {}).addr;
+  const UDAM_VALUES_ADDR = addrOf('DriveUnit', 'READ_UDAM_VALUES');
   // RESET_UDAM_VALUES(ConfigId) -> bool — the ONE write this tool performs,
   // added deliberately and only after real-world confirmation (2026-07-19/20
   // hardware incident) that: (a) it's a plain consumer-tier RPC the official
@@ -555,11 +564,11 @@
   // level/max-speed/acceleration-response to Bosch factory defaults. It
   // does not touch tuning, region/speed-class, or any other mode. See
   // RESEARCH.md (private repo) for the full incident writeup and trace.
-  const RESET_UDAM_VALUES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'RESET_UDAM_VALUES') || {}).addr;
+  const RESET_UDAM_VALUES_ADDR = addrOf('DriveUnit', 'RESET_UDAM_VALUES');
   // Per-mode min/max bounds for the 3 editable UDAM fields — read-only,
   // used to keep the change UI from ever offering a value the bike itself
   // wouldn't already permit for this mode.
-  const UDAM_LIMITS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'READ_UDAM_LIMITS') || {}).addr;
+  const UDAM_LIMITS_ADDR = addrOf('DriveUnit', 'READ_UDAM_LIMITS');
   // SET_UDAM_VALUES_PARAMETERS(ConfigId, UdamParams) -> bool — the second
   // write this tool performs on UDAM data (alongside RESET_UDAM_VALUES).
   // Mirrors Flow's own "customize this mode" screen: a plain consumer-tier
@@ -569,7 +578,7 @@
   // confirmed unit/factor (assistLevel, accelerationResponse,
   // maximumBikeSpeed) are editable; the rest are carried through unchanged
   // from the mode's current values.
-  const SET_UDAM_VALUES_PARAMETERS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'SET_UDAM_VALUES_PARAMETERS') || {}).addr;
+  const SET_UDAM_VALUES_PARAMETERS_ADDR = addrOf('DriveUnit', 'SET_UDAM_VALUES_PARAMETERS');
   const ASSIST_MODE_PALETTE = ['#8a8f98', '#4caf50', '#2196f3', '#ff9800', '#e53935', '#9c27b0'];
   let assistModeStats = []; // [{ index, configId, label, status, distance, consumedEnergy, detail, color, udam, resetState }]
 
@@ -1217,7 +1226,7 @@
 
   async function attemptWriteExperiment(id) {
     const exp = WRITE_EXPERIMENTS.find((e) => e.id === id);
-    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === exp.addrName) || {}).addr;
+    const addr = addrOf('DriveUnit', exp.addrName);
     if (!addr || !transport) {
       await appAlert('Not connected to the bike anymore — reconnect (Read again) and try again.');
       return;
@@ -1242,7 +1251,7 @@
   let startModeTryAllResults = null; // null | 'running' | [{ordinal, name, label, ok, statusName, stuck}]
 
   async function attemptTryAllStartModeValues() {
-    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'START_ASSIST_MODE_CONFIGURATION') || {}).addr;
+    const addr = addrOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION');
     if (!addr || !transport) {
       await appAlert('Not connected to the bike anymore — reconnect (Read again) and try again.');
       return;
@@ -1274,8 +1283,7 @@
   function renderWriteExperiments() {
     els.writeExperiments.innerHTML = '';
     for (const exp of WRITE_EXPERIMENTS) {
-      const addrEntry = ALL_ADDRESSES.DriveUnit.find((e) => e.name === exp.addrName);
-      if (!addrEntry) continue;
+      if (addrOf('DriveUnit', exp.addrName) === undefined) continue;
       const current = valueOf('DriveUnit', exp.addrName);
       if (current == null) continue; // not read yet / declined — nothing to show or act on
 
