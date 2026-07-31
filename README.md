@@ -144,4 +144,10 @@ git config core.hooksPath githooks
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+This project is dual-licensed:
+
+- **Code** (everything under `web/`, `src/`, `node/`, `tools/`) — MIT, see [LICENSE](LICENSE).
+- **Data** (the address registry, generated reference docs, and other researched/reverse-engineered
+  datasets) — [CC BY 4.0](LICENSE-DATA), attribution required. This represents a substantial amount
+  of independent research (protocol tracing, decompile analysis, verification against real hardware)
+  — reuse it freely, but credit this project when you do.
