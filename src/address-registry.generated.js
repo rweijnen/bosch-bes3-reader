@@ -6061,7 +6061,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6123,6 +6126,9 @@ const ADDRESS_REGISTRY = {
           "#9643ed (auto)",
           "#e20015 (turbo)"
         ]
+      },
+      "ui": {
+        "card": "usage"
       }
     },
     {
@@ -6149,7 +6155,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6162,7 +6171,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6724,7 +6736,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7404,7 +7419,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7430,7 +7448,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7443,7 +7464,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7686,7 +7710,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7769,7 +7796,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",

@@ -6057,7 +6057,10 @@
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6119,6 +6122,9 @@
           "#9643ed (auto)",
           "#e20015 (turbo)"
         ]
+      },
+      "ui": {
+        "card": "usage"
       }
     },
     {
@@ -6145,7 +6151,10 @@
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6158,7 +6167,10 @@
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6720,7 +6732,10 @@
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7400,7 +7415,10 @@
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7426,7 +7444,10 @@
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7439,7 +7460,10 @@
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7682,7 +7706,10 @@
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7765,7 +7792,10 @@
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
