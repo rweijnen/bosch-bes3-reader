@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-31.6-registry-phase3-driveunit';
+  const APP_VERSION = '2026-07-31.7-registry-phase3-remaining';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -971,8 +971,10 @@
   const UI_FORMATTERS = {
     metersToKm: (value) => (value == null ? '—' : `${(value / 1000).toFixed(1)} km`),
     secondsToHours: (value) => (value == null ? '—' : `${(value / 3600).toFixed(1)} h`),
-    // `values` is [lowerLimitValue, upperLimitValue] - see `combinesWith` in renderCard().
-    socRange: (values) => `${values[0] ?? '—'} – ${values[1] ?? '—'}`,
+    // `values` is [lowerLimitDisplay, upperLimitDisplay] (formatted strings, e.g. "20 %") - see
+    // the combinesWith branch in renderCard(), which passes displayOf() output here, not raw
+    // values, since this formatter doesn't do math - it just joins two already-formatted values.
+    socRange: (values) => values.join(' – '),
   };
 
   // Flattens the registry's per-component arrays into one list with `component` attached to each
@@ -1003,12 +1005,16 @@
       const label = e.ui.label || e.label;
       let displayValue;
       if (e.ui.formatter) {
-        const raw = valueOf(e.component, e.name);
         if (e.ui.combinesWith && e.ui.combinesWith.length) {
-          const values = [raw, ...e.ui.combinesWith.map((n) => valueOf(e.component, n))];
+          // Multi-address rows join already-formatted display strings (e.g. "20 %"), not raw
+          // numbers - there's no unit math to do here, just combining values that are each
+          // already correctly formatted on their own.
+          const values = [displayOf(e.component, e.name), ...e.ui.combinesWith.map((n) => displayOf(e.component, n))];
           displayValue = UI_FORMATTERS[e.ui.formatter](values);
         } else {
-          displayValue = UI_FORMATTERS[e.ui.formatter](raw);
+          // Single-value formatters (unit conversions like meters->km) need the raw number to do
+          // math on, not a pre-formatted string.
+          displayValue = UI_FORMATTERS[e.ui.formatter](valueOf(e.component, e.name));
         }
       } else {
         displayValue = displayOf(e.component, e.name);
@@ -1393,19 +1399,7 @@
     els.batteryCertBtn.style.display = cert ? '' : 'none';
 
     els.batteryDetailGrid.innerHTML = '';
-    kvRow(els.batteryDetailGrid, 'Product code', batteryProductCode);
-    kvRow(els.batteryDetailGrid, 'Delivered Ah (lifetime)', displayOf('Battery', 'DELIVERED_AH_OVER_LIFETIME'));
-    kvRow(els.batteryDetailGrid, 'Delivered Wh (lifetime)', displayOf('Battery', 'DELIVERED_WH_OVER_LIFETIME'));
-    kvRow(els.batteryDetailGrid, 'Thermal protection', displayOf('Battery', 'DURATION_IN_THERMAL_PROTECTION'));
-    kvRow(els.batteryDetailGrid, 'Present cell voltage', displayOf('Battery', 'PRESENT_CELL_VOLTAGE'));
-    kvRow(els.batteryDetailGrid, 'Present FET temp', displayOf('Battery', 'PRESENT_FET_TEMPERATURE'));
-    kvRow(els.batteryDetailGrid, 'Min pack temp', displayOf('Battery', 'MINIMUM_PACK_TEMPERATURE'));
-    kvRow(els.batteryDetailGrid, 'Max pack temp', displayOf('Battery', 'MAXIMUM_PACK_TEMPERATURE'));
-    kvRow(els.batteryDetailGrid, 'Last end-of-charge V', displayOf('Battery', 'LAST_END_OF_CHARGE_VOLTAGE'));
-    kvRow(els.batteryDetailGrid, 'Max charging current', displayOf('Battery', 'MAXIMUM_CHARGING_CURRENT'));
-    kvRow(els.batteryDetailGrid, 'Self-discharge rate', displayOf('Battery', 'SELF_DISCHARGING_RATE'));
-    kvRow(els.batteryDetailGrid, 'SoC limits', `${displayOf('Battery', 'SO_C_LOWER_LIMIT')} – ${displayOf('Battery', 'SO_C_UPPER_LIMIT')}`, true);
-    kvRow(els.batteryDetailGrid, 'Deactivation', displayOf('Battery', 'COMPONENT_DEACTIVATION_PROOF'));
+    renderCard('battery', els.batteryDetailGrid);
 
     const driveUnitProductLine = displayOf('DriveUnit', 'PRODUCT_LINE', '');
     const driveUnitProductCode = displayOf('DriveUnit', 'PRODUCT_CODE', '');
@@ -1416,16 +1410,10 @@
     renderCard('driveUnit', els.driveUnitGrid);
 
     els.drivetrainGrid.innerHTML = '';
-    kvRow(els.drivetrainGrid, 'Gearing', displayOf('DriveUnit', 'GEARING_SYSTEM'));
-    kvRow(els.drivetrainGrid, 'Max legal speed', displayOf('DriveUnit', 'MAXIMUM_LEGAL_BIKE_SPEED'));
-    kvRow(els.drivetrainGrid, 'Max assist speed', displayOf('DriveUnit', 'MAXIMUM_ASSISTANCE_SPEED'));
-    kvRow(els.drivetrainGrid, 'Wheel circ. (OEM)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_OEM'));
-    kvRow(els.drivetrainGrid, 'Wheel circ. (user)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_USER'));
-    kvRow(els.drivetrainGrid, 'Max motor torque', displayOf('DriveUnit', 'MAXIMUM_AVAILABLE_MOTOR_TORQUE'));
-    kvRow(els.drivetrainGrid, 'Light', displayOf('DriveUnit', 'BIKE_LIGHT'), true);
-    kvRow(els.drivetrainGrid, 'Light available', displayOf('DriveUnit', 'BIKE_LIGHT_AVAILABLE'), true);
-    kvRow(els.drivetrainGrid, 'Region / speed class', displayOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'), false, technicalOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'));
-    kvRow(els.drivetrainGrid, 'Start mode', displayOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION'), false, technicalOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION'));
+    renderCard('drivetrain', els.drivetrainGrid);
+    // Tuning detection / Distracted riding alert stay dedicated code (not part of renderCard) -
+    // both apply a semantic CSS class based on the decoded value's meaning, not just format text;
+    // their registry entries carry ui.card but no ui.row, so renderCard() already skips them.
     const tuning = findResult('DriveUnit', 'TUNING_DETECTION');
     const tv = tuning && tuning.status === 'ok' && tuning.typed ? tuning.typed.value : null;
     const tuningLabel =
@@ -1465,19 +1453,11 @@
     renderPartPhoto(els.remoteControlPhoto, 'RemoteControl', remoteControlProductCode);
 
     els.remoteGrid.innerHTML = '';
-    kvRow(els.remoteGrid, 'Product code', remoteControlProductCode);
-    // Rider-set nickname, read from the remote/head-unit side rather than the drive unit —
-    // distinct from PRODUCT_NAME (the fixed model name) and OEM_BIKE_ID (a manufacturer code).
-    kvRow(els.remoteGrid, 'Bike name', displayOf('RemoteControl', 'BIKE_NAME'));
-    // All of these are declared writable in Bosch's own RemoteControl adapter (see the ✎ marker
-    // and its tooltip / README) — read-only display here, no write UI built for any of them yet;
-    // none have had their write path traced/tested the way START_ASSIST_MODE_CONFIGURATION has.
-    kvRow(els.remoteGrid, 'Language', displayOf('RemoteControl', 'LANGUAGE'), true);
-    kvRow(els.remoteGrid, 'Units', displayOf('RemoteControl', 'UNITS'), true, technicalOf('RemoteControl', 'UNITS'));
-    kvRow(els.remoteGrid, 'Time format', displayOf('RemoteControl', 'TIME_FORMAT'), true, technicalOf('RemoteControl', 'TIME_FORMAT'));
-    kvRow(els.remoteGrid, 'Time (bike clock)', displayOf('RemoteControl', 'TIME'), true);
-    kvRow(els.remoteGrid, 'LED colors', displayOf('RemoteControl', 'LED_COLORS'), true);
-    kvRow(els.remoteGrid, 'Service due', displayOf('RemoteControl', 'SERVICE_DUE'), true);
+    // All of these (bar Product code/Bike name) are declared writable in Bosch's own
+    // RemoteControl adapter (see the ✎ marker and its tooltip / README) — read-only display here,
+    // no write UI built for any of them yet; none have had their write path traced/tested the way
+    // START_ASSIST_MODE_CONFIGURATION has.
+    renderCard('remote', els.remoteGrid);
 
     renderAssistModeHistogram();
   }
