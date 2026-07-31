@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-31.11-zigzag-signed-fix';
+  const APP_VERSION = '2026-07-31.12-escape-closes-popups';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -1038,12 +1038,15 @@
   // instead of blocking synchronously, so every call site awaits them from an async function/
   // handler instead of relying on alert()/confirm()'s synchronous return value.
   let appDialogResolve = null;
+  // Value Escape resolves with — the Cancel-equivalent (first non-primary) button if there is
+  // one, otherwise the dialog's only button (a plain alert just gets dismissed).
+  let appDialogEscapeValue = null;
   function appDialog({ title, message, buttons }) {
     return new Promise((resolve) => {
-      // A dialog opened while one is already open would leak the previous resolve() — clicking
-      // Escape/backdrop isn't wired up here, but a stray double-open still shouldn't hang a caller.
+      // A dialog opened while one is already open would leak the previous resolve().
       if (appDialogResolve) appDialogResolve(false);
       appDialogResolve = resolve;
+      appDialogEscapeValue = (buttons.find((b) => !b.primary) || buttons[0]).value;
       els.appDialogTitle.textContent = title;
       els.appDialogMessage.textContent = message;
       els.appDialogActions.innerHTML = '';
@@ -1598,6 +1601,23 @@
   els.certModalBackdrop.addEventListener('click', (e) => {
     if (e.target === els.certModalBackdrop) closeCertModal();
   });
+
+  // Escape closes whichever popup is open, same as clicking its backdrop (or, for the
+  // alert/confirm dialog, same as clicking Cancel/OK). Deliberately excludes the disclaimer
+  // modal (els.disclaimerModal) — that one requires an explicit acknowledgment click, not a
+  // dismiss.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (els.assistModeModalBackdrop.style.display !== 'none') closeAssistModeModal();
+    else if (els.certModalBackdrop.style.display !== 'none') closeCertModal();
+    else if (els.appDialogBackdrop.style.display !== 'none' && appDialogResolve) {
+      els.appDialogBackdrop.style.display = 'none';
+      const resolve = appDialogResolve;
+      appDialogResolve = null;
+      resolve(appDialogEscapeValue);
+    }
+  });
+
   function openCertModal(title, cvc) {
     els.certModalTitle.textContent = title;
     els.certModalBody.innerHTML = '';
