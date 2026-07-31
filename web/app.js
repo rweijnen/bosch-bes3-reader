@@ -1989,14 +1989,22 @@
 
     startKeepAlive();
 
-    const all = [];
-    for (const [component, entries] of Object.entries(ALL_ADDRESSES)) {
-      for (const e of entries) {
-        if (e.readable === true) all.push({ component, ...e });
-      }
-    }
-    // Stable sort (spec-guaranteed in modern JS): priority entries keep their addresses.js
-    // order among themselves, same for the rest — no separate index/rank needed.
+    // Sourced from the address registry, not ALL_ADDRESSES — "priority" (read-first) is now
+    // derived from having a `ui` block (i.e. this address feeds a dashboard element) rather than
+    // a separately-maintained flag, so there's nothing to keep in sync with what's actually shown.
+    const registryAddresses = window.Bes3AddressRegistry.ADDRESS_REGISTRY.addresses;
+    const all = registryAddresses
+      .filter((e) => e.readable === true)
+      .map((e) => ({
+        component: e.component,
+        name: e.name,
+        addr: e.address,
+        readable: e.readable,
+        writable: e.writable,
+        priority: !!e.ui,
+      }));
+    // Stable sort (spec-guaranteed in modern JS): priority entries keep their registry order
+    // among themselves, same for the rest — no separate index/rank needed.
     const readable = all.slice().sort((a, b) => (b.priority ? 1 : 0) - (a.priority ? 1 : 0));
     const priorityCount = readable.filter((e) => e.priority).length;
 

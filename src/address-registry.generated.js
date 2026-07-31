@@ -1827,7 +1827,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "DeactivationProof: field1=deactivationState (bool), field2=certificateSerialNumber (nested submessage), field3=signature (bytes) — confirmed via decompile",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 130,
+        "label": "Deactivation"
+      }
     },
     {
       "component": "Battery",
@@ -1867,7 +1872,12 @@ const ADDRESS_REGISTRY = {
       "source": "real capture",
       "confirmed": false,
       "notes": "bare UInt; unit corrected from an earlier \"mAh\" guess — a real capture showed 1024 (raw) alongside DELIVERED_WH_OVER_LIFETIME=36884 Wh, and 36884/1024 = 36.02 V, matching a typical Bosch PowerTube pack's nominal voltage — confirms the raw value is whole Ah, not milliamp-hours",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 20,
+        "label": "Delivered Ah (lifetime)"
+      }
     },
     {
       "component": "Battery",
@@ -1881,7 +1891,12 @@ const ADDRESS_REGISTRY = {
       "source": "inferred",
       "confirmed": false,
       "notes": "inferred — bare UInt",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 30,
+        "label": "Delivered Wh (lifetime)"
+      }
     },
     {
       "component": "Battery",
@@ -1894,7 +1909,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "Certificate: field1 = raw bytes (ByteString), confirmed via decompile — likely an X.509 or Bosch CVC-format cert, not parsed further (see decode comment)",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery"
+      }
     },
     {
       "component": "Battery",
@@ -1908,7 +1926,12 @@ const ADDRESS_REGISTRY = {
       "source": "inferred",
       "confirmed": false,
       "notes": "inferred — bare UInt, confirmed via decompile (BatteryMessageBusWrapper.getDurationInThermalProtection())",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 40,
+        "label": "Thermal protection"
+      }
     },
     {
       "component": "Battery",
@@ -2066,7 +2089,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "Uint16NormFactor10Message, confirmed via decompile",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 90,
+        "label": "Last end-of-charge V"
+      }
     },
     {
       "component": "Battery",
@@ -2107,7 +2135,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "Int16NormFactor10Message, confirmed via decompile",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 100,
+        "label": "Max charging current"
+      }
     },
     {
       "component": "Battery",
@@ -2122,7 +2155,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "Int16NormFactor10Message, confirmed via decompile",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 80,
+        "label": "Max pack temp"
+      }
     },
     {
       "component": "Battery",
@@ -2137,7 +2175,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "Int16NormFactor10Message, confirmed via decompile",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 70,
+        "label": "Min pack temp"
+      }
     },
     {
       "component": "Battery",
@@ -2151,7 +2194,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery"
+      }
     },
     {
       "component": "Battery",
@@ -2178,7 +2224,12 @@ const ADDRESS_REGISTRY = {
       "source": "inferred",
       "confirmed": false,
       "notes": "inferred — bare UShort, confirmed via decompile (BatteryMessageBusWrapper.getPresentCellVoltage())",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 50,
+        "label": "Present cell voltage"
+      }
     },
     {
       "component": "Battery",
@@ -2193,7 +2244,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "Int16NormFactor10Message, confirmed via decompile",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 60,
+        "label": "Present FET temp"
+      }
     },
     {
       "component": "Battery",
@@ -2208,7 +2264,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "Bosch's own wrapper calls the identical address \"presentCellTemperature\" — same data point, our own address-table name predates that discovery",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery"
+      }
     },
     {
       "component": "Battery",
@@ -2221,7 +2280,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 10,
+        "label": "Product code"
+      }
     },
     {
       "component": "Battery",
@@ -2234,7 +2298,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery"
+      }
     },
     {
       "component": "Battery",
@@ -2249,7 +2316,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery"
+      }
     },
     {
       "component": "Battery",
@@ -2278,7 +2348,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "Uint8NullableNormFactor10Message, confirmed via decompile — \"Nullable\" just means protobuf presence-tracking, decodes the same as any other NormFactor10 on the wire",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 110,
+        "label": "Self-discharge rate"
+      }
     },
     {
       "component": "Battery",
@@ -2331,7 +2406,17 @@ const ADDRESS_REGISTRY = {
       "source": "inferred",
       "confirmed": false,
       "notes": "inferred — bare UByte, writable (see addresses.js)",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery",
+        "row": 120,
+        "label": "SoC limits",
+        "writable": true,
+        "formatter": "socRange",
+        "combinesWith": [
+          "SO_C_UPPER_LIMIT"
+        ]
+      }
     },
     {
       "component": "Battery",
@@ -2345,7 +2430,10 @@ const ADDRESS_REGISTRY = {
       "source": "inferred",
       "confirmed": false,
       "notes": "inferred — bare UByte, writable (see addresses.js)",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery"
+      }
     },
     {
       "component": "Battery",
@@ -2359,7 +2447,10 @@ const ADDRESS_REGISTRY = {
       "source": "inferred",
       "confirmed": false,
       "notes": "inferred — bare UByte",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery"
+      }
     },
     {
       "component": "Battery",
@@ -2373,7 +2464,10 @@ const ADDRESS_REGISTRY = {
       "source": "inferred",
       "confirmed": false,
       "notes": "inferred — bare UByte",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "battery"
+      }
     },
     {
       "component": "Battery2",
@@ -6204,7 +6298,13 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "bike",
+        "row": 50,
+        "label": "Category",
+        "technical": true
+      }
     },
     {
       "component": "DriveUnit",
@@ -6230,7 +6330,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "bike",
+        "row": 20,
+        "label": "Bike ID"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6243,7 +6348,13 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "BikeStateWritable<Boolean> per addresses.js",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 70,
+        "label": "Light",
+        "writable": true
+      }
     },
     {
       "component": "DriveUnit",
@@ -6256,7 +6367,13 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 80,
+        "label": "Light available",
+        "writable": true
+      }
     },
     {
       "component": "DriveUnit",
@@ -6321,7 +6438,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "\"FBL\" = Bosch's own term for the bootloader",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "driveUnit",
+        "row": 50,
+        "label": "Bootloader"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6399,7 +6521,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6542,7 +6667,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 10,
+        "label": "Gearing"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6620,7 +6750,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "ShortVersion, same wrapper as 6149/6151",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "driveUnit",
+        "row": 30,
+        "label": "Hardware"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6698,7 +6833,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "driveUnit",
+        "row": 60,
+        "label": "Manufacturing date"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6713,7 +6853,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 30,
+        "label": "Max assist speed"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6756,7 +6901,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "MessageBus.DriveUnit.Companion.normalizeMotorTorque (Flow source)",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 60,
+        "label": "Max motor torque"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6785,7 +6935,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 20,
+        "label": "Max legal speed"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6864,7 +7019,10 @@ const ADDRESS_REGISTRY = {
       "source": "inferred",
       "confirmed": false,
       "notes": "inferred — bare UInt, see file header",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6877,7 +7035,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "bike",
+        "row": 30,
+        "label": "OEM bike ID"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6890,7 +7053,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "bike"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6916,7 +7082,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "bike",
+        "row": 10,
+        "label": "Brand"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7059,7 +7230,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "driveUnit",
+        "row": 20,
+        "label": "Part number"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7073,7 +7249,10 @@ const ADDRESS_REGISTRY = {
       "source": "inferred",
       "confirmed": false,
       "notes": "inferred — bare UShort",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7087,7 +7266,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "was previously address-only, falling through to the generic (wrong) little-endian-byte-concat heuristic instead of this project's real protobuf varint parser — this is the \"running hours\" figure Flow's own UI shows",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "usage"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7102,7 +7284,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "Int16NormFactor10Message — zigzag varint (writeSInt32)",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "driveUnit",
+        "row": 70,
+        "label": "PCB temp"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7154,7 +7341,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "driveUnit",
+        "row": 10,
+        "label": "Product code"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7167,7 +7359,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "driveUnit"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7180,7 +7375,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "bike"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7260,7 +7458,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "SafeUint16NormFactor10 — has a field-2 checksum we ignore",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 40,
+        "label": "Wheel circ. (OEM)"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7275,7 +7478,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "MessageBus.DriveUnit.Companion.normalizeRearWheelCircumferenceUser (Flow source)",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 50,
+        "label": "Wheel circ. (user)"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7381,7 +7589,13 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 90,
+        "label": "Region / speed class",
+        "technical": true
+      }
     },
     {
       "component": "DriveUnit",
@@ -7537,7 +7751,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "bike",
+        "row": 40,
+        "label": "Serial"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7563,7 +7782,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "driveUnit",
+        "row": 40,
+        "label": "Software"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7662,7 +7886,13 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "writable — MessageBus.DriveUnit.getStartAssistModeConfiguration() is ReadableWritableSubscribableDataPoint, no dealer/HSM gate found",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 100,
+        "label": "Start mode",
+        "technical": true
+      }
     },
     {
       "component": "DriveUnit",
@@ -7709,7 +7939,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7735,7 +7968,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain"
+      }
     },
     {
       "component": "DriveUnit",
@@ -11065,7 +11301,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "remote",
+        "row": 20,
+        "label": "Bike name"
+      }
     },
     {
       "component": "RemoteControl",
@@ -12157,7 +12398,13 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "remote",
+        "row": 30,
+        "label": "Language",
+        "writable": true
+      }
     },
     {
       "component": "RemoteControl",
@@ -12209,7 +12456,13 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "remote",
+        "row": 70,
+        "label": "LED colors",
+        "writable": true
+      }
     },
     {
       "component": "RemoteControl",
@@ -12404,7 +12657,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "was address-only — same field as Battery/DriveUnit's own PRODUCT_CODE (both already typed), just never wired up here; the gap silently broke the part-photo stale-check (see renderPartPhoto in app.js), since that guard needs a typed valueOf() to work",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "remote",
+        "row": 10,
+        "label": "Product code"
+      }
     },
     {
       "component": "RemoteControl",
@@ -12417,7 +12675,10 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "remote"
+      }
     },
     {
       "component": "RemoteControl",
@@ -12586,7 +12847,13 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "remote",
+        "row": 80,
+        "label": "Service due",
+        "writable": true
+      }
     },
     {
       "component": "RemoteControl",
@@ -12859,7 +13126,13 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "remote",
+        "row": 60,
+        "label": "Time (bike clock)",
+        "writable": true
+      }
     },
     {
       "component": "RemoteControl",
@@ -12886,7 +13159,14 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "remote",
+        "row": 50,
+        "label": "Time format",
+        "writable": true,
+        "technical": true
+      }
     },
     {
       "component": "RemoteControl",
@@ -12926,7 +13206,14 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "remote",
+        "row": 40,
+        "label": "Units",
+        "writable": true,
+        "technical": true
+      }
     },
     {
       "component": "RemoteControl",
