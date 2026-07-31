@@ -83,6 +83,7 @@ for (const [component, entries] of Object.entries(ALL_ADDRESSES)) {
       if (meta.enumTable) out.enumTable = meta.enumTable;
       if (meta.fields) out.fields = meta.fields;
       if (meta.factor !== undefined) out.factor = meta.factor;
+      if (meta.signed !== undefined) out.signed = meta.signed;
     } else {
       out.kind = 'unknown';
     }

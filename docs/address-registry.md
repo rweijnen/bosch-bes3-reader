@@ -4,7 +4,7 @@ Generated from `src/address-registry.json` (registryVersion 1.0.0) — do not ed
 
 License: **CC-BY-4.0** — attribution required (Bosch BES3 address registry — github.com/rweijnen/bosch-bes3-reader). See `LICENSE-DATA`.
 
-Total: 895 addresses across 10 components. 135 confirmed against real captured data; 377 have a confirmed decode kind.
+Total: 895 addresses across 10 components. 141 confirmed against real captured data; 377 have a confirmed decode kind.
 
 ## Contents
 
@@ -99,7 +99,7 @@ Total: 895 addresses across 10 components. 135 confirmed against real captured d
 | 0x0088 | `STATE_OF_CHARGE` | State of Charge | uint | R |  | inferred |
 | 0x0089 | `CHARGER_CONNECTED` | Charger Connected | unknown | R |  |  |
 | 0x008a | `CHARGING_ACTIVE` | Charging Active | unknown | R |  |  |
-| 0x008b | `PRESENT_PACK_TEMPERATURE` | Present Pack Temperature | normFactor | R |  |  |
+| 0x008b | `PRESENT_PACK_TEMPERATURE` | Present Pack Temperature | normFactor | R | ✓ | main branch (pre-registry) messageTypes.js |
 | 0x008c | `PRESENT_CELL_VOLTAGE` | Present Pack Voltage | normFactor | R | ✓ | Flow decompile + real capture |
 | 0x008d | `REQUEST_SHUTDOWN` | Request Shutdown | unknown | R |  |  |
 | 0x008e | `PREPARE_SHUTDOWN` | Prepare-for-shutdown flag | bool | R |  | Flow decompile |
@@ -119,9 +119,9 @@ Total: 895 addresses across 10 components. 135 confirmed against real captured d
 | 0x009c | `DELIVERED_WH_OVER_LIFETIME` | Delivered Wh (Lifetime) | uint | R |  | inferred |
 | 0x009d | `DURATION_IN_THERMAL_PROTECTION` | Duration in Thermal Protection | uint | R |  | inferred |
 | 0x009e | `LAST_END_OF_CHARGE_VOLTAGE` | Last End-of-Charge Voltage | normFactor | R |  |  |
-| 0x009f | `MAXIMUM_CHARGING_CURRENT` | Maximum Charging Current | normFactor | R |  |  |
-| 0x00a0 | `MAXIMUM_PACK_TEMPERATURE` | Maximum Pack Temperature | normFactor | R |  |  |
-| 0x00a1 | `MINIMUM_PACK_TEMPERATURE` | Minimum Pack Temperature | normFactor | R |  |  |
+| 0x009f | `MAXIMUM_CHARGING_CURRENT` | Maximum Charging Current | normFactor | R | ✓ | main branch (pre-registry) messageTypes.js |
+| 0x00a0 | `MAXIMUM_PACK_TEMPERATURE` | Maximum Pack Temperature | normFactor | R | ✓ | main branch (pre-registry) messageTypes.js |
+| 0x00a1 | `MINIMUM_PACK_TEMPERATURE` | Minimum Pack Temperature | normFactor | R | ✓ | main branch (pre-registry) messageTypes.js |
 | 0x00a2 | `SO_C_LOWER_LIMIT` | SoC Lower Limit | uint | RW |  | inferred |
 | 0x00a3 | `SO_C_UPPER_LIMIT` | SoC Upper Limit | uint | RW |  | inferred |
 | 0x00a4 | `MANUFACTURING_DATE` | Manufacturing Date | unknown | R |  |  |
@@ -166,7 +166,7 @@ Total: 895 addresses across 10 components. 135 confirmed against real captured d
 | 0x00ce | `EASTER_EGG` | Easter-egg text/code | string | R | ✓ | Flow decompile |
 | 0x00d0 | `DUAL_BATTERY_MODE` | Dual-battery mode enabled | bool | R |  | Flow decompile |
 | 0x00d1 | `SHUTDOWN_STATE` | Battery shutdown progress | enum | R | ✓ | Flow decompile |
-| 0x00d2 | `PRESENT_FET_TEMPERATURE` | Present FET Temperature | normFactor | R |  |  |
+| 0x00d2 | `PRESENT_FET_TEMPERATURE` | Present FET Temperature | normFactor | R | ✓ | main branch (pre-registry) messageTypes.js |
 | 0x00d3 | `GET_TIME_UNTIL_DERATING` | Time until derating | uint | R |  | Flow decompile |
 | 0x00d5 | `CONTINUOUS_PACK_POWER` | Continuous pack power | uint | R |  | Flow decompile |
 | 0x00d7 | `DELIVERED_AH_OVER_LIFETIME` | Delivered Ah (Lifetime) | uint | R |  | real capture |
@@ -530,7 +530,7 @@ Total: 895 addresses across 10 components. 135 confirmed against real captured d
 | 0x1881 | `MOTOR_INTERACTION_REQUEST` | Motor Interaction Request | unknown | R |  |  |
 | 0x1882 | `DEAD_CENTER_PREDICTION` | Predicted pedal dead-center crank-angle/timestamp samples | uint32List | R | ✓ | Flow decompile |
 | 0x1883 | `MOTOR_SUPPORT_ACTIVE` | Motor assistance currently active | bool | R |  | Flow decompile |
-| 0x1884 | `PRESENT_PCB_TEMPERATURE` | Present PCB Temperature | normFactor | R |  |  |
+| 0x1884 | `PRESENT_PCB_TEMPERATURE` | Present PCB Temperature | normFactor | R | ✓ | main branch (pre-registry) messageTypes.js |
 | 0x1885 | `LIMIT_MAXIMUM_MOTOR_POWER` | Configured maximum motor power limit | uint | R |  | Flow decompile |
 | 0x1886 | `LIMIT_MAXIMUM_MOTOR_TORQUE` | Configured maximum motor torque limit | uint | R |  | Flow decompile |
 | 0x1887 | `CONTINUOUS_MOTOR_TORQUE` | Continuous (sustained) motor torque rating | uint | R |  | Flow decompile |

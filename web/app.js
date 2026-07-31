@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-31.10-pack-voltage-fix';
+  const APP_VERSION = '2026-07-31.11-zigzag-signed-fix';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
