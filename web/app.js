@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-31.5-registry-phase1';
+  const APP_VERSION = '2026-07-31.6-registry-phase3-driveunit';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -964,6 +964,60 @@
     container.appendChild(v);
   }
 
+  // Single-value formatters, named from a `ui.formatter` string in the address registry — the
+  // registry can't hold real functions (it's JSON), so it holds a lookup key into this table
+  // instead. Only for genuine unit/format conversions; anything that needs to manipulate real DOM
+  // elements (photos, buttons) stays dedicated code, not a formatter.
+  const UI_FORMATTERS = {
+    metersToKm: (value) => (value == null ? '—' : `${(value / 1000).toFixed(1)} km`),
+    secondsToHours: (value) => (value == null ? '—' : `${(value / 3600).toFixed(1)} h`),
+    // `values` is [lowerLimitValue, upperLimitValue] - see `combinesWith` in renderCard().
+    socRange: (values) => `${values[0] ?? '—'} – ${values[1] ?? '—'}`,
+  };
+
+  // Flattens the registry's per-component arrays into one list with `component` attached to each
+  // entry, same shape the old ALL_ADDRESSES-based code used to build ad hoc.
+  function collectRegistryEntries() {
+    return window.Bes3AddressRegistry.ADDRESS_REGISTRY.addresses;
+  }
+
+  // Generic renderer for a card's plain kv-grid rows, driven entirely by `ui.card`/`ui.row`
+  // entries in the address registry — replaces hand-written kvRow(...) call chains. Entries with
+  // a `ui.card` but no `ui.row` (widget-fed addresses: photos, headlines, SoC bar, etc.) are
+  // deliberately skipped here; dedicated code elsewhere still renders those.
+  function renderCard(cardId, container) {
+    const entries = collectRegistryEntries()
+      .filter((e) => e.ui && e.ui.card === cardId && e.ui.row !== undefined)
+      .sort((a, b) => a.ui.row - b.ui.row);
+
+    const seenRows = new Map();
+    for (const e of entries) {
+      const key = e.ui.row;
+      if (seenRows.has(key)) {
+        console.warn(`renderCard('${cardId}'): row ${key} used by both ${seenRows.get(key)} and ${e.component}.${e.name} - one will be hidden by the other`);
+      }
+      seenRows.set(key, `${e.component}.${e.name}`);
+    }
+
+    for (const e of entries) {
+      const label = e.ui.label || e.label;
+      let displayValue;
+      if (e.ui.formatter) {
+        const raw = valueOf(e.component, e.name);
+        if (e.ui.combinesWith && e.ui.combinesWith.length) {
+          const values = [raw, ...e.ui.combinesWith.map((n) => valueOf(e.component, n))];
+          displayValue = UI_FORMATTERS[e.ui.formatter](values);
+        } else {
+          displayValue = UI_FORMATTERS[e.ui.formatter](raw);
+        }
+      } else {
+        displayValue = displayOf(e.component, e.name);
+      }
+      const technical = e.ui.technical ? technicalOf(e.component, e.name) : undefined;
+      kvRow(container, label, displayValue, !!e.ui.writable, technical);
+    }
+  }
+
   // Themed replacement for window.alert()/window.confirm() — native browser dialogs can't be
   // styled and look out of place against this app's own dark/light theme. Both resolve a Promise
   // instead of blocking synchronously, so every call site awaits them from an async function/
@@ -1359,13 +1413,7 @@
     renderPartPhoto(els.driveUnitPhoto, 'DriveUnit', driveUnitProductCode);
 
     els.driveUnitGrid.innerHTML = '';
-    kvRow(els.driveUnitGrid, 'Product code', driveUnitProductCode);
-    kvRow(els.driveUnitGrid, 'Part number', displayOf('DriveUnit', 'PART_NUMBER'));
-    kvRow(els.driveUnitGrid, 'Hardware', displayOf('DriveUnit', 'HARDWARE_VERSION'));
-    kvRow(els.driveUnitGrid, 'Software', displayOf('DriveUnit', 'SOFTWARE_VERSION'));
-    kvRow(els.driveUnitGrid, 'Bootloader', displayOf('DriveUnit', 'BOOTLOADER_SOFTWARE_VERSION'));
-    kvRow(els.driveUnitGrid, 'Manufacturing date', displayOf('DriveUnit', 'MANUFACTURING_DATE'));
-    kvRow(els.driveUnitGrid, 'PCB temp', displayOf('DriveUnit', 'PRESENT_PCB_TEMPERATURE'));
+    renderCard('driveUnit', els.driveUnitGrid);
 
     els.drivetrainGrid.innerHTML = '';
     kvRow(els.drivetrainGrid, 'Gearing', displayOf('DriveUnit', 'GEARING_SYSTEM'));
