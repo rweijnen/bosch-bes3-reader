@@ -2216,19 +2216,20 @@ const ADDRESS_REGISTRY = {
       "component": "Battery",
       "name": "PRESENT_CELL_VOLTAGE",
       "address": 140,
-      "label": "Present Cell Voltage",
+      "label": "Present Pack Voltage",
       "readable": true,
       "writable": false,
-      "kind": "uint",
-      "unit": "mV",
-      "source": "inferred",
-      "confirmed": false,
-      "notes": "inferred — bare UShort, confirmed via decompile (BatteryMessageBusWrapper.getPresentCellVoltage())",
+      "kind": "normFactor",
+      "unit": "V",
+      "factor": 1000,
+      "source": "Flow decompile + real capture",
+      "confirmed": true,
+      "notes": "Bare UShort raw milli-volts; Flow (Bes3BaseBbpAdapterImpl.presentCellVoltage$lambda$15) applies scaleUshortToDouble(0.001) to get volts, confirmed against a real capture (raw 40100 -> 40.1 V, plausible resting voltage for a 10s PowerTube pack). Field name is Bosch's own (getPresentCellVoltage()) despite reporting whole-pack voltage, not a single cell - same cell/pack naming mismatch already noted on PRESENT_PACK_TEMPERATURE.",
       "dependsOn": null,
       "ui": {
         "card": "battery",
         "row": 50,
-        "label": "Present cell voltage"
+        "label": "Present pack voltage"
       }
     },
     {

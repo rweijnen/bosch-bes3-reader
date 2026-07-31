@@ -4,7 +4,7 @@ Generated from `src/address-registry.json` (registryVersion 1.0.0) — do not ed
 
 License: **CC-BY-4.0** — attribution required (Bosch BES3 address registry — github.com/rweijnen/bosch-bes3-reader). See `LICENSE-DATA`.
 
-Total: 895 addresses across 10 components. 134 confirmed against real captured data; 377 have a confirmed decode kind.
+Total: 895 addresses across 10 components. 135 confirmed against real captured data; 377 have a confirmed decode kind.
 
 ## Contents
 
@@ -100,7 +100,7 @@ Total: 895 addresses across 10 components. 134 confirmed against real captured d
 | 0x0089 | `CHARGER_CONNECTED` | Charger Connected | unknown | R |  |  |
 | 0x008a | `CHARGING_ACTIVE` | Charging Active | unknown | R |  |  |
 | 0x008b | `PRESENT_PACK_TEMPERATURE` | Present Pack Temperature | normFactor | R |  |  |
-| 0x008c | `PRESENT_CELL_VOLTAGE` | Present Cell Voltage | uint | R |  | inferred |
+| 0x008c | `PRESENT_CELL_VOLTAGE` | Present Pack Voltage | normFactor | R | ✓ | Flow decompile + real capture |
 | 0x008d | `REQUEST_SHUTDOWN` | Request Shutdown | unknown | R |  |  |
 | 0x008e | `PREPARE_SHUTDOWN` | Prepare-for-shutdown flag | bool | R |  | Flow decompile |
 | 0x008f | `NO_SHUTDOWN` | Veto/deny shutdown flag | bool | R |  | Flow decompile |
