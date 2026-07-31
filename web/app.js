@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-31.8-registry-phase4-retired-addressesjs';
+  const APP_VERSION = '2026-07-31.9-assist-stats-before-background';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -2124,6 +2124,25 @@
         if (done < readable.length) {
           els.sweepProgress.style.display = 'flex';
         }
+        // Per-assist-mode usage (the histogram) is UI-visible data, same as everything else in
+        // the priority batch — it should load before the ~740 non-displayed background addresses,
+        // not after all of them. readAllAssistModeStats() is fully self-contained (does its own
+        // reads, doesn't depend on any result from this sweep loop), so it's safe to run here
+        // rather than after the entire sweep finishes, which is where it used to run — a real gap
+        // caught by asking "is usage data actually loaded before non-displayed data?" (it wasn't).
+        // The transport is single-threaded (one read in flight at a time), so this does pause the
+        // background sweep below while it runs - that's the intended trade-off, not a side effect.
+        if (!aborted && transport) {
+          els.sweepProgressText.textContent = 'reading per-mode ride statistics…';
+          // Keep the stall watchdog's "what's it stuck on" naming accurate for this window too —
+          // readAllAssistModeStats() does its own reads outside this loop's per-iteration tracking.
+          sweepWatchdogAddr = 'per-mode ride statistics';
+          sweepWatchdogStart = Date.now();
+          sweepWatchdogFired = false;
+          try { await readAllAssistModeStats(); } catch (_) {}
+          lastResults = results;
+          renderDashboard();
+        }
       }
       if (!revealed) {
         els.connectingBar.style.width = Math.round((done / Math.max(1, priorityCount)) * 100) + '%';
@@ -2151,7 +2170,11 @@
       renderPhase();
     }
 
-    if (!aborted && transport) {
+    // Fallback only — the normal path already ran this right at the reveal point above, as soon
+    // as the priority batch finished. This only fires if the sweep was aborted/disconnected
+    // before ever reaching that point, so `revealed` (and therefore the earlier call) never
+    // happened.
+    if (!revealed && !aborted && transport) {
       els.sweepProgress.style.display = 'flex';
       els.sweepProgressText.textContent = 'reading per-mode ride statistics…';
       try { await readAllAssistModeStats(); } catch (_) {}
