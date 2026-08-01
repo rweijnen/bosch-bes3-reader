@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-31.12-escape-closes-popups';
+  const APP_VERSION = '2026-08-01.13-range-probe-diagnostic';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -705,20 +705,32 @@
         }
       } catch (_) { /* leave the design-palette colors already assigned above */ }
     }
+    // Diagnostic only — does not feed the dashboard. DriveUnit.REACHABLE_RANGE (addr 6231)
+    // has consistently declined as a plain read; nothing in Flow's own decompiled code reads
+    // it either, in any form, so we don't actually know whether it wants no argument, a
+    // ConfigId argument (like GET_ASSIST_MODE_STATISTICS), or is simply unimplemented on this
+    // bike. Logging the real status code (not just "declined") and trying it both ways here,
+    // purely to get a real answer from the debug log export — never shown in the UI.
     if (REACHABLE_RANGE_ADDR) {
       try {
-        const rangeRes = await readOne(REACHABLE_RANGE_ADDR);
-        if (rangeRes && !rangeRes.declined && rangeRes.payload) {
-          const typed = decodeTyped(REACHABLE_RANGE_ADDR, rangeRes.payload);
-          const ranges = typed ? typed.value : [];
-          if (dlog) dlog.log('assist-rpc', 'REACHABLE_RANGE decoded', JSON.stringify(ranges));
-          if (ranges.length === assistModeStats.length) {
-            ranges.forEach((km, i) => { assistModeStats[i].reachableRangeKm = km; });
-          } else if (ranges.length === assistModeStats.length - 1) {
-            ranges.forEach((km, i) => { assistModeStats[i + 1].reachableRangeKm = km; });
-          }
+        const plain = await readOne(REACHABLE_RANGE_ADDR);
+        if (dlog) {
+          dlog.log('range-probe', 'plain read (no argument)', plain && plain.declined ? `declined: ${plain.statusName}` : plain && plain.payload ? plain.payload : JSON.stringify(plain));
         }
-      } catch (_) { /* leave range unset — histogram just omits it for this mode */ }
+      } catch (err) {
+        if (dlog) dlog.log('range-probe', 'plain read threw', err.message);
+      }
+      for (const configId of configIds) {
+        if (!transport) return;
+        try {
+          const withArg = await rpcCallWithArg(REACHABLE_RANGE_ADDR, encodeConfigIdArg(configId), (payload) => ({ payload }), `configId="${configId}"`);
+          if (dlog) {
+            dlog.log('range-probe', `with ConfigId="${configId}" argument`, withArg && withArg.declined ? `declined: ${withArg.statusName}` : withArg && withArg.payload ? withArg.payload : JSON.stringify(withArg));
+          }
+        } catch (err) {
+          if (dlog) dlog.log('range-probe', `with ConfigId="${configId}" argument threw`, err.message);
+        }
+      }
     }
 
     for (const entry of assistModeStats) {
@@ -747,6 +759,27 @@
           const l = await rpcCallWithConfigId(UDAM_LIMITS_ADDR, entry.configId, decodeUdamLimits);
           if (l && !l.declined) entry.udamLimits = l;
         } catch (_) { /* leave entry.udamLimits unset — change UI stays hidden for this mode */ }
+      }
+    }
+
+    // Range estimate, computed client-side — NOT read from the bike. An earlier version of
+    // this tool read DriveUnit.REACHABLE_RANGE (addr 6231) believing it to be the bike-computed
+    // value behind Flow's own "range estimate" screen; that address consistently declined on
+    // real hardware, and a closer look at Flow's decompile found no adapter/view-model anywhere
+    // that actually reads it — nothing wires it to any screen. Since Flow shows a range estimate
+    // even offline (no bike connected), it can't be a live device value anyway; it has to be
+    // computed from data already on the phone. We have the same ingredients: each mode's
+    // lifetime distance/consumedEnergy (from GET_ASSIST_MODE_STATISTICS, just read above) gives
+    // a Wh/km efficiency, and REMAINING_ENERGY (already read as part of the battery card) gives
+    // what's left — divide one by the other. Verified against a real capture: ECO mode decoded
+    // to distance=18225 m, consumedEnergy=58 Wh (3.18 Wh/km); at 532.3 Wh remaining that's a
+    // plausible ~167 km estimate.
+    const remainingEnergyWh = valueOf('Battery', 'REMAINING_ENERGY');
+    if (remainingEnergyWh != null) {
+      for (const entry of assistModeStats) {
+        if (entry.status !== 'ok' || !entry.distance || !entry.consumedEnergy) continue;
+        const whPerKm = entry.consumedEnergy / (entry.distance / 1000);
+        if (whPerKm > 0) entry.reachableRangeKm = Math.round(remainingEnergyWh / whPerKm);
       }
     }
   }
