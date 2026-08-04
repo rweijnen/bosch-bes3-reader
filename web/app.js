@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-08-04.14-subscribe-protocol';
+  const APP_VERSION = '2026-08-05.15-assist-mode-usb-experiments';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -1248,6 +1248,20 @@
         'firmware returned an explicit DENIED. The result (including a re-read afterward) is only ' +
         'logged, not assumed.',
     },
+    {
+      id: 'assistMode',
+      addrName: 'ASSIST_MODE',
+      label: 'Assist mode (6153)',
+      isRealWrite: true,
+      buildPayload: () => encodeEnumArg(1),
+      confirmText: () =>
+        'Attempt to write ASSIST_MODE (addr 6153) to index 1, over USB?\n\n' +
+        'Already tested over BLE from a non-Flow client (a companion React Native PoC): the bike ' +
+        'returned an explicit DENIED, not a timeout. This tests whether USB — a different ' +
+        'transport with a different firmware host address — gets the same result. The result ' +
+        '(including a re-read afterward) is only logged, not assumed. If it actually changes the ' +
+        'bike\'s live assist mode, watch the display/remote.',
+    },
   ];
   const experimentState = {}; // id -> null | 'pending' | 'done' | 'failed' ("done" = got a response, not "it worked")
 
@@ -1420,6 +1434,81 @@
       row.append(label, value, btn);
       els.writeExperiments.appendChild(row);
       if (exp.id === 'startMode') renderStartModeTryAllBlock();
+    }
+    renderRpcExperiments();
+  }
+
+  // ASSIST_MODE_UP/ASSIST_MODE_DOWN are CallableDataPoint<Boolean, Unit> per Flow's own type
+  // declarations (confirmed via decompile) — the LED remote's own up/down mechanism, an RPC call,
+  // not a plain write. Already tested over BLE from a non-Flow client (companion bosch-assist-poc
+  // React Native PoC): both consistently DENIED, same as the direct ASSIST_MODE write above. This
+  // tests whether USB (a different transport, different firmware host address) gets the same
+  // result — appended to the same WRITE_EXPERIMENTS div since rpcCallWithArg (not writeAndReadBack)
+  // is the right primitive for an RPC, not a WRITE.
+  const RPC_EXPERIMENTS = [
+    { id: 'assistModeUp', addrName: 'ASSIST_MODE_UP', label: 'Assist mode up (6154, RPC)' },
+    { id: 'assistModeDown', addrName: 'ASSIST_MODE_DOWN', label: 'Assist mode down (6155, RPC)' },
+  ];
+  const rpcExperimentState = {}; // id -> null | 'pending' | 'done' | 'failed'
+  const rpcExperimentResult = {}; // id -> last statusName ('SUCCESS' / 'DENIED' / 'timeout' / etc.)
+
+  async function attemptRpcExperiment(id) {
+    const exp = RPC_EXPERIMENTS.find((e) => e.id === id);
+    const addr = addrOf('DriveUnit', exp.addrName);
+    if (!addr || !transport) {
+      await appAlert('Not connected to the bike anymore — reconnect (Read again) and try again.');
+      return;
+    }
+    rpcExperimentState[id] = 'pending';
+    renderWriteExperiments();
+    const result = await rpcCallWithArg(addr, encodeBoolArg(true), () => true, `usb-test-${id}`);
+    let statusName;
+    let ok;
+    if (result === null) { statusName = 'timeout'; ok = false; }
+    else if (result && result.declined) { statusName = result.statusName; ok = false; }
+    else { statusName = 'SUCCESS'; ok = true; }
+    rpcExperimentResult[id] = statusName;
+    rpcExperimentState[id] = ok ? 'done' : 'failed';
+    renderDashboard();
+  }
+
+  function renderRpcExperiments() {
+    for (const exp of RPC_EXPERIMENTS) {
+      if (addrOf('DriveUnit', exp.addrName) === undefined) continue;
+
+      const row = document.createElement('div');
+      row.className = 'write-experiment-row write-experiment-real';
+
+      const label = document.createElement('span');
+      label.className = 'write-experiment-label';
+      label.textContent = exp.label;
+
+      const value = document.createElement('span');
+      value.className = 'write-experiment-value';
+      value.textContent = rpcExperimentResult[exp.id] || '—';
+
+      const state = rpcExperimentState[exp.id];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'histogram-reset-btn';
+      if (state === 'pending') { btn.textContent = 'Sending…'; btn.disabled = true; }
+      else if (!sweepFullyLoaded) { btn.textContent = 'Loading…'; btn.disabled = true; }
+      else if (state === 'done') { btn.textContent = 'Sent ✓'; }
+      else if (state === 'failed') { btn.textContent = 'Denied/failed — retry?'; }
+      else { btn.textContent = 'Trigger (RPC)'; }
+      btn.addEventListener('click', async () => {
+        const addr = addrOf('DriveUnit', exp.addrName);
+        if (await appConfirm(
+          `Call ${exp.addrName} (addr ${addr}) as an RPC, over USB?\n\n` +
+          'This is the LED remote\'s own up/down mechanism (CallableDataPoint<Boolean, Unit>), not ' +
+          'a plain write. Already tested over BLE from a non-Flow client: consistently DENIED. ' +
+          'This tests whether USB gets the same result. If it actually changes the bike\'s live ' +
+          'assist mode, watch the display/remote — the result is only logged, not assumed.'
+        )) attemptRpcExperiment(exp.id);
+      });
+
+      row.append(label, value, btn);
+      els.writeExperiments.appendChild(row);
     }
   }
 
