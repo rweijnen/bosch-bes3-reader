@@ -47,7 +47,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -82,7 +83,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — TestResultEnumType",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -95,7 +97,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -121,7 +124,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -147,7 +151,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -182,7 +187,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — TestResultEnumType (merged result of front/rear sensor tests)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -195,7 +201,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — no dedicated ABS \"BrakeDuration\" message class; scale/unit (ms vs s) not recoverable from decompile",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -208,7 +215,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — no dedicated \"BrakeDistance\" class found; scale/unit (m vs cm) not recoverable",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -247,7 +255,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — AntiLockBrakeSystemFeaturePropertiesRelease4OrBuilder — single field: centralInformationVisualization",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -260,7 +269,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -305,7 +315,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -318,7 +329,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -483,7 +495,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -509,7 +522,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -522,7 +536,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -574,7 +589,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -587,7 +603,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -691,7 +708,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -730,7 +748,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -834,7 +853,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -873,7 +893,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "AntiLockBrakeSystem",
@@ -951,7 +972,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — matches FEATURE_PROPERTIES naming pattern of shutdown-lifecycle bools",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -977,7 +999,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -992,7 +1015,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Uint16NormFactor10Message pattern for current fields",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1007,7 +1031,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — same current-scaling pattern",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1021,7 +1046,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — plain uint16 duration, likely minutes",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1036,7 +1062,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — current-scaling pattern",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1075,7 +1102,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1088,7 +1116,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1103,7 +1132,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Room model exposes as Float; scaled uint fits nullable-float semantics",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1118,7 +1148,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — same as above",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1132,7 +1163,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Energy measurement wrapper base-converts to Wh; RoomComponent$Battery.totalEnergy",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1145,7 +1177,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — RoomComponent$Battery.isLightReserveReached direct match",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1159,7 +1192,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — unit unconfirmed (s or min)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1173,7 +1207,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — rider-facing SoC percentage, uint8 range 0-100",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1213,7 +1248,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — unit unconfirmed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1243,7 +1279,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1269,7 +1306,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — mirrors CHARGING_ACTIVE at instance scope",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1283,7 +1321,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Energy measurement, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1298,7 +1337,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — current-scaling pattern, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1313,7 +1353,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — current-scaling pattern, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1328,7 +1369,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — current-scaling pattern, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1341,7 +1383,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — instance-scoped mirror of addr 182",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1355,7 +1398,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — instance-scoped mirror of addr 188",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1370,7 +1414,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — current-scaling pattern, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1383,7 +1428,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1463,7 +1509,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1489,7 +1536,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — no dedicated proto class found, generic bool assumed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1516,7 +1564,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — BatteryShutdownStateEnumType confirmed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1544,7 +1593,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — RoomComponent field name match, likely watts",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1558,7 +1608,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Energy measurement",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1572,7 +1623,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Energy measurement, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1632,7 +1684,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Charge measurement wrapper, base-converts to Ah",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1681,7 +1734,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1717,7 +1771,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1775,7 +1830,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1788,7 +1844,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1801,7 +1858,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1832,7 +1890,8 @@ const ADDRESS_REGISTRY = {
         "card": "battery",
         "row": 130,
         "label": "Deactivation"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1845,7 +1904,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1858,7 +1918,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1896,7 +1957,8 @@ const ADDRESS_REGISTRY = {
         "card": "battery",
         "row": 30,
         "label": "Delivered Wh (lifetime)"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -1931,7 +1993,8 @@ const ADDRESS_REGISTRY = {
         "card": "battery",
         "row": 40,
         "label": "Thermal protection"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2022,7 +2085,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2061,7 +2125,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2094,7 +2159,8 @@ const ADDRESS_REGISTRY = {
         "card": "battery",
         "row": 90,
         "label": "Last end-of-charge V"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2141,7 +2207,8 @@ const ADDRESS_REGISTRY = {
         "card": "battery",
         "row": 100,
         "label": "Max charging current"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2162,7 +2229,8 @@ const ADDRESS_REGISTRY = {
         "card": "battery",
         "row": 80,
         "label": "Max pack temp"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2183,7 +2251,8 @@ const ADDRESS_REGISTRY = {
         "card": "battery",
         "row": 70,
         "label": "Min pack temp"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2200,7 +2269,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "battery"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2222,12 +2292,13 @@ const ADDRESS_REGISTRY = {
       "label": "Present Pack Voltage",
       "readable": true,
       "writable": false,
+      "subscribable": true,
       "kind": "normFactor",
       "unit": "V",
       "factor": 1000,
       "source": "Flow decompile + real capture",
       "confirmed": true,
-      "notes": "Bare UShort raw milli-volts; Flow (Bes3BaseBbpAdapterImpl.presentCellVoltage$lambda$15) applies scaleUshortToDouble(0.001) to get volts, confirmed against a real capture (raw 40100 -> 40.1 V, plausible resting voltage for a 10s PowerTube pack). Field name is Bosch's own (getPresentCellVoltage()) despite reporting whole-pack voltage, not a single cell - same cell/pack naming mismatch already noted on PRESENT_PACK_TEMPERATURE.",
+      "notes": "Bare UShort raw milli-volts; Flow (Bes3BaseBbpAdapterImpl.presentCellVoltage$lambda$15) applies scaleUshortToDouble(0.001) to get volts, confirmed against a real capture (raw 40100 -> 40.1 V, plausible resting voltage for a 10s PowerTube pack). The diagnostic-module adapter names it getPresentCellVoltage() despite reporting whole-pack voltage, not a single cell - same cell/pack naming mismatch already noted on PRESENT_PACK_TEMPERATURE. Corroborated independently from the full app's own low-level MessageBus.Battery interface, which names the identical data point getPresentBatteryVoltage() - i.e. even within Bosch's own codebase, the lower layer already calls it 'battery' (pack), only the diagnostic-facing wrapper says 'cell'. subscribable:true confirmed the same way (MessageBus.Battery.getPresentBatteryVoltage() returns a ReadableSubscribableDataPoint).",
       "dependsOn": null,
       "ui": {
         "card": "battery",
@@ -2254,7 +2325,8 @@ const ADDRESS_REGISTRY = {
         "card": "battery",
         "row": 60,
         "label": "Present FET temp"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2273,7 +2345,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "battery"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2325,7 +2398,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "battery"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2340,7 +2414,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2385,7 +2460,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2422,7 +2498,8 @@ const ADDRESS_REGISTRY = {
         "combinesWith": [
           "SO_C_UPPER_LIMIT"
         ]
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2439,7 +2516,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "battery"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2456,7 +2534,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "battery"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "Battery",
@@ -2512,7 +2591,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2525,7 +2605,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2540,7 +2621,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's NUMBER_OF_FULL_CHARGE_CYCLES_ON_BIKE (same field, Battery2 instance) — Room model exposes as Float; scaled uint fits nullable-float semantics",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2555,7 +2637,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's NUMBER_OF_FULL_CHARGE_CYCLES_OFF_BIKE (same field, Battery2 instance) — same as above",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2569,7 +2652,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's TOTAL_ENERGY (same field, Battery2 instance) — Energy measurement wrapper base-converts to Wh; RoomComponent$Battery.totalEnergy",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2583,7 +2667,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — mirrors Battery's TIME_IN_BALANCING (same field, Battery2 instance) — unit unconfirmed (s or min)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2610,7 +2695,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — mirrors Battery's DISCHARGE_DURATION (same field, Battery2 instance) — unit unconfirmed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2640,7 +2726,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2653,7 +2740,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — mirrors Battery's INSTANCE_CHARGING_ACTIVE (same field, Battery2 instance) — mirrors CHARGING_ACTIVE at instance scope",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2667,7 +2755,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's INSTANCE_REMAINING_ENERGY_FOR_RIDER (same field, Battery2 instance) — Energy measurement, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2682,7 +2771,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's INSTANCE_MAXIMUM_ALLOWED_DISCHARGE_CURRENT (same field, Battery2 instance) — current-scaling pattern, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2697,7 +2787,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's INSTANCE_MAXIMUM_ALLOWED_REVERSE_CURRENT (same field, Battery2 instance) — current-scaling pattern, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2712,7 +2803,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's INSTANCE_PRESENT_DISCHARGE_CURRENT (same field, Battery2 instance) — current-scaling pattern, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2725,7 +2817,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — mirrors Battery's INSTANCE_LIGHT_RESERVE_STATE (same field, Battery2 instance) — instance-scoped mirror of addr 182",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2739,7 +2832,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — mirrors Battery's INSTANCE_STATE_OF_CHARGE_FOR_RIDER (same field, Battery2 instance) — instance-scoped mirror of addr 188",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2754,7 +2848,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's INSTANCE_MAXIMUM_ALLOWED_CHARGE_CURRENT (same field, Battery2 instance) — current-scaling pattern, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2767,7 +2862,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2847,7 +2943,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2873,7 +2970,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's DUAL_BATTERY_MODE (same field, Battery2 instance) — no dedicated proto class found, generic bool assumed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2887,7 +2985,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's INSTANCE_ENERGY_RESERVE (same field, Battery2 instance) — Energy measurement, instance-scoped",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2947,7 +3046,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors Battery's TOTAL_CAPACITY (same field, Battery2 instance) — Charge measurement wrapper, base-converts to Ah",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -2996,7 +3096,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3054,7 +3155,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3080,7 +3182,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3093,7 +3196,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3106,7 +3210,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3132,7 +3237,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3158,7 +3264,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3249,7 +3356,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3288,7 +3396,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3314,7 +3423,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3353,7 +3463,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3366,7 +3477,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3379,7 +3491,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3392,7 +3505,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3414,6 +3528,7 @@ const ADDRESS_REGISTRY = {
       "label": "Present Cell Voltage",
       "readable": true,
       "writable": false,
+      "subscribable": true,
       "kind": "unknown",
       "source": "",
       "confirmed": false,
@@ -3431,7 +3546,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3444,7 +3560,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3483,7 +3600,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3522,7 +3640,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3548,7 +3667,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3561,7 +3681,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3574,7 +3695,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "Battery2",
@@ -3743,7 +3865,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -3756,7 +3879,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -3782,7 +3906,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -3913,7 +4038,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — BatteryChargingStatusEnumType",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -3926,7 +4052,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -3956,7 +4083,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4000,7 +4128,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — DebugComponentState{value}, same wrapper pattern as EasterEgg",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4069,7 +4198,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4082,7 +4212,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4095,7 +4226,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4108,7 +4240,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4134,7 +4267,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4147,7 +4281,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4238,7 +4373,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4264,7 +4400,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4407,7 +4544,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "ConnectModule",
@@ -4433,7 +4571,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4446,7 +4585,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag, same pattern as sibling *_AVAILABLE addresses",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4459,7 +4599,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4472,7 +4613,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag (bootloader variant)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4485,7 +4627,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4498,7 +4641,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag (bootloader variant)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4511,7 +4655,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4524,7 +4669,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag (bootloader variant)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4537,7 +4683,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4550,7 +4697,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag (bootloader variant)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4563,7 +4711,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4576,7 +4725,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Component-presence flag (bootloader variant)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4615,7 +4765,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4628,7 +4779,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4667,7 +4819,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4805,7 +4958,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar per Bosch BES3 convention",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4819,7 +4973,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4832,7 +4987,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Confirmed via EbikeDriveUnit.isNotDriving boolean field",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4847,7 +5003,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Likely scaled percentage factor akin to assistanceLevel fields (Room AssistMode.assistanceLevel* are Float)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4874,7 +5031,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar counter",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4887,7 +5045,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Paired trigger/event flag with ENERGY_RESERVE (6230)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4914,7 +5073,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ShiftRecommendationEnumType / ShiftRecommendationEnumMessage",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4927,7 +5087,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Companion state flag to ENTERING_ENERGY_RESERVE",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4941,7 +5102,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4955,7 +5117,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Confirmed via EbikeDriveUnit.riderPower:Power(measurement.Power wraps double inWatts); wire field is plain int watts (cf. MaximumAvailableMotorPowerOrBuilder int fields)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4969,7 +5132,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar, mirrors RIDER_CADENCE",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -4983,7 +5147,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Confirmed via EbikeDriveUnit.motorPower:Power",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5022,7 +5187,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Confirmed via EbikeDriveUnit.isNotMoving boolean field",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5102,7 +5268,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5182,7 +5349,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5267,7 +5435,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5319,7 +5488,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — DriveUnitFeaturePropertiesRelease4 message currently has a single boolean field (centralInformationVisualization); treat as bool but may grow more fields in future firmware",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5371,7 +5541,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — DeadCenterTimestamps protobuf message: repeated int32 value",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5384,7 +5555,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — State flag, no dedicated message class found",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5426,7 +5598,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar, parallels MotorPowerConfiguration.continuousRatedMotorPower pattern",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5490,7 +5663,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5503,7 +5677,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Simple availability flag, naming pattern consistent with other *_AVAILABLE bools",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5538,7 +5713,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5566,7 +5742,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — No dedicated message wrapper; plain scalar",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5593,7 +5770,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — WalkAssistTipEnumType / WalkAssistTipEnumMessage",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5646,7 +5824,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5660,7 +5839,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — MotorInteractionConfiguration protobuf message: single optional int field motorRampDownTime",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5690,7 +5870,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5791,7 +5972,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5816,7 +5998,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5843,7 +6026,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Parallels ODOMETER (Length-typed) but for the motor unit specifically; no dedicated message wrapper confirmed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -5919,7 +6103,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — BrakeDetectionStatusEnumType / EnumMessage",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6001,7 +6186,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6070,7 +6256,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "usage"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6109,7 +6296,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6135,7 +6323,8 @@ const ADDRESS_REGISTRY = {
       },
       "ui": {
         "card": "usage"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6164,7 +6353,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "usage"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6180,7 +6370,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "usage"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6232,7 +6423,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6245,7 +6437,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6372,7 +6565,8 @@ const ADDRESS_REGISTRY = {
         "row": 70,
         "label": "Light",
         "writable": true
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6391,7 +6585,8 @@ const ADDRESS_REGISTRY = {
         "row": 80,
         "label": "Light available",
         "writable": true
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6404,7 +6599,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6430,7 +6626,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6443,7 +6640,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6474,7 +6672,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6487,7 +6686,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6526,7 +6726,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6542,7 +6743,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "drivetrain"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6555,7 +6757,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6568,7 +6771,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6581,7 +6785,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6594,7 +6799,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6659,7 +6865,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6789,7 +6996,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6815,7 +7023,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6841,7 +7050,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6894,7 +7104,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6907,7 +7118,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6927,7 +7139,8 @@ const ADDRESS_REGISTRY = {
         "card": "drivetrain",
         "row": 60,
         "label": "Max motor torque"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -6961,7 +7174,8 @@ const ADDRESS_REGISTRY = {
         "card": "drivetrain",
         "row": 20,
         "label": "Max legal speed"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -7026,7 +7240,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -7043,7 +7258,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "usage"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -7273,7 +7489,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "usage"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -7290,7 +7507,8 @@ const ADDRESS_REGISTRY = {
       "dependsOn": null,
       "ui": {
         "card": "usage"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -7311,7 +7529,8 @@ const ADDRESS_REGISTRY = {
         "card": "driveUnit",
         "row": 70,
         "label": "PCB temp"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -7422,10 +7641,11 @@ const ADDRESS_REGISTRY = {
       "label": "Reachable Range (per mode, km)",
       "readable": true,
       "writable": false,
+      "subscribable": true,
       "kind": "uint32List",
-      "source": "",
-      "confirmed": false,
-      "notes": "",
+      "source": "Flow decompile (real device read confirmed) + real capture (declined)",
+      "confirmed": true,
+      "notes": "SUBSCRIBE-only in practice, not a plain read - confirmed both ways. On real hardware, a plain GET_VALUE read of this address (with or without a ConfigId argument) consistently returns status DENIED, never UNSUPPORTED or INVALID_VALUE, across multiple attempts. Tracing Flow's own per-mode range display back to its source (BatteryDataServiceImpl.computeRange() -> assistMode.getReachableRange(), tagged DataSource.Bike when connected, i.e. genuinely read from the bike, not cloud/Connect-Module/subscription-gated) leads to AssistModesKt.assistModeReachableRangeFlow(): `driveUnit.getReachableRange().subscribe()` (com.bosch.ebike.appcore.bike.internal.datasources.ebike.readers.driveunit.AssistModesKt, full eBike Flow app v1.36.5 decompile) - a genuine MCSP SUBSCRIBE request (MessageType.SUBSCRIBE=6), not READ (MessageType.READ=0). Flow itself races this subscribe against a plain read with a 500ms timeout (SubscribeOrReadWithDefaultKt.subscribeOrReadWithDefault) and falls back to a default value if neither responds in time - it doesn't fully trust the subscribe path either. This tool doesn't yet implement SUBSCRIBE/UNSUBSCRIBE/NotifyMessage handling (see src/protocol.js's MessageType table, which already documented the raw enum values for this) - see the DriveUnit.getReachableRange() entry in Flow's decompiled MessageBus.java for the return type (ReadableSubscribableDataPoint<ReachableRangeType>), and the ReachableRangeType proto class (com.bosch.ebike.bes3.messagebus.ReachableRangeType, packed repeated uint32) confirming the uint32List decode kind here is already correct once subscribe is used to actually fetch it.",
       "dependsOn": null,
       "ui": {
         "card": "usage"
@@ -7514,7 +7734,8 @@ const ADDRESS_REGISTRY = {
         "card": "drivetrain",
         "row": 50,
         "label": "Wheel circ. (user)"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -7772,7 +7993,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -7876,7 +8098,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -7929,7 +8152,8 @@ const ADDRESS_REGISTRY = {
         "row": 100,
         "label": "Start mode",
         "technical": true
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -8034,7 +8258,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "DriveUnit",
@@ -8073,7 +8298,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8086,7 +8312,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8125,7 +8352,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — VisualizableIssueTypesOrBuilder, repeated IssueTypeEnum",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8138,7 +8366,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8234,7 +8463,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — StatusbarCustomizationEnumMessageOrBuilder",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8273,7 +8503,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — KeyDeviceStatusEnumMessageOrBuilder",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8325,7 +8556,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8364,7 +8596,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — CategoryConfigurationIdOrBuilder",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8377,7 +8610,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8390,7 +8624,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — FeatureStreamingTilesOfInterestOrBuilder, repeated int32",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8546,7 +8781,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8559,7 +8795,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8585,7 +8822,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8598,7 +8836,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8611,7 +8850,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8706,7 +8946,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8719,7 +8960,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8732,7 +8974,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8745,7 +8988,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8836,7 +9080,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8849,7 +9094,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8862,7 +9108,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8875,7 +9122,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -8992,7 +9240,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -9018,7 +9267,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "HeadUnit",
@@ -9031,7 +9281,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9044,7 +9295,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — Priority of the currently-active UI, used for UI arbitration (byte value, scale seen in UiType.priority)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9071,7 +9323,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Identifies which UI currently owns control",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9084,7 +9337,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9123,7 +9377,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9136,7 +9391,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ArrayOf10CpuLoad, recent CPU load samples (10 slots)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9149,7 +9405,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — likely bitmask of present button keycodes, no dedicated class found",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9162,7 +9419,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9221,7 +9479,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — UiControlCommandEnum has 15 values, only a subset confirmed - ordinal order not fully verified",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9261,7 +9520,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — current UI mode state",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9274,7 +9534,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — matches RemoteControl.diagnosisProgramActive domain field",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9352,7 +9613,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — whether CAN-bus time sync is enabled",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9365,7 +9627,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — this component's own advertised UI priority (byte value, 0-80 scale)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9378,7 +9641,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9391,7 +9655,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — startup light pattern completed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9417,7 +9682,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — error light/signal pattern currently active",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9430,7 +9696,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — critical-severity error light pattern active",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9456,7 +9723,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — matches RemoteControl.plusMinusButtonControlByActiveUi domain field",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9469,7 +9737,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — repeated IssueTypeEnum (IM_INFORMATION,IM_WARNING,IM_ERROR,IM_CRITICAL_ERROR) — a list, not a single enum value; shows as raw ordinals for now",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9513,7 +9782,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — selects what ride-screen status bar shows",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9539,7 +9809,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9591,7 +9862,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — repeated int32 (TileIdEnumType values)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9604,7 +9876,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — UByte (0-255)",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9617,7 +9890,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9695,7 +9969,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9721,7 +9996,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9734,7 +10010,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — no dedicated class found; naming implies boolean state flag",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9774,7 +10051,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — matches RemoteControl.SnoozeState domain enum",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9801,7 +10079,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — HeartRate domain model: heartRate is raw Integer bpm",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9828,7 +10107,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — mirrored by RemoteControl.HeartRateStatus domain enum",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9854,7 +10134,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — 2-value enum (OFF/ACTIVE), semantically boolean",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9936,7 +10217,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9975,7 +10257,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -9988,7 +10271,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10001,7 +10285,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ListOfIssueIds, code-confirmed ReadableSubscribableDataPoint<ListOfIssueIds>",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10066,7 +10351,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — no dedicated message; likely a downshift-hint flag",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10175,7 +10461,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — reports gear device's current operating mode",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10198,7 +10485,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — requests a single micro-adjustment step of derailleur",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10211,7 +10499,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — no dedicated wrapper found; step counter paired with FINE_ADJUSTMENT_STEP_REQUEST",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10242,7 +10531,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — matches EShift.ShiftMode domain enum 1:1",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10255,7 +10545,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — reports rider manual override gear during AUTOMATIC shift mode",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10281,7 +10572,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10294,7 +10586,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — gates power-down until gear device confirms safe state",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10320,7 +10613,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — matches RoomComponent RemoteControl.systemLockIsLockSoundEnabled",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10333,7 +10627,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10368,7 +10663,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10381,7 +10677,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — no dedicated proto class; generic bool pattern",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10394,7 +10691,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — same generic-bool pattern as USB_POWER_AVAILABLE",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10420,7 +10718,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10447,7 +10746,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — generic bool wrapper pattern",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10460,7 +10760,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10473,7 +10774,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10486,7 +10788,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10499,7 +10802,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10512,7 +10816,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — repeated IssueTypeEnum, internal issue-visualization plumbing",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10539,7 +10844,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — mirrors AVERAGE_HEART_RATE plain-scalar convention",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10566,7 +10872,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — also persisted as RemoteControl.HeartRateStatus",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10579,7 +10886,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — corroborated by BLE_SHIFTER peripheral profile",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10592,7 +10900,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — opaque uint id, no direct consumer found in app code",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10606,7 +10915,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — seconds since epoch, no direct app consumer found",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10620,7 +10930,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — confirmed as display tile REMOTE_CONTROL_DURATION_WITHOUT_STOPS_OF_ACTIVITY",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10634,7 +10945,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — minutes offset from UTC (inferred); sibling TIME_ZONE/LOCAL_TIME_OFFSET use same representation",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10648,7 +10960,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — analogous to DriveUnit ODOMETER bare-uint convention",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10662,7 +10975,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ActivityService.java proto field average_speed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10676,7 +10990,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ActivityService.java proto field average_cadence",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10690,7 +11005,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ActivityService.java proto field maximum_cadence",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10704,7 +11020,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ActivityService.java proto field average_rider_power",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10718,7 +11035,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ActivityService.java proto field maximum_rider_power",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10732,7 +11050,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ActivityService.java proto field average_heart_rate",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10746,7 +11065,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ActivityService.java proto field maximum_heart_rate",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10760,7 +11080,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — ActivityService.java proto field energy_consumed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10804,7 +11125,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — condition under which app-tracked ride auto-ends",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10818,7 +11140,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — CaloriesConsumedSampleProvider.java wraps Flow<UShort>",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10831,7 +11154,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — seconds per mode, array; BikeDataSupplier.getAssistModeUsage()",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10844,7 +11168,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — motor-active subset of usage time",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10858,7 +11183,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — RiderEnergyShareSampleProvider.java wraps Flow<UByte>",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10883,7 +11209,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10896,7 +11223,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -10935,7 +11263,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11026,7 +11355,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11039,7 +11369,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — no class/usage found outside enum; name implies boolean status flag",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11052,7 +11383,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11066,7 +11398,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — displayed as ABS brake-duration tile; generic scalar wrapper",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11079,7 +11412,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — meters/cm unconfirmed; displayed as ABS brake-distance tile",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11104,7 +11438,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11143,7 +11478,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — AbsModeEnumMessage / AbsModeEnumType; ordinal-to-mode mapping (ABS_MODE1..5) not individually confirmed, kept as raw uint rather than guessed enum",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11156,7 +11492,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — no class/usage found outside enum; paired with SIGNAL_LAMP_CONTROL",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11169,7 +11506,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11182,7 +11520,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11195,7 +11534,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11208,7 +11548,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11247,7 +11588,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11260,7 +11602,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11286,7 +11629,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11299,7 +11643,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11343,7 +11688,8 @@ const ADDRESS_REGISTRY = {
         "card": "remote",
         "row": 20,
         "label": "Bike name"
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11356,7 +11702,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11395,7 +11742,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11421,7 +11769,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11434,7 +11783,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11590,7 +11940,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11603,7 +11954,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11616,7 +11968,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11629,7 +11982,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11642,7 +11996,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11655,7 +12010,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11681,7 +12037,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11694,7 +12051,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11707,7 +12065,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11746,7 +12105,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11759,7 +12119,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11772,7 +12133,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11798,7 +12160,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11863,7 +12226,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11876,7 +12240,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11889,7 +12254,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11902,7 +12268,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11915,7 +12282,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11928,7 +12296,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11941,7 +12310,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11967,7 +12337,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -11980,7 +12351,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12006,7 +12378,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12019,7 +12392,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12071,7 +12445,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12084,7 +12459,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12188,7 +12564,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12201,7 +12578,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12214,7 +12592,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12227,7 +12606,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12305,7 +12685,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12318,7 +12699,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12331,7 +12713,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12422,7 +12805,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12441,7 +12825,8 @@ const ADDRESS_REGISTRY = {
         "row": 30,
         "label": "Language",
         "writable": true
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12480,7 +12865,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12538,7 +12924,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12590,7 +12977,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12741,7 +13129,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12767,7 +13156,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12780,7 +13170,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12793,7 +13184,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12806,7 +13198,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12819,7 +13212,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12890,7 +13284,8 @@ const ADDRESS_REGISTRY = {
         "row": 80,
         "label": "Service due",
         "writable": true
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12903,7 +13298,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12916,7 +13312,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12942,7 +13339,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12955,7 +13353,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12968,7 +13367,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12981,7 +13381,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -12994,7 +13395,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13007,7 +13409,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13059,7 +13462,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13072,7 +13476,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13098,7 +13503,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13124,7 +13530,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13137,7 +13544,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13150,7 +13558,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13203,7 +13612,8 @@ const ADDRESS_REGISTRY = {
         "label": "Time format",
         "writable": true,
         "technical": true
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13216,7 +13626,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13250,7 +13661,8 @@ const ADDRESS_REGISTRY = {
         "label": "Units",
         "writable": true,
         "technical": true
-      }
+      },
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13263,7 +13675,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13276,7 +13689,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "RemoteControl",
@@ -13315,7 +13729,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — raw priority index, no scaling; PayloadKt.java maps to Uint8Message",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13328,7 +13743,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13368,7 +13784,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Int16NullableMessage, no scale factor",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13382,7 +13799,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Int16NullableMessage, same wrapper as ALTITUDE",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13396,7 +13814,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Uint16Message, no scaling",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13410,7 +13829,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Uint16Message, same wrapper as ASCENT",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13424,7 +13844,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Uint8Message, no scaling",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13438,7 +13859,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Int8Message, signed; corroborated by DefaultGetRoadSlopePercentage.java",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13504,7 +13926,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — generic Uint8Message wrapper; HeartRateSampleProvider.java models as plain Int",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13531,7 +13954,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — HeartRateStatusEnumMessage",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13558,7 +13982,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — MobileAppNavigationStatusEnumMessage",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13572,7 +13997,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: low — exact wrapper width unconfirmed; RideInfoService.java feeds distanceRemaining in meters",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13585,7 +14011,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — epoch-based Timestamp int64, unit unconfirmed",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13599,7 +14026,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — MobileAppDuration int32, confirmed seconds via getInWholeSeconds",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13612,7 +14040,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — AltitudeGraphNumberOfAvailableSamples, single int32",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13651,7 +14080,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — repeated IssueTypeEnum (IM_INFORMATION,IM_WARNING,IM_ERROR,IM_CRITICAL_ERROR) — a list, not a single enum value",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13664,7 +14094,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13677,7 +14108,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13690,7 +14122,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13704,7 +14137,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Uint8NullableMessage; SendArrivalChargeToBhu.java feeds getBatteryPercentage()",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13717,7 +14151,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — PhoneCharging provider returns MobileDevice.Battery.isCharging()",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13730,7 +14165,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13743,7 +14179,8 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "MobileApp",
@@ -13795,7 +14232,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — inferred bool by analogy with confirmed sibling addresses",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "CanTestNode",
@@ -13808,7 +14246,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — DriveUnitReader.java: remoteControl.getDriveUnitAvailable()",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "CanTestNode",
@@ -13821,7 +14260,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": false,
       "notes": "Flow decompile, confidence: medium — inferred bool by naming/family analogy",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     },
     {
       "component": "CanTestNode",
@@ -13834,7 +14274,8 @@ const ADDRESS_REGISTRY = {
       "source": "Flow decompile",
       "confirmed": true,
       "notes": "Flow decompile, confidence: high — Battery2Reader.java: remoteControl.getBattery2Available()",
-      "dependsOn": null
+      "dependsOn": null,
+      "subscribable": true
     }
   ]
 };

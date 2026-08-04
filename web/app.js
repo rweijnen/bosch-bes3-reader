@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-08-01.13-range-probe-diagnostic';
+  const APP_VERSION = '2026-08-04.14-subscribe-protocol';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -25,6 +25,7 @@
     MessageType, buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
     encodeBoolArg, encodeStartAssistModeOemArg,
     buildRpcCallFrame, buildRpcCallFrameWithArg,
+    buildSubscribeRequestFrame, buildUnsubscribeRequestFrame, parseNotifyMessage,
     encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList, decodeStringList,
     decodeUdamParams, decodeBoolResponse, decodeUdamLimits, encodeSetUdamValuesParametersArg,
     parseReadResponseFrame, decodeValue,
@@ -632,6 +633,64 @@
     return rpcCallWithArg(addr, encodeConfigIdArg(configId), decodeFn, `configId="${configId}"`);
   }
 
+  // Subscribes to a *SubscribableDataPoint address, waits briefly for the bike's pushed
+  // NotifyMessage carrying its actual value, then always unsubscribes before returning —
+  // read-only in effect (it doesn't change any bike setting, only registers momentary interest
+  // in push updates), but a genuinely different MCSP operation than a plain read. Exists because
+  // a real capture showed DriveUnit.REACHABLE_RANGE (addr 6231) declining every plain-read
+  // attempt with DENIED, and tracing Flow's own decompiled per-mode range display back to its
+  // source found it uses exactly this — driveUnit.getReachableRange().subscribe(), never a
+  // one-shot read (see the address-registry.json entry for the full trace). Confirmed via
+  // decompile of com.bosch.ebike.messagebus.MessageBus that 439 other addresses across every
+  // component are declared the same *SubscribableDataPoint way — this is the first one attempted
+  // for real, not a generic mechanism proven to work everywhere yet.
+  async function subscribeOnce(addr, waitForNotifyMs = 2000) {
+    transportBusy = true;
+    const dlog = window.Bes3DebugLog;
+    try {
+      for (let i = 0; i < 4; i++) {
+        if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
+      }
+      const subSeq = nextSeq();
+      const subFrame = buildSubscribeRequestFrame(addr, subSeq);
+      if (dlog) dlog.log('range-subscribe', `-> SUBSCRIBE addr 0x${addr.toString(16)} seq ${subSeq}`, subFrame);
+      await transport.doMcspWrite(subFrame);
+
+      let ack = null;
+      const ackDeadline = Date.now() + 500;
+      while (Date.now() < ackDeadline) {
+        const raw = await transport.readNextFrame(4, 4);
+        if (!raw) continue;
+        const parsed = parseReadResponseFrame(raw);
+        if (parsed && parsed.type === MessageType.SUBSCRIBE_RESPONSE && parsed.seq === subSeq) { ack = parsed; break; }
+      }
+      if (dlog) dlog.log('range-subscribe', '<- SUBSCRIBE_RESPONSE', ack ? `ok=${ack.ok} status=${ack.statusName}` : 'no response within 500ms');
+      if (!ack || !ack.ok) return { subscribed: false, ackStatus: ack ? ack.statusName : 'timeout' };
+
+      let notify = null;
+      const notifyDeadline = Date.now() + waitForNotifyMs;
+      while (Date.now() < notifyDeadline) {
+        const raw = await transport.readNextFrame(4, 4);
+        if (!raw) continue;
+        const n = parseNotifyMessage(raw);
+        if (n && n.addr === addr) { notify = n; break; }
+      }
+      if (dlog) dlog.log('range-subscribe', notify ? '<- NotifyMessage received' : `<- no NotifyMessage within ${waitForNotifyMs}ms`, notify ? notify.payload : undefined);
+      return { subscribed: true, notify };
+    } finally {
+      try {
+        const unsubSeq = nextSeq();
+        const unsubFrame = buildUnsubscribeRequestFrame(addr, unsubSeq);
+        if (dlog) dlog.log('range-subscribe', `-> UNSUBSCRIBE addr 0x${addr.toString(16)} seq ${unsubSeq}`, unsubFrame);
+        await transport.doMcspWrite(unsubFrame);
+        for (let i = 0; i < 4; i++) {
+          if (!(await transport.readNextFrame(2, 3))) break; // best-effort drain of the ack, don't block on it
+        }
+      } catch (_) { /* best-effort cleanup only */ }
+      transportBusy = false;
+    }
+  }
+
   async function readAllAssistModeStats() {
     assistModeStats = [];
     if (!ASSIST_MODE_STATS_ADDR || !ACTIVE_ASSIST_MODES_ADDR) return;
@@ -705,31 +764,26 @@
         }
       } catch (_) { /* leave the design-palette colors already assigned above */ }
     }
-    // Diagnostic only — does not feed the dashboard. DriveUnit.REACHABLE_RANGE (addr 6231)
-    // has consistently declined as a plain read; nothing in Flow's own decompiled code reads
-    // it either, in any form, so we don't actually know whether it wants no argument, a
-    // ConfigId argument (like GET_ASSIST_MODE_STATISTICS), or is simply unimplemented on this
-    // bike. Logging the real status code (not just "declined") and trying it both ways here,
-    // purely to get a real answer from the debug log export — never shown in the UI.
+    // Diagnostic only — does not feed the dashboard. Confirmed on real hardware that a plain
+    // read of DriveUnit.REACHABLE_RANGE (addr 6231) always declines with DENIED, with or
+    // without a ConfigId argument — and confirmed via decompile that Flow itself only ever
+    // reads this address via .subscribe(), never a one-shot get (see this address's registry
+    // notes for the full trace). Trying the real SUBSCRIBE mechanism here for the first time.
     if (REACHABLE_RANGE_ADDR) {
       try {
-        const plain = await readOne(REACHABLE_RANGE_ADDR);
+        const result = await subscribeOnce(REACHABLE_RANGE_ADDR);
         if (dlog) {
-          dlog.log('range-probe', 'plain read (no argument)', plain && plain.declined ? `declined: ${plain.statusName}` : plain && plain.payload ? plain.payload : JSON.stringify(plain));
+          if (!result.subscribed) {
+            dlog.log('range-subscribe', 'result', `subscribe declined: ${result.ackStatus}`);
+          } else if (result.notify) {
+            const typed = decodeTyped(REACHABLE_RANGE_ADDR, result.notify.payload);
+            dlog.log('range-subscribe', 'result', `subscribed, got value: ${typed ? JSON.stringify(typed.value) : '(undecoded)'} raw: ${result.notify.payload}`);
+          } else {
+            dlog.log('range-subscribe', 'result', 'subscribed, but no value pushed before timeout');
+          }
         }
       } catch (err) {
-        if (dlog) dlog.log('range-probe', 'plain read threw', err.message);
-      }
-      for (const configId of configIds) {
-        if (!transport) return;
-        try {
-          const withArg = await rpcCallWithArg(REACHABLE_RANGE_ADDR, encodeConfigIdArg(configId), (payload) => ({ payload }), `configId="${configId}"`);
-          if (dlog) {
-            dlog.log('range-probe', `with ConfigId="${configId}" argument`, withArg && withArg.declined ? `declined: ${withArg.statusName}` : withArg && withArg.payload ? withArg.payload : JSON.stringify(withArg));
-          }
-        } catch (err) {
-          if (dlog) dlog.log('range-probe', `with ConfigId="${configId}" argument threw`, err.message);
-        }
+        if (dlog) dlog.log('range-subscribe', 'threw', err.message);
       }
     }
 

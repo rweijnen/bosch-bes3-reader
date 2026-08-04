@@ -109,6 +109,42 @@ function buildReadRequestFrame(addr, seq) {
   return buildFrame(addr, MessageType.READ, seq);
 }
 
+// Subscribe/unsubscribe requests (MessageType.SUBSCRIBE/UNSUBSCRIBE) — same frame shape as a
+// plain read (no payload), confirmed via Flow's own MessageDecodingKt (com.bosch.ebike.messagebus.
+// message.MessageDecodingKt) treating SUBSCRIBE/UNSUBSCRIBE identically to READ/WRITE for framing
+// purposes, differing only in the type nibble. Needed for the handful of *SubscribableDataPoint
+// addresses (confirmed via decompile of com.bosch.ebike.messagebus.MessageBus — 443 across every
+// component) that decline a plain read outright (DriveUnit.REACHABLE_RANGE, addr 6231, confirmed
+// on real hardware: DENIED for every plain-read attempt, with or without an argument) because
+// Flow itself only ever reads them via .subscribe(), never a one-shot get.
+function buildSubscribeRequestFrame(addr, seq) {
+  return buildFrame(addr, MessageType.SUBSCRIBE, seq);
+}
+function buildUnsubscribeRequestFrame(addr, seq) {
+  return buildFrame(addr, MessageType.UNSUBSCRIBE, seq);
+}
+
+// Parses an unsolicited NotifyMessage/push frame — the shape a subscription's actual value
+// updates arrive as, confirmed via Flow's own MessageDecodingKt.decodeToMessage: when the
+// *source* address's MSB is set (as opposed to the destination address MSB, which flags an
+// implicit-success plain response), the frame carries no destination address, type/sequence,
+// or status byte at all — just the 2-byte source address followed directly by the payload.
+// Returns null if this isn't a NotifyMessage shape (including any normal request/response frame,
+// which parseReadResponseFrame already rejects for the same reason it accepts this one).
+function parseNotifyMessage(bytes) {
+  if (!bytes || bytes.length < 2 || bytes[0] !== BLOCK_OP) return null;
+  const len = bytes[1];
+  const body = bytes.slice(2, 2 + len);
+  if (body.length < 2) return null;
+  const srcHigh = body[0];
+  const srcLow = body[1];
+  if (!(srcHigh & 0x80)) return null; // not a NotifyMessage — source MSB must be set
+  return {
+    addr: ((srcHigh & 0x7f) << 8) | srcLow,
+    payload: body.slice(2),
+  };
+}
+
 // Plain write (MessageType.WRITE) — a WritableDataPoint, confirmed via
 // Flow's MessageEncodingKt.encodeMessage to use the identical frame shape
 // as a read/RPC, just with type=WRITE and the new value as payload. Used
@@ -592,6 +628,9 @@ const protocolExports = {
   encodeVarint,
   buildFrame,
   buildReadRequestFrame,
+  buildSubscribeRequestFrame,
+  buildUnsubscribeRequestFrame,
+  parseNotifyMessage,
   buildWriteFrame,
   encodeEnumArg,
   encodeBoolArg,

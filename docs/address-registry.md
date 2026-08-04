@@ -4,7 +4,7 @@ Generated from `src/address-registry.json` (registryVersion 1.0.0) — do not ed
 
 License: **CC-BY-4.0** — attribution required (Bosch BES3 address registry — github.com/rweijnen/bosch-bes3-reader). See `LICENSE-DATA`.
 
-Total: 895 addresses across 10 components. 141 confirmed against real captured data; 377 have a confirmed decode kind.
+Total: 895 addresses across 10 components. 142 confirmed against real captured data; 377 have a confirmed decode kind.
 
 ## Contents
 
@@ -486,7 +486,7 @@ Total: 895 addresses across 10 components. 141 confirmed against real captured d
 | 0x1854 | `FRONT_ANTI_LOCK_BRAKE_SYSTEM_ASSEMBLED` | Front ABS Assembled | bool | R |  |  |
 | 0x1855 | `BIKE_CATEGORY` | Bike Category | enum | R |  |  |
 | 0x1856 | `ENERGY_RESERVE` | Currently operating in energy-reserve (low battery protection) mode | bool | R |  | Flow decompile |
-| 0x1857 | `REACHABLE_RANGE` | Reachable Range (per mode, km) | uint32List | R |  |  |
+| 0x1857 | `REACHABLE_RANGE` | Reachable Range (per mode, km) | uint32List | R | ✓ | Flow decompile (real device read confirmed) + real capture (declined) |
 | 0x1858 | `SPEED_BIKE_SIGNAL_LAMP_REQUIRED` | Speed Bike Signal Lamp Required | unknown | R |  |  |
 | 0x185a | `RIDER_CADENCE` | Rider pedal cadence | uint | R |  | Flow decompile |
 | 0x185b | `RIDER_POWER` | Rider (pedal) power | uint | R | ✓ | Flow decompile |
