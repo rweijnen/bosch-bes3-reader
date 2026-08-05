@@ -4,7 +4,7 @@ Generated from `src/address-registry.json` (registryVersion 1.0.0) — do not ed
 
 License: **CC-BY-4.0** — attribution required (Bosch BES3 address registry — github.com/rweijnen/bosch-bes3-reader). See `LICENSE-DATA`.
 
-Total: 895 addresses across 10 components. 142 confirmed against real captured data; 377 have a confirmed decode kind.
+Total: 895 addresses across 10 components. 145 confirmed against real captured data; 378 have a confirmed decode kind.
 
 ## Contents
 
@@ -408,9 +408,9 @@ Total: 895 addresses across 10 components. 142 confirmed against real captured d
 | 0x1806 | `SOFTWARE_VERSION` | SW Version | string | R |  |  |
 | 0x1807 | `BOOTLOADER_SOFTWARE_VERSION` | FBL Version | string | R |  |  |
 | 0x1808 | `BIKE_SPEED` | Bike Speed | unknown | R |  |  |
-| 0x1809 | `ASSIST_MODE` | Assist Mode | unknown | R |  |  |
-| 0x180a | `ASSIST_MODE_UP` | Trigger: switch to next-higher assist mode | bool | R |  | Flow decompile |
-| 0x180b | `ASSIST_MODE_DOWN` | Trigger: switch to next-lower assist mode | bool | R |  | Flow decompile |
+| 0x1809 | `ASSIST_MODE` | Assist Mode | uint | R | ✓ | Flow decompile + real hardware (USB and BLE) |
+| 0x180a | `ASSIST_MODE_UP` | Trigger: switch to next-higher assist mode | bool | R | ✓ | Flow decompile + real hardware (USB and BLE) |
+| 0x180b | `ASSIST_MODE_DOWN` | Trigger: switch to next-lower assist mode | bool | R | ✓ | Flow decompile + real hardware (USB and BLE) |
 | 0x180c | `ASSIST_MODE_SHORT_NAMES` | Assist Mode Short Names | unknown | R |  |  |
 | 0x180d | `ASSIST_MODE_LONG_NAMES` | Assist Mode Long Names | unknown | R |  |  |
 | 0x180e | `ASSIST_MODE_COLORS` | Assist Mode Colors | assistModeColors | R | ✓ | Flow decompile (ArrayOf5Uint32) + real capture |

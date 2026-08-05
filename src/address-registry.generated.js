@@ -4915,9 +4915,9 @@ const ADDRESS_REGISTRY = {
       "readable": true,
       "writable": false,
       "kind": "bool",
-      "source": "Flow decompile",
-      "confirmed": false,
-      "notes": "Flow decompile, confidence: medium — Write-trigger address, no dedicated message class found",
+      "source": "Flow decompile + real hardware (USB and BLE)",
+      "confirmed": true,
+      "notes": "CallableDataPoint<Boolean, Unit> in Flow's own type system — an RPC (message type 4), not a plain write. This is the LED remote's own up-button mechanism. Confirmed DENIED (status 6, well-formed RPC_RESPONSE) from a non-Flow client on BOTH USB and BLE — not transport-specific. Same result as the direct ASSIST_MODE write (see that entry), so the gate applies uniformly across write-style (WRITE) and call-style (RPC) mechanisms alike, not just one message type.",
       "dependsOn": null
     },
     {
@@ -4928,9 +4928,9 @@ const ADDRESS_REGISTRY = {
       "readable": true,
       "writable": false,
       "kind": "bool",
-      "source": "Flow decompile",
-      "confirmed": false,
-      "notes": "Flow decompile, confidence: medium — Write-trigger address, no dedicated message class found",
+      "source": "Flow decompile + real hardware (USB and BLE)",
+      "confirmed": true,
+      "notes": "CallableDataPoint<Boolean, Unit> in Flow's own type system — an RPC (message type 4), not a plain write. This is the LED remote's own down-button mechanism. Confirmed DENIED (status 6, well-formed RPC_RESPONSE) from a non-Flow client on BOTH USB and BLE — not transport-specific. Same result as ASSIST_MODE_UP and the direct ASSIST_MODE write.",
       "dependsOn": null
     },
     {
@@ -6292,10 +6292,10 @@ const ADDRESS_REGISTRY = {
       "label": "Assist Mode",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
-      "notes": "",
+      "kind": "uint",
+      "source": "Flow decompile + real hardware (USB and BLE)",
+      "confirmed": true,
+      "notes": "Declared ReadableWritableSubscribableDataPoint<UByte> in Flow's own type system, but a real WRITE from a non-Flow client is explicitly DENIED (status 6, well-formed WRITE_RESPONSE, not a timeout) — confirmed on real hardware over BOTH USB and BLE (companion bosch-assist-poc PoC over BLE; this tool's WRITE EXPERIMENTS button over USB, same result). Not transport-specific: whatever gates this is applied consistently regardless of external transport. See ASSIST_MODE_UP/DOWN for the RPC-mechanism equivalent, also DENIED both ways.",
       "dependsOn": null,
       "subscribable": true
     },
