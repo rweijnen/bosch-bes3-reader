@@ -4,18 +4,28 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-07-31.4';
+  const APP_VERSION = '2026-08-05.15-assist-mode-usb-experiments';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
   // instead of silently mis-rendering when a field it expects (like rawValue) is missing.
   const REPORT_FORMAT_VERSION = 1;
 
-  const { ALL_ADDRESSES } = window.Bes3Addresses;
+  // Single named-address lookup against the registry — replaces the old
+  // `ALL_ADDRESSES.DriveUnit.find((e) => e.name === X).addr` pattern for the RPC/write-experiment
+  // address constants below, now that addresses.js is retired.
+  function addrOf(component, name) {
+    const entry = window.Bes3AddressRegistry.ADDRESS_REGISTRY.addresses.find(
+      (e) => e.component === component && e.name === name
+    );
+    return entry ? entry.address : undefined;
+  }
+
   const {
     MessageType, buildReadRequestFrame, buildWriteFrame, encodeEnumArg,
     encodeBoolArg, encodeStartAssistModeOemArg,
     buildRpcCallFrame, buildRpcCallFrameWithArg,
+    buildSubscribeRequestFrame, buildUnsubscribeRequestFrame, parseNotifyMessage,
     encodeConfigIdArg, decodeAssistModeStatistics, decodeConfigIdList, decodeStringList,
     decodeUdamParams, decodeBoolResponse, decodeUdamLimits, encodeSetUdamValuesParametersArg,
     parseReadResponseFrame, decodeValue,
@@ -521,29 +531,29 @@
   // bike). ASSIST_MODE_PALETTE now only serves as a fallback for whichever
   // slots ASSIST_MODE_COLORS doesn't cover, and for generic position labels
   // when the name reads don't line up.
-  const ASSIST_MODE_STATS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'GET_ASSIST_MODE_STATISTICS') || {}).addr;
-  const ACTIVE_ASSIST_MODES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ACTIVE_ASSIST_MODES') || {}).addr;
+  const ASSIST_MODE_STATS_ADDR = addrOf('DriveUnit', 'GET_ASSIST_MODE_STATISTICS');
+  const ACTIVE_ASSIST_MODES_ADDR = addrOf('DriveUnit', 'ACTIVE_ASSIST_MODES');
   // Real bike-reported mode names — NOT the per-mode GET_ASSIST_MODE_INFORMATION
   // RPC (tried earlier; its nameShort/nameLong don't match what Flow displays
   // and Flow doesn't use it for this). Flow's actual source is these two bulk
   // repeated-string data points, one entry per active mode in the same order
   // as ACTIVE_ASSIST_MODES — confirmed from Flow's decompiled source
   // (AssistModeShortNames/AssistModeLongNames, both `repeated string value=1`).
-  const ASSIST_MODE_SHORT_NAMES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_SHORT_NAMES') || {}).addr;
-  const ASSIST_MODE_LONG_NAMES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_LONG_NAMES') || {}).addr;
+  const ASSIST_MODE_SHORT_NAMES_ADDR = addrOf('DriveUnit', 'ASSIST_MODE_SHORT_NAMES');
+  const ASSIST_MODE_LONG_NAMES_ADDR = addrOf('DriveUnit', 'ASSIST_MODE_LONG_NAMES');
   // Real bike-reported per-mode colors — see messageTypes.js's FIELD_TYPES[6158] comment for
   // how the byte layout was inferred and verified (AUTO decoded to purple, matching what the
   // rider's own Flow app/head unit shows). Falls back to ASSIST_MODE_PALETTE below when this
   // read fails or the entry count doesn't line up, same fallback strategy as the name reads above.
-  const ASSIST_MODE_COLORS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'ASSIST_MODE_COLORS') || {}).addr;
+  const ASSIST_MODE_COLORS_ADDR = addrOf('DriveUnit', 'ASSIST_MODE_COLORS');
   // Real, live, bike-computed per-mode range estimate — confirmed via Flow's own decompile
   // (DriveUnitAddresses.REACHABLE_RANGE, addr 6231) to be the actual source behind Flow's
   // "range estimate" screen, not a client-side formula. Same alignment/fallback strategy as
   // the name/color reads above.
-  const REACHABLE_RANGE_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'REACHABLE_RANGE') || {}).addr;
+  const REACHABLE_RANGE_ADDR = addrOf('DriveUnit', 'REACHABLE_RANGE');
   // Per-mode assist parameters (assist level / max speed / acceleration
   // response) — same ConfigId argument as the stats RPC above. Read-only.
-  const UDAM_VALUES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'READ_UDAM_VALUES') || {}).addr;
+  const UDAM_VALUES_ADDR = addrOf('DriveUnit', 'READ_UDAM_VALUES');
   // RESET_UDAM_VALUES(ConfigId) -> bool — the ONE write this tool performs,
   // added deliberately and only after real-world confirmation (2026-07-19/20
   // hardware incident) that: (a) it's a plain consumer-tier RPC the official
@@ -555,11 +565,11 @@
   // level/max-speed/acceleration-response to Bosch factory defaults. It
   // does not touch tuning, region/speed-class, or any other mode. See
   // RESEARCH.md (private repo) for the full incident writeup and trace.
-  const RESET_UDAM_VALUES_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'RESET_UDAM_VALUES') || {}).addr;
+  const RESET_UDAM_VALUES_ADDR = addrOf('DriveUnit', 'RESET_UDAM_VALUES');
   // Per-mode min/max bounds for the 3 editable UDAM fields — read-only,
   // used to keep the change UI from ever offering a value the bike itself
   // wouldn't already permit for this mode.
-  const UDAM_LIMITS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'READ_UDAM_LIMITS') || {}).addr;
+  const UDAM_LIMITS_ADDR = addrOf('DriveUnit', 'READ_UDAM_LIMITS');
   // SET_UDAM_VALUES_PARAMETERS(ConfigId, UdamParams) -> bool — the second
   // write this tool performs on UDAM data (alongside RESET_UDAM_VALUES).
   // Mirrors Flow's own "customize this mode" screen: a plain consumer-tier
@@ -569,7 +579,7 @@
   // confirmed unit/factor (assistLevel, accelerationResponse,
   // maximumBikeSpeed) are editable; the rest are carried through unchanged
   // from the mode's current values.
-  const SET_UDAM_VALUES_PARAMETERS_ADDR = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'SET_UDAM_VALUES_PARAMETERS') || {}).addr;
+  const SET_UDAM_VALUES_PARAMETERS_ADDR = addrOf('DriveUnit', 'SET_UDAM_VALUES_PARAMETERS');
   const ASSIST_MODE_PALETTE = ['#8a8f98', '#4caf50', '#2196f3', '#ff9800', '#e53935', '#9c27b0'];
   let assistModeStats = []; // [{ index, configId, label, status, distance, consumedEnergy, detail, color, udam, resetState }]
 
@@ -621,6 +631,64 @@
 
   async function rpcCallWithConfigId(addr, configId, decodeFn) {
     return rpcCallWithArg(addr, encodeConfigIdArg(configId), decodeFn, `configId="${configId}"`);
+  }
+
+  // Subscribes to a *SubscribableDataPoint address, waits briefly for the bike's pushed
+  // NotifyMessage carrying its actual value, then always unsubscribes before returning —
+  // read-only in effect (it doesn't change any bike setting, only registers momentary interest
+  // in push updates), but a genuinely different MCSP operation than a plain read. Exists because
+  // a real capture showed DriveUnit.REACHABLE_RANGE (addr 6231) declining every plain-read
+  // attempt with DENIED, and tracing Flow's own decompiled per-mode range display back to its
+  // source found it uses exactly this — driveUnit.getReachableRange().subscribe(), never a
+  // one-shot read (see the address-registry.json entry for the full trace). Confirmed via
+  // decompile of com.bosch.ebike.messagebus.MessageBus that 439 other addresses across every
+  // component are declared the same *SubscribableDataPoint way — this is the first one attempted
+  // for real, not a generic mechanism proven to work everywhere yet.
+  async function subscribeOnce(addr, waitForNotifyMs = 2000) {
+    transportBusy = true;
+    const dlog = window.Bes3DebugLog;
+    try {
+      for (let i = 0; i < 4; i++) {
+        if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
+      }
+      const subSeq = nextSeq();
+      const subFrame = buildSubscribeRequestFrame(addr, subSeq);
+      if (dlog) dlog.log('range-subscribe', `-> SUBSCRIBE addr 0x${addr.toString(16)} seq ${subSeq}`, subFrame);
+      await transport.doMcspWrite(subFrame);
+
+      let ack = null;
+      const ackDeadline = Date.now() + 500;
+      while (Date.now() < ackDeadline) {
+        const raw = await transport.readNextFrame(4, 4);
+        if (!raw) continue;
+        const parsed = parseReadResponseFrame(raw);
+        if (parsed && parsed.type === MessageType.SUBSCRIBE_RESPONSE && parsed.seq === subSeq) { ack = parsed; break; }
+      }
+      if (dlog) dlog.log('range-subscribe', '<- SUBSCRIBE_RESPONSE', ack ? `ok=${ack.ok} status=${ack.statusName}` : 'no response within 500ms');
+      if (!ack || !ack.ok) return { subscribed: false, ackStatus: ack ? ack.statusName : 'timeout' };
+
+      let notify = null;
+      const notifyDeadline = Date.now() + waitForNotifyMs;
+      while (Date.now() < notifyDeadline) {
+        const raw = await transport.readNextFrame(4, 4);
+        if (!raw) continue;
+        const n = parseNotifyMessage(raw);
+        if (n && n.addr === addr) { notify = n; break; }
+      }
+      if (dlog) dlog.log('range-subscribe', notify ? '<- NotifyMessage received' : `<- no NotifyMessage within ${waitForNotifyMs}ms`, notify ? notify.payload : undefined);
+      return { subscribed: true, notify };
+    } finally {
+      try {
+        const unsubSeq = nextSeq();
+        const unsubFrame = buildUnsubscribeRequestFrame(addr, unsubSeq);
+        if (dlog) dlog.log('range-subscribe', `-> UNSUBSCRIBE addr 0x${addr.toString(16)} seq ${unsubSeq}`, unsubFrame);
+        await transport.doMcspWrite(unsubFrame);
+        for (let i = 0; i < 4; i++) {
+          if (!(await transport.readNextFrame(2, 3))) break; // best-effort drain of the ack, don't block on it
+        }
+      } catch (_) { /* best-effort cleanup only */ }
+      transportBusy = false;
+    }
   }
 
   async function readAllAssistModeStats() {
@@ -696,20 +764,27 @@
         }
       } catch (_) { /* leave the design-palette colors already assigned above */ }
     }
+    // Diagnostic only — does not feed the dashboard. Confirmed on real hardware that a plain
+    // read of DriveUnit.REACHABLE_RANGE (addr 6231) always declines with DENIED, with or
+    // without a ConfigId argument — and confirmed via decompile that Flow itself only ever
+    // reads this address via .subscribe(), never a one-shot get (see this address's registry
+    // notes for the full trace). Trying the real SUBSCRIBE mechanism here for the first time.
     if (REACHABLE_RANGE_ADDR) {
       try {
-        const rangeRes = await readOne(REACHABLE_RANGE_ADDR);
-        if (rangeRes && !rangeRes.declined && rangeRes.payload) {
-          const typed = decodeTyped(REACHABLE_RANGE_ADDR, rangeRes.payload);
-          const ranges = typed ? typed.value : [];
-          if (dlog) dlog.log('assist-rpc', 'REACHABLE_RANGE decoded', JSON.stringify(ranges));
-          if (ranges.length === assistModeStats.length) {
-            ranges.forEach((km, i) => { assistModeStats[i].reachableRangeKm = km; });
-          } else if (ranges.length === assistModeStats.length - 1) {
-            ranges.forEach((km, i) => { assistModeStats[i + 1].reachableRangeKm = km; });
+        const result = await subscribeOnce(REACHABLE_RANGE_ADDR);
+        if (dlog) {
+          if (!result.subscribed) {
+            dlog.log('range-subscribe', 'result', `subscribe declined: ${result.ackStatus}`);
+          } else if (result.notify) {
+            const typed = decodeTyped(REACHABLE_RANGE_ADDR, result.notify.payload);
+            dlog.log('range-subscribe', 'result', `subscribed, got value: ${typed ? JSON.stringify(typed.value) : '(undecoded)'} raw: ${result.notify.payload}`);
+          } else {
+            dlog.log('range-subscribe', 'result', 'subscribed, but no value pushed before timeout');
           }
         }
-      } catch (_) { /* leave range unset — histogram just omits it for this mode */ }
+      } catch (err) {
+        if (dlog) dlog.log('range-subscribe', 'threw', err.message);
+      }
     }
 
     for (const entry of assistModeStats) {
@@ -738,6 +813,27 @@
           const l = await rpcCallWithConfigId(UDAM_LIMITS_ADDR, entry.configId, decodeUdamLimits);
           if (l && !l.declined) entry.udamLimits = l;
         } catch (_) { /* leave entry.udamLimits unset — change UI stays hidden for this mode */ }
+      }
+    }
+
+    // Range estimate, computed client-side — NOT read from the bike. An earlier version of
+    // this tool read DriveUnit.REACHABLE_RANGE (addr 6231) believing it to be the bike-computed
+    // value behind Flow's own "range estimate" screen; that address consistently declined on
+    // real hardware, and a closer look at Flow's decompile found no adapter/view-model anywhere
+    // that actually reads it — nothing wires it to any screen. Since Flow shows a range estimate
+    // even offline (no bike connected), it can't be a live device value anyway; it has to be
+    // computed from data already on the phone. We have the same ingredients: each mode's
+    // lifetime distance/consumedEnergy (from GET_ASSIST_MODE_STATISTICS, just read above) gives
+    // a Wh/km efficiency, and REMAINING_ENERGY (already read as part of the battery card) gives
+    // what's left — divide one by the other. Verified against a real capture: ECO mode decoded
+    // to distance=18225 m, consumedEnergy=58 Wh (3.18 Wh/km); at 532.3 Wh remaining that's a
+    // plausible ~167 km estimate.
+    const remainingEnergyWh = valueOf('Battery', 'REMAINING_ENERGY');
+    if (remainingEnergyWh != null) {
+      for (const entry of assistModeStats) {
+        if (entry.status !== 'ok' || !entry.distance || !entry.consumedEnergy) continue;
+        const whPerKm = entry.consumedEnergy / (entry.distance / 1000);
+        if (whPerKm > 0) entry.reachableRangeKm = Math.round(remainingEnergyWh / whPerKm);
       }
     }
   }
@@ -964,17 +1060,80 @@
     container.appendChild(v);
   }
 
+  // Single-value formatters, named from a `ui.formatter` string in the address registry — the
+  // registry can't hold real functions (it's JSON), so it holds a lookup key into this table
+  // instead. Only for genuine unit/format conversions; anything that needs to manipulate real DOM
+  // elements (photos, buttons) stays dedicated code, not a formatter.
+  const UI_FORMATTERS = {
+    metersToKm: (value) => (value == null ? '—' : `${(value / 1000).toFixed(1)} km`),
+    secondsToHours: (value) => (value == null ? '—' : `${(value / 3600).toFixed(1)} h`),
+    // `values` is [lowerLimitDisplay, upperLimitDisplay] (formatted strings, e.g. "20 %") - see
+    // the combinesWith branch in renderCard(), which passes displayOf() output here, not raw
+    // values, since this formatter doesn't do math - it just joins two already-formatted values.
+    socRange: (values) => values.join(' – '),
+  };
+
+  // Flattens the registry's per-component arrays into one list with `component` attached to each
+  // entry, same shape the old ALL_ADDRESSES-based code used to build ad hoc.
+  function collectRegistryEntries() {
+    return window.Bes3AddressRegistry.ADDRESS_REGISTRY.addresses;
+  }
+
+  // Generic renderer for a card's plain kv-grid rows, driven entirely by `ui.card`/`ui.row`
+  // entries in the address registry — replaces hand-written kvRow(...) call chains. Entries with
+  // a `ui.card` but no `ui.row` (widget-fed addresses: photos, headlines, SoC bar, etc.) are
+  // deliberately skipped here; dedicated code elsewhere still renders those.
+  function renderCard(cardId, container) {
+    const entries = collectRegistryEntries()
+      .filter((e) => e.ui && e.ui.card === cardId && e.ui.row !== undefined)
+      .sort((a, b) => a.ui.row - b.ui.row);
+
+    const seenRows = new Map();
+    for (const e of entries) {
+      const key = e.ui.row;
+      if (seenRows.has(key)) {
+        console.warn(`renderCard('${cardId}'): row ${key} used by both ${seenRows.get(key)} and ${e.component}.${e.name} - one will be hidden by the other`);
+      }
+      seenRows.set(key, `${e.component}.${e.name}`);
+    }
+
+    for (const e of entries) {
+      const label = e.ui.label || e.label;
+      let displayValue;
+      if (e.ui.formatter) {
+        if (e.ui.combinesWith && e.ui.combinesWith.length) {
+          // Multi-address rows join already-formatted display strings (e.g. "20 %"), not raw
+          // numbers - there's no unit math to do here, just combining values that are each
+          // already correctly formatted on their own.
+          const values = [displayOf(e.component, e.name), ...e.ui.combinesWith.map((n) => displayOf(e.component, n))];
+          displayValue = UI_FORMATTERS[e.ui.formatter](values);
+        } else {
+          // Single-value formatters (unit conversions like meters->km) need the raw number to do
+          // math on, not a pre-formatted string.
+          displayValue = UI_FORMATTERS[e.ui.formatter](valueOf(e.component, e.name));
+        }
+      } else {
+        displayValue = displayOf(e.component, e.name);
+      }
+      const technical = e.ui.technical ? technicalOf(e.component, e.name) : undefined;
+      kvRow(container, label, displayValue, !!e.ui.writable, technical);
+    }
+  }
+
   // Themed replacement for window.alert()/window.confirm() — native browser dialogs can't be
   // styled and look out of place against this app's own dark/light theme. Both resolve a Promise
   // instead of blocking synchronously, so every call site awaits them from an async function/
   // handler instead of relying on alert()/confirm()'s synchronous return value.
   let appDialogResolve = null;
+  // Value Escape resolves with — the Cancel-equivalent (first non-primary) button if there is
+  // one, otherwise the dialog's only button (a plain alert just gets dismissed).
+  let appDialogEscapeValue = null;
   function appDialog({ title, message, buttons }) {
     return new Promise((resolve) => {
-      // A dialog opened while one is already open would leak the previous resolve() — clicking
-      // Escape/backdrop isn't wired up here, but a stray double-open still shouldn't hang a caller.
+      // A dialog opened while one is already open would leak the previous resolve().
       if (appDialogResolve) appDialogResolve(false);
       appDialogResolve = resolve;
+      appDialogEscapeValue = (buttons.find((b) => !b.primary) || buttons[0]).value;
       els.appDialogTitle.textContent = title;
       els.appDialogMessage.textContent = message;
       els.appDialogActions.innerHTML = '';
@@ -1089,6 +1248,20 @@
         'firmware returned an explicit DENIED. The result (including a re-read afterward) is only ' +
         'logged, not assumed.',
     },
+    {
+      id: 'assistMode',
+      addrName: 'ASSIST_MODE',
+      label: 'Assist mode (6153)',
+      isRealWrite: true,
+      buildPayload: () => encodeEnumArg(1),
+      confirmText: () =>
+        'Attempt to write ASSIST_MODE (addr 6153) to index 1, over USB?\n\n' +
+        'Already tested over BLE from a non-Flow client (a companion React Native PoC): the bike ' +
+        'returned an explicit DENIED, not a timeout. This tests whether USB — a different ' +
+        'transport with a different firmware host address — gets the same result. The result ' +
+        '(including a re-read afterward) is only logged, not assumed. If it actually changes the ' +
+        'bike\'s live assist mode, watch the display/remote.',
+    },
   ];
   const experimentState = {}; // id -> null | 'pending' | 'done' | 'failed' ("done" = got a response, not "it worked")
 
@@ -1157,7 +1330,7 @@
 
   async function attemptWriteExperiment(id) {
     const exp = WRITE_EXPERIMENTS.find((e) => e.id === id);
-    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === exp.addrName) || {}).addr;
+    const addr = addrOf('DriveUnit', exp.addrName);
     if (!addr || !transport) {
       await appAlert('Not connected to the bike anymore — reconnect (Read again) and try again.');
       return;
@@ -1182,7 +1355,7 @@
   let startModeTryAllResults = null; // null | 'running' | [{ordinal, name, label, ok, statusName, stuck}]
 
   async function attemptTryAllStartModeValues() {
-    const addr = (ALL_ADDRESSES.DriveUnit.find((e) => e.name === 'START_ASSIST_MODE_CONFIGURATION') || {}).addr;
+    const addr = addrOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION');
     if (!addr || !transport) {
       await appAlert('Not connected to the bike anymore — reconnect (Read again) and try again.');
       return;
@@ -1214,8 +1387,7 @@
   function renderWriteExperiments() {
     els.writeExperiments.innerHTML = '';
     for (const exp of WRITE_EXPERIMENTS) {
-      const addrEntry = ALL_ADDRESSES.DriveUnit.find((e) => e.name === exp.addrName);
-      if (!addrEntry) continue;
+      if (addrOf('DriveUnit', exp.addrName) === undefined) continue;
       const current = valueOf('DriveUnit', exp.addrName);
       if (current == null) continue; // not read yet / declined — nothing to show or act on
 
@@ -1262,6 +1434,81 @@
       row.append(label, value, btn);
       els.writeExperiments.appendChild(row);
       if (exp.id === 'startMode') renderStartModeTryAllBlock();
+    }
+    renderRpcExperiments();
+  }
+
+  // ASSIST_MODE_UP/ASSIST_MODE_DOWN are CallableDataPoint<Boolean, Unit> per Flow's own type
+  // declarations (confirmed via decompile) — the LED remote's own up/down mechanism, an RPC call,
+  // not a plain write. Already tested over BLE from a non-Flow client (companion bosch-assist-poc
+  // React Native PoC): both consistently DENIED, same as the direct ASSIST_MODE write above. This
+  // tests whether USB (a different transport, different firmware host address) gets the same
+  // result — appended to the same WRITE_EXPERIMENTS div since rpcCallWithArg (not writeAndReadBack)
+  // is the right primitive for an RPC, not a WRITE.
+  const RPC_EXPERIMENTS = [
+    { id: 'assistModeUp', addrName: 'ASSIST_MODE_UP', label: 'Assist mode up (6154, RPC)' },
+    { id: 'assistModeDown', addrName: 'ASSIST_MODE_DOWN', label: 'Assist mode down (6155, RPC)' },
+  ];
+  const rpcExperimentState = {}; // id -> null | 'pending' | 'done' | 'failed'
+  const rpcExperimentResult = {}; // id -> last statusName ('SUCCESS' / 'DENIED' / 'timeout' / etc.)
+
+  async function attemptRpcExperiment(id) {
+    const exp = RPC_EXPERIMENTS.find((e) => e.id === id);
+    const addr = addrOf('DriveUnit', exp.addrName);
+    if (!addr || !transport) {
+      await appAlert('Not connected to the bike anymore — reconnect (Read again) and try again.');
+      return;
+    }
+    rpcExperimentState[id] = 'pending';
+    renderWriteExperiments();
+    const result = await rpcCallWithArg(addr, encodeBoolArg(true), () => true, `usb-test-${id}`);
+    let statusName;
+    let ok;
+    if (result === null) { statusName = 'timeout'; ok = false; }
+    else if (result && result.declined) { statusName = result.statusName; ok = false; }
+    else { statusName = 'SUCCESS'; ok = true; }
+    rpcExperimentResult[id] = statusName;
+    rpcExperimentState[id] = ok ? 'done' : 'failed';
+    renderDashboard();
+  }
+
+  function renderRpcExperiments() {
+    for (const exp of RPC_EXPERIMENTS) {
+      if (addrOf('DriveUnit', exp.addrName) === undefined) continue;
+
+      const row = document.createElement('div');
+      row.className = 'write-experiment-row write-experiment-real';
+
+      const label = document.createElement('span');
+      label.className = 'write-experiment-label';
+      label.textContent = exp.label;
+
+      const value = document.createElement('span');
+      value.className = 'write-experiment-value';
+      value.textContent = rpcExperimentResult[exp.id] || '—';
+
+      const state = rpcExperimentState[exp.id];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'histogram-reset-btn';
+      if (state === 'pending') { btn.textContent = 'Sending…'; btn.disabled = true; }
+      else if (!sweepFullyLoaded) { btn.textContent = 'Loading…'; btn.disabled = true; }
+      else if (state === 'done') { btn.textContent = 'Sent ✓'; }
+      else if (state === 'failed') { btn.textContent = 'Denied/failed — retry?'; }
+      else { btn.textContent = 'Trigger (RPC)'; }
+      btn.addEventListener('click', async () => {
+        const addr = addrOf('DriveUnit', exp.addrName);
+        if (await appConfirm(
+          `Call ${exp.addrName} (addr ${addr}) as an RPC, over USB?\n\n` +
+          'This is the LED remote\'s own up/down mechanism (CallableDataPoint<Boolean, Unit>), not ' +
+          'a plain write. Already tested over BLE from a non-Flow client: consistently DENIED. ' +
+          'This tests whether USB gets the same result. If it actually changes the bike\'s live ' +
+          'assist mode, watch the display/remote — the result is only logged, not assumed.'
+        )) attemptRpcExperiment(exp.id);
+      });
+
+      row.append(label, value, btn);
+      els.writeExperiments.appendChild(row);
     }
   }
 
@@ -1339,19 +1586,7 @@
     els.batteryCertBtn.style.display = cert ? '' : 'none';
 
     els.batteryDetailGrid.innerHTML = '';
-    kvRow(els.batteryDetailGrid, 'Product code', batteryProductCode);
-    kvRow(els.batteryDetailGrid, 'Delivered Ah (lifetime)', displayOf('Battery', 'DELIVERED_AH_OVER_LIFETIME'));
-    kvRow(els.batteryDetailGrid, 'Delivered Wh (lifetime)', displayOf('Battery', 'DELIVERED_WH_OVER_LIFETIME'));
-    kvRow(els.batteryDetailGrid, 'Thermal protection', displayOf('Battery', 'DURATION_IN_THERMAL_PROTECTION'));
-    kvRow(els.batteryDetailGrid, 'Present cell voltage', displayOf('Battery', 'PRESENT_CELL_VOLTAGE'));
-    kvRow(els.batteryDetailGrid, 'Present FET temp', displayOf('Battery', 'PRESENT_FET_TEMPERATURE'));
-    kvRow(els.batteryDetailGrid, 'Min pack temp', displayOf('Battery', 'MINIMUM_PACK_TEMPERATURE'));
-    kvRow(els.batteryDetailGrid, 'Max pack temp', displayOf('Battery', 'MAXIMUM_PACK_TEMPERATURE'));
-    kvRow(els.batteryDetailGrid, 'Last end-of-charge V', displayOf('Battery', 'LAST_END_OF_CHARGE_VOLTAGE'));
-    kvRow(els.batteryDetailGrid, 'Max charging current', displayOf('Battery', 'MAXIMUM_CHARGING_CURRENT'));
-    kvRow(els.batteryDetailGrid, 'Self-discharge rate', displayOf('Battery', 'SELF_DISCHARGING_RATE'));
-    kvRow(els.batteryDetailGrid, 'SoC limits', `${displayOf('Battery', 'SO_C_LOWER_LIMIT')} – ${displayOf('Battery', 'SO_C_UPPER_LIMIT')}`, true);
-    kvRow(els.batteryDetailGrid, 'Deactivation', displayOf('Battery', 'COMPONENT_DEACTIVATION_PROOF'));
+    renderCard('battery', els.batteryDetailGrid);
 
     const driveUnitProductLine = displayOf('DriveUnit', 'PRODUCT_LINE', '');
     const driveUnitProductCode = displayOf('DriveUnit', 'PRODUCT_CODE', '');
@@ -1359,25 +1594,13 @@
     renderPartPhoto(els.driveUnitPhoto, 'DriveUnit', driveUnitProductCode);
 
     els.driveUnitGrid.innerHTML = '';
-    kvRow(els.driveUnitGrid, 'Product code', driveUnitProductCode);
-    kvRow(els.driveUnitGrid, 'Part number', displayOf('DriveUnit', 'PART_NUMBER'));
-    kvRow(els.driveUnitGrid, 'Hardware', displayOf('DriveUnit', 'HARDWARE_VERSION'));
-    kvRow(els.driveUnitGrid, 'Software', displayOf('DriveUnit', 'SOFTWARE_VERSION'));
-    kvRow(els.driveUnitGrid, 'Bootloader', displayOf('DriveUnit', 'BOOTLOADER_SOFTWARE_VERSION'));
-    kvRow(els.driveUnitGrid, 'Manufacturing date', displayOf('DriveUnit', 'MANUFACTURING_DATE'));
-    kvRow(els.driveUnitGrid, 'PCB temp', displayOf('DriveUnit', 'PRESENT_PCB_TEMPERATURE'));
+    renderCard('driveUnit', els.driveUnitGrid);
 
     els.drivetrainGrid.innerHTML = '';
-    kvRow(els.drivetrainGrid, 'Gearing', displayOf('DriveUnit', 'GEARING_SYSTEM'));
-    kvRow(els.drivetrainGrid, 'Max legal speed', displayOf('DriveUnit', 'MAXIMUM_LEGAL_BIKE_SPEED'));
-    kvRow(els.drivetrainGrid, 'Max assist speed', displayOf('DriveUnit', 'MAXIMUM_ASSISTANCE_SPEED'));
-    kvRow(els.drivetrainGrid, 'Wheel circ. (OEM)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_OEM'));
-    kvRow(els.drivetrainGrid, 'Wheel circ. (user)', displayOf('DriveUnit', 'REAR_WHEEL_CIRCUMFERENCE_USER'));
-    kvRow(els.drivetrainGrid, 'Max motor torque', displayOf('DriveUnit', 'MAXIMUM_AVAILABLE_MOTOR_TORQUE'));
-    kvRow(els.drivetrainGrid, 'Light', displayOf('DriveUnit', 'BIKE_LIGHT'), true);
-    kvRow(els.drivetrainGrid, 'Light available', displayOf('DriveUnit', 'BIKE_LIGHT_AVAILABLE'), true);
-    kvRow(els.drivetrainGrid, 'Region / speed class', displayOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'), false, technicalOf('DriveUnit', 'REGIO_SPEED_CONFIGURATION'));
-    kvRow(els.drivetrainGrid, 'Start mode', displayOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION'), false, technicalOf('DriveUnit', 'START_ASSIST_MODE_CONFIGURATION'));
+    renderCard('drivetrain', els.drivetrainGrid);
+    // Tuning detection / Distracted riding alert stay dedicated code (not part of renderCard) -
+    // both apply a semantic CSS class based on the decoded value's meaning, not just format text;
+    // their registry entries carry ui.card but no ui.row, so renderCard() already skips them.
     const tuning = findResult('DriveUnit', 'TUNING_DETECTION');
     const tv = tuning && tuning.status === 'ok' && tuning.typed ? tuning.typed.value : null;
     const tuningLabel =
@@ -1417,19 +1640,11 @@
     renderPartPhoto(els.remoteControlPhoto, 'RemoteControl', remoteControlProductCode);
 
     els.remoteGrid.innerHTML = '';
-    kvRow(els.remoteGrid, 'Product code', remoteControlProductCode);
-    // Rider-set nickname, read from the remote/head-unit side rather than the drive unit —
-    // distinct from PRODUCT_NAME (the fixed model name) and OEM_BIKE_ID (a manufacturer code).
-    kvRow(els.remoteGrid, 'Bike name', displayOf('RemoteControl', 'BIKE_NAME'));
-    // All of these are declared writable in Bosch's own RemoteControl adapter (see the ✎ marker
-    // and its tooltip / README) — read-only display here, no write UI built for any of them yet;
-    // none have had their write path traced/tested the way START_ASSIST_MODE_CONFIGURATION has.
-    kvRow(els.remoteGrid, 'Language', displayOf('RemoteControl', 'LANGUAGE'), true);
-    kvRow(els.remoteGrid, 'Units', displayOf('RemoteControl', 'UNITS'), true, technicalOf('RemoteControl', 'UNITS'));
-    kvRow(els.remoteGrid, 'Time format', displayOf('RemoteControl', 'TIME_FORMAT'), true, technicalOf('RemoteControl', 'TIME_FORMAT'));
-    kvRow(els.remoteGrid, 'Time (bike clock)', displayOf('RemoteControl', 'TIME'), true);
-    kvRow(els.remoteGrid, 'LED colors', displayOf('RemoteControl', 'LED_COLORS'), true);
-    kvRow(els.remoteGrid, 'Service due', displayOf('RemoteControl', 'SERVICE_DUE'), true);
+    // All of these (bar Product code/Bike name) are declared writable in Bosch's own
+    // RemoteControl adapter (see the ✎ marker and its tooltip / README) — read-only display here,
+    // no write UI built for any of them yet; none have had their write path traced/tested the way
+    // START_ASSIST_MODE_CONFIGURATION has.
+    renderCard('remote', els.remoteGrid);
 
     renderAssistModeHistogram();
   }
@@ -1562,6 +1777,23 @@
   els.certModalBackdrop.addEventListener('click', (e) => {
     if (e.target === els.certModalBackdrop) closeCertModal();
   });
+
+  // Escape closes whichever popup is open, same as clicking its backdrop (or, for the
+  // alert/confirm dialog, same as clicking Cancel/OK). Deliberately excludes the disclaimer
+  // modal (els.disclaimerModal) — that one requires an explicit acknowledgment click, not a
+  // dismiss.
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (els.assistModeModalBackdrop.style.display !== 'none') closeAssistModeModal();
+    else if (els.certModalBackdrop.style.display !== 'none') closeCertModal();
+    else if (els.appDialogBackdrop.style.display !== 'none' && appDialogResolve) {
+      els.appDialogBackdrop.style.display = 'none';
+      const resolve = appDialogResolve;
+      appDialogResolve = null;
+      resolve(appDialogEscapeValue);
+    }
+  });
+
   function openCertModal(title, cvc) {
     els.certModalTitle.textContent = title;
     els.certModalBody.innerHTML = '';
@@ -1989,14 +2221,22 @@
 
     startKeepAlive();
 
-    const all = [];
-    for (const [component, entries] of Object.entries(ALL_ADDRESSES)) {
-      for (const e of entries) {
-        if (e.readable === true) all.push({ component, ...e });
-      }
-    }
-    // Stable sort (spec-guaranteed in modern JS): priority entries keep their addresses.js
-    // order among themselves, same for the rest — no separate index/rank needed.
+    // Sourced from the address registry, not ALL_ADDRESSES — "priority" (read-first) is now
+    // derived from having a `ui` block (i.e. this address feeds a dashboard element) rather than
+    // a separately-maintained flag, so there's nothing to keep in sync with what's actually shown.
+    const registryAddresses = window.Bes3AddressRegistry.ADDRESS_REGISTRY.addresses;
+    const all = registryAddresses
+      .filter((e) => e.readable === true)
+      .map((e) => ({
+        component: e.component,
+        name: e.name,
+        addr: e.address,
+        readable: e.readable,
+        writable: e.writable,
+        priority: !!e.ui,
+      }));
+    // Stable sort (spec-guaranteed in modern JS): priority entries keep their registry order
+    // among themselves, same for the rest — no separate index/rank needed.
     const readable = all.slice().sort((a, b) => (b.priority ? 1 : 0) - (a.priority ? 1 : 0));
     const priorityCount = readable.filter((e) => e.priority).length;
 
@@ -2080,6 +2320,25 @@
         if (done < readable.length) {
           els.sweepProgress.style.display = 'flex';
         }
+        // Per-assist-mode usage (the histogram) is UI-visible data, same as everything else in
+        // the priority batch — it should load before the ~740 non-displayed background addresses,
+        // not after all of them. readAllAssistModeStats() is fully self-contained (does its own
+        // reads, doesn't depend on any result from this sweep loop), so it's safe to run here
+        // rather than after the entire sweep finishes, which is where it used to run — a real gap
+        // caught by asking "is usage data actually loaded before non-displayed data?" (it wasn't).
+        // The transport is single-threaded (one read in flight at a time), so this does pause the
+        // background sweep below while it runs - that's the intended trade-off, not a side effect.
+        if (!aborted && transport) {
+          els.sweepProgressText.textContent = 'reading per-mode ride statistics…';
+          // Keep the stall watchdog's "what's it stuck on" naming accurate for this window too —
+          // readAllAssistModeStats() does its own reads outside this loop's per-iteration tracking.
+          sweepWatchdogAddr = 'per-mode ride statistics';
+          sweepWatchdogStart = Date.now();
+          sweepWatchdogFired = false;
+          try { await readAllAssistModeStats(); } catch (_) {}
+          lastResults = results;
+          renderDashboard();
+        }
       }
       if (!revealed) {
         els.connectingBar.style.width = Math.round((done / Math.max(1, priorityCount)) * 100) + '%';
@@ -2107,7 +2366,11 @@
       renderPhase();
     }
 
-    if (!aborted && transport) {
+    // Fallback only — the normal path already ran this right at the reveal point above, as soon
+    // as the priority batch finished. This only fires if the sweep was aborted/disconnected
+    // before ever reaching that point, so `revealed` (and therefore the earlier call) never
+    // happened.
+    if (!revealed && !aborted && transport) {
       els.sweepProgress.style.display = 'flex';
       els.sweepProgressText.textContent = 'reading per-mode ride statistics…';
       try { await readAllAssistModeStats(); } catch (_) {}
