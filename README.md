@@ -16,6 +16,10 @@ sanctioned by Bosch. Only use it if you understand what it's doing at the
 protocol level, knowingly accept the risks, and doing so is legal where you
 live.
 
+**AI assistance disclosure**: this project uses AI assistance, with human
+verification as much as possible. This has helped accelerate both the
+reverse-engineering and the coding.
+
 Two identical implementations sharing the same protocol code:
 
 - **`web/`** — runs entirely in the browser via [WebUSB](https://developer.mozilla.org/en-US/docs/Web/API/WebUSB_API). No install, no server, nothing leaves your machine. Open `index.html` in Chrome/Edge (desktop only — WebUSB isn't available on iOS/Safari).
