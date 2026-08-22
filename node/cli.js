@@ -72,7 +72,7 @@ async function main() {
   }
 
   const transport = new Bes3UsbTransport(device);
-  transport.open();
+  await transport.open();
 
   let keepAliveSeq = 0;
   const keepAliveTimer = setInterval(() => {

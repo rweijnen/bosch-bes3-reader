@@ -49,7 +49,7 @@ class Bes3UsbTransport {
     this.epOut = null;
   }
 
-  open() {
+  async open() {
     this.device.open();
     this.iface = this.device.interface(0);
     try {
@@ -66,6 +66,49 @@ class Bes3UsbTransport {
     this.epIn = this.iface.endpoints.find((e) => e.address === (EP_IN | 0x80));
     if (!this.epIn || !this.epOut) {
       throw new Error(`Could not find expected bulk endpoints (in=${EP_IN}, out=${EP_OUT})`);
+    }
+    await this.init();
+  }
+
+  // Bring the BRC3600's USB<->serial bridge up. WITHOUT this, bulk writes ACK at the
+  // USB layer but are never forwarded to the drive unit's serial bus, so every read
+  // times out forever -- exactly the all-timeout symptom the node CLI had. Ported
+  // verbatim from the working WebUSB transport (web/transport-webusb.js), which was
+  // captured from the stock tool's connect sequence:
+  //   1) one vendor IN 0x01 (1-byte bridge status)
+  //   2) five vendor OUT control transfers (0x00, 0x43, 0x23, 0x41, 0x21); 0x43/0x23
+  //      carry a fixed 9-byte config blob
+  //   3) the MCSP session handshake: 0x10-opcode frames that arm the drive unit to
+  //      answer 0x30 block reads. Drain their replies so they do not leak into later reads.
+  async init() {
+    const cfg = Buffer.from([0x00, 0x80, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00]);
+    const vout = (request, data) =>
+      controlTransfer(this.device, BM_VENDOR_IFACE_OUT, request, 0, 0, data || Buffer.alloc(0));
+
+    // vendor IN 0x01 -> 1 byte
+    await controlTransfer(this.device, BM_VENDOR_IFACE_IN, 0x01, 0, 0, 1);
+    await vout(0x00);
+    await vout(0x43, cfg);
+    await vout(0x23, cfg);
+    await vout(0x41);
+    await vout(0x21);
+
+    const handshake = [
+      [0x10, 0x02, 0x01, 0x03],
+      [0x10, 0x03, 0x04, 0x04, 0x00],
+      [0x10, 0x06, 0x02, 0x01, 0x00, 0x10, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x02, 0x00, 0x10, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x03, 0x00, 0x10, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x04, 0x00, 0x00, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x05, 0x00, 0x00, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x06, 0x00, 0x00, 0x00, 0x00],
+      [0x10, 0x06, 0x02, 0x07, 0x00, 0x00, 0x00, 0x00],
+    ];
+    for (const frame of handshake) {
+      await this.doMcspWrite(Buffer.from(frame));
+      for (let i = 0; i < 4; i++) {
+        if (!(await this.readNextFrame(2, 3))) break;
+      }
     }
   }
 
