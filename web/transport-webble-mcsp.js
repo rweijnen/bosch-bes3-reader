@@ -40,6 +40,11 @@ const Channel = {
 const MessageType = {
   READ: 0, READ_RESPONSE: 1, WRITE: 2, WRITE_RESPONSE: 3, RPC: 4, RPC_RESPONSE: 5,
 };
+const ResponseStatus = {
+  SUCCESS: 0,
+  UNSUPPORTED: 4,
+  MALFORMED: 8,
+};
 
 // The bike expects the phone to act as a message-bus PEER with its own
 // "MobileApp" component, not just a client issuing reads — discovered by
@@ -80,6 +85,9 @@ const BLE_HOST_HIGH = 0x41;
 const BLE_HOST_LOW = 0x80;
 const USB_HOST_HIGH = 0x0e; // what protocol.js hardcodes; rewritten back to this on the way in
 const USB_HOST_LOW = 0x10;
+const BLOCK_OP = 0x30;
+const MAX_REASSEMBLED_MESSAGE_BYTES = 16 * 1024;
+const FRAME_LOGGING_FLAG = 'Bes3BleMcspFrameLogging';
 // MobileAppStaticFeatureProperties: proto3 bools, field 3 = stagedStartup.
 // Only the true field needs encoding (proto3 omits false/default fields):
 // tag=(3<<3)|0=0x18, value=1.
@@ -87,6 +95,26 @@ const STATIC_FEATURE_PROPERTIES_RESPONSE = Uint8Array.from([0x18, 0x01]);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getDebugLog() {
+  if (typeof window === 'undefined') return null;
+  return window.Bes3DebugLog && window.Bes3DebugLog.log;
+}
+
+function isFrameLoggingEnabled() {
+  return typeof window !== 'undefined' && window[FRAME_LOGGING_FLAG] === true;
+}
+
+function concatBytes(parts) {
+  const total = parts.reduce((sum, p) => sum + p.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
 }
 
 // Segmentation frame header (2 bytes), generic — does not hardcode any
@@ -108,7 +136,7 @@ function encodeSegmentationFrame(channel, endOfChannel, payload) {
 // Decodes as many complete [header][payload] frames as fit in `buffer` —
 // multiple frames can be packed back-to-back into a single physical BLE
 // write/notification.
-function decodeSegmentationFrames(buffer) {
+function decodeSegmentationFramesWithRemainder(buffer) {
   const frames = [];
   let offset = 0;
   while (offset + 2 <= buffer.length) {
@@ -119,11 +147,74 @@ function decodeSegmentationFrames(buffer) {
     const length = ((header0 & 0x0f) << 8) | header1;
     const payloadStart = offset + 2;
     const payloadEnd = payloadStart + length;
-    if (payloadEnd > buffer.length) break; // incomplete trailing frame — shouldn't happen, ignore
+    if (payloadEnd > buffer.length) break;
     frames.push({ channel, endOfChannel, payload: buffer.slice(payloadStart, payloadEnd) });
     offset = payloadEnd;
   }
-  return frames;
+  return { frames, remainder: buffer.slice(offset) };
+}
+
+function decodeSegmentationFrames(buffer) {
+  return decodeSegmentationFramesWithRemainder(buffer).frames;
+}
+
+function wrapMessageBusBodyForUsb(body) {
+  if (body.length > 4095) throw new Error(`message-bus body too large for MCSP segmentation frame: ${body.length} bytes`);
+  const translated = body.slice();
+  if (translated.length >= 4 && (translated[2] & 0x7f) === BLE_HOST_HIGH && translated[3] === BLE_HOST_LOW) {
+    const successFlag = translated[2] & 0x80;
+    translated[2] = successFlag | USB_HOST_HIGH;
+    translated[3] = USB_HOST_LOW;
+  }
+  return encodeSegmentationFrame(Channel.MESSAGE_BUS, true, translated);
+}
+
+function reassembleSegmentationFrame(state, frame, maxBytes = MAX_REASSEMBLED_MESSAGE_BYTES) {
+  if (!state[frame.channel]) state[frame.channel] = [];
+  const parts = state[frame.channel];
+  parts.push(frame.payload);
+  const total = parts.reduce((sum, p) => sum + p.length, 0);
+  if (total > maxBytes) {
+    state[frame.channel] = [];
+    throw new Error(`segmentation reassembly exceeded ${maxBytes} bytes on channel ${frame.channel}`);
+  }
+  if (!frame.endOfChannel) return null;
+  const body = concatBytes(parts);
+  state[frame.channel] = [];
+  return body;
+}
+
+function publicFrameLogData(frame) {
+  if (!isFrameLoggingEnabled()) return undefined;
+  if (frame.channel === Channel.MESSAGE_BUS) {
+    return '[omitted message-bus payload]';
+  }
+  return frame.payload;
+}
+
+function buildMobileAppResponseBody(reqSrcHigh, reqSrcLow, srcLow, responseType, seq, payload, status = ResponseStatus.SUCCESS) {
+  const success = status === ResponseStatus.SUCCESS;
+  return Uint8Array.from([
+    MOBILE_APP_HIGH_BYTE,
+    srcLow,
+    (success ? 0x80 : 0x00) | (reqSrcHigh & 0x7f),
+    reqSrcLow,
+    ((responseType & 0x0f) << 4) | (seq & 0x0f),
+    ...(success ? Array.from(payload || []) : [status]),
+  ]);
+}
+
+function decodeStartupStagePayload(payload) {
+  if (!payload || payload.length !== 2 || payload[0] !== 0x08 || payload[1] > STARTUP_STAGE_DONE) return null;
+  return payload[1];
+}
+
+function clearTransportState(transport) {
+  transport._readQueue = [];
+  transport._commandsSeen = [];
+  transport._segmentationRemainder = new Uint8Array(0);
+  transport._reassembly = {};
+  transport.startupStage = null;
 }
 
 function encodeCommand(type, args) {
@@ -144,6 +235,8 @@ class Bes3BleMcspTransport {
     this.txChar = null;
     this._readQueue = []; // reconstructed USB-shaped frames, ready for protocol.js's parseReadResponseFrame
     this._commandsSeen = [];
+    this._segmentationRemainder = new Uint8Array(0);
+    this._reassembly = {};
     this.startupStage = null; // last STARTUP_STAGE value the bike has written to us, or null if never seen
   }
 
@@ -155,8 +248,8 @@ class Bes3BleMcspTransport {
   // won't fix itself by retrying (the OS bond is missing), so bail out early
   // with guidance instead of hammering.
   async open() {
-    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
-    log && log('ble-mcsp', `device: ${this.device.name || '(unnamed)'} id=${this.device.id}`);
+    const log = getDebugLog();
+    log && log('ble-mcsp', 'device selected for BLE MCSP transport');
     const backoffsMs = [0, 400, 900, 1600];
     let lastErr;
     for (let attempt = 0; attempt < backoffsMs.length; attempt++) {
@@ -206,42 +299,30 @@ class Bes3BleMcspTransport {
   }
 
   _handleNotification(bytes) {
-    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
-    log && log('ble-rx', `raw notification (${bytes.length} bytes)`, bytes);
-    for (const frame of decodeSegmentationFrames(bytes)) {
-      log && log('ble-rx', `frame: channel=${frame.channel} endOfChannel=${frame.endOfChannel} len=${frame.payload.length}`, frame.payload);
-      if (frame.channel === Channel.MESSAGE_BUS && frame.endOfChannel) {
-        if (this._handleInboundMobileAppRequest(frame.payload)) continue;
-        // Reconstruct as the exact bytes transport-webusb.js's readNextFrame()
-        // would have returned, so the existing, unmodified
-        // parseReadResponseFrame() can be reused as-is. Only correct for
-        // single-fragment bodies under 256 bytes — true for every plain
-        // read/RPC this tool issues, but a real limitation if that ever
-        // changes (e.g. a bulk/multi-field response).
-        if (frame.payload.length < 256) {
-          const wrapped = new Uint8Array(2 + frame.payload.length);
-          wrapped[0] = 0x30;
-          wrapped[1] = frame.payload.length;
-          wrapped.set(frame.payload, 2);
-          // Rewrite the echoed destination (our own BLE address, 0x41 0x80)
-          // back to the fixed 0x0e10 protocol.js's parseReadResponseFrame()
-          // expects as "us" — see BLE_HOST_HIGH/LOW above for why these
-          // differ. Only the address bits (low 7) are rewritten; the MSB is
-          // the real SUCCESS-vs-explicit-status-code flag from the bike and
-          // MUST be preserved verbatim — forcing it to 1 unconditionally
-          // (an earlier version of this code did exactly that) makes every
-          // DENIED/NOT_READY/NO_ROUTE_FOUND status response get misread as
-          // an "ok" 1-byte payload instead of a declined status, corrupting
-          // both the ok/declined counts and the payload offset.
-          if (wrapped.length >= 6 && (wrapped[4] & 0x7f) === BLE_HOST_HIGH) {
-            const successFlag = wrapped[4] & 0x80;
-            wrapped[4] = successFlag | USB_HOST_HIGH;
-            wrapped[5] = USB_HOST_LOW;
-          }
-          this._readQueue.push(wrapped);
+    const log = getDebugLog();
+    const combined = concatBytes([this._segmentationRemainder, bytes]);
+    const decoded = decodeSegmentationFramesWithRemainder(combined);
+    this._segmentationRemainder = decoded.remainder;
+    log && log('ble-rx', `notification (${bytes.length} bytes, ${decoded.frames.length} complete frame(s), ${decoded.remainder.length} trailing byte(s))`);
+    for (const frame of decoded.frames) {
+      log && log('ble-rx', `frame: channel=${frame.channel} endOfChannel=${frame.endOfChannel} len=${frame.payload.length}`, publicFrameLogData(frame));
+      let body;
+      try {
+        body = reassembleSegmentationFrame(this._reassembly, frame);
+      } catch (err) {
+        log && log('ble-rx', err.message);
+        continue;
+      }
+      if (!body) continue;
+      if (frame.channel === Channel.MESSAGE_BUS) {
+        if (this._handleInboundMobileAppRequest(body)) continue;
+        try {
+          this._readQueue.push(wrapMessageBusBodyForUsb(body));
+        } catch (err) {
+          log && log('ble-rx', err.message);
         }
       } else if (frame.channel === Channel.COMMAND) {
-        this._commandsSeen.push(frame.payload);
+        this._commandsSeen.push(body);
       }
       // LBTP_PULL/PUSH and channels 4-7 not handled — not used by any plain read/RPC.
     }
@@ -265,9 +346,10 @@ class Bes3BleMcspTransport {
     if ((destHigh & 0x7f) !== MOBILE_APP_HIGH_BYTE) return false;
     if (reqType !== MessageType.READ && reqType !== MessageType.WRITE) return false;
 
-    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    const log = getDebugLog();
     let responseType;
     let payload = [];
+    let status = ResponseStatus.SUCCESS;
 
     if (reqType === MessageType.READ) {
       responseType = MessageType.READ_RESPONSE;
@@ -275,7 +357,8 @@ class Bes3BleMcspTransport {
         payload = Array.from(STATIC_FEATURE_PROPERTIES_RESPONSE);
         log && log('ble-mcsp', 'answered bike READ of MobileApp.MOBILE_APP_STATIC_FEATURE_PROPERTIES (stagedStartup=true)');
       } else {
-        log && log('ble-mcsp', `answered bike READ of unrecognized MobileApp field 0x${destLow.toString(16)} (empty ack)`);
+        status = ResponseStatus.UNSUPPORTED;
+        log && log('ble-mcsp', `declined bike READ of unrecognized MobileApp field 0x${destLow.toString(16)} (UNSUPPORTED)`);
       }
     } else {
       responseType = MessageType.WRITE_RESPONSE;
@@ -284,24 +367,22 @@ class Bes3BleMcspTransport {
         // shape as every other enum-wrapper message already confirmed
         // elsewhere in this protocol. Payload here is the request's own
         // payload (after the 5-byte envelope), e.g. [0x08, stageValue].
-        const stagePayload = body.slice(5);
-        const stage = stagePayload.length >= 2 ? stagePayload[1] : null;
-        this.startupStage = stage;
-        log && log('ble-mcsp', `bike WROTE MobileApp.STARTUP_STAGE = ${stage}${stage === STARTUP_STAGE_DONE ? ' (done)' : ''}`);
+        const stage = decodeStartupStagePayload(body.slice(5));
+        if (stage === null) {
+          status = ResponseStatus.MALFORMED;
+          log && log('ble-mcsp', 'declined malformed bike WRITE to MobileApp.STARTUP_STAGE');
+        } else {
+          this.startupStage = stage;
+          log && log('ble-mcsp', `bike WROTE MobileApp.STARTUP_STAGE = ${stage}${stage === STARTUP_STAGE_DONE ? ' (done)' : ''}`);
+        }
       } else {
-        log && log('ble-mcsp', `acked bike WRITE to unrecognized MobileApp field 0x${destLow.toString(16)}`);
+        status = ResponseStatus.UNSUPPORTED;
+        log && log('ble-mcsp', `declined bike WRITE to unrecognized MobileApp field 0x${destLow.toString(16)} (UNSUPPORTED)`);
       }
     }
 
-    const responseBody = [
-      MOBILE_APP_HIGH_BYTE,          // srcHigh: us, unflagged
-      destLow,                        // srcLow: echo which field this was about
-      0x80 | (reqSrcHigh & 0x7f),    // destHigh: echo requester, implicit-success flag set
-      reqSrcLow,                      // destLow: echo requester's own low byte
-      ((responseType & 0x0f) << 4) | (seq & 0x0f),
-      ...payload,
-    ];
-    this._writeFrame(Channel.MESSAGE_BUS, Uint8Array.from(responseBody)).catch(() => {});
+    const responseBody = buildMobileAppResponseBody(reqSrcHigh, reqSrcLow, destLow, responseType, seq, payload, status);
+    this._writeFrame(Channel.MESSAGE_BUS, responseBody).catch(() => {});
     return true;
   }
 
@@ -312,7 +393,7 @@ class Bes3BleMcspTransport {
   // fallback rather than blocking forever if a bike/firmware never sends
   // this handshake at all.
   async waitForBikeReady(timeoutMs = 8000) {
-    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    const log = getDebugLog();
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       if (this.startupStage === STARTUP_STAGE_DONE) {
@@ -326,8 +407,8 @@ class Bes3BleMcspTransport {
 
   async _writeFrame(channel, payload) {
     const frame = encodeSegmentationFrame(channel, true, payload);
-    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
-    log && log('ble-tx', `write: channel=${channel} len=${payload.length}`, frame);
+    const log = getDebugLog();
+    log && log('ble-tx', `write: channel=${channel} len=${payload.length}`, publicFrameLogData({ channel, payload: frame }));
     if (this.txChar.writeValueWithoutResponse) {
       await this.txChar.writeValueWithoutResponse(frame);
     } else {
@@ -346,7 +427,7 @@ class Bes3BleMcspTransport {
     for (const ch of [1, 2, 3, 4, 5, 6, 7]) {
       await this._writeFrame(Channel.COMMAND, encodeCommand(CommandType.DISABLE_FLOW_CONTROL, [ch]));
     }
-    const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+    const log = getDebugLog();
     const deadline = Date.now() + 3000;
     while (Date.now() < deadline) {
       const sawVersion = this._commandsSeen.some((p) => p[0] === CommandType.VERSION);
@@ -374,7 +455,7 @@ class Bes3BleMcspTransport {
     if (body.length >= 2 && body[0] === USB_HOST_HIGH && body[1] === USB_HOST_LOW) {
       body[0] = BLE_HOST_HIGH;
       body[1] = BLE_HOST_LOW;
-      const log = window.Bes3DebugLog && window.Bes3DebugLog.log;
+      const log = getDebugLog();
       log && log('ble-mcsp', 'rewrote outgoing source 0x0e10 -> 0x4180 (MobileAppGatewaysAddresses.E_BIKE)');
     }
     await this._writeFrame(Channel.MESSAGE_BUS, body);
@@ -395,7 +476,35 @@ class Bes3BleMcspTransport {
     try {
       this.device.gatt.disconnect();
     } catch (_) {}
+    clearTransportState(this);
   }
 }
 
-window.Bes3BleMcsp = { Bes3BleMcspTransport, requestMcspDevice, ADVERTISED_SERVICE_UUID, MCSP_SERVICE_UUID };
+const browserBleMcspExports = {
+  Bes3BleMcspTransport,
+  requestMcspDevice,
+  ADVERTISED_SERVICE_UUID,
+  MCSP_SERVICE_UUID,
+};
+
+const nodeBleMcspExports = {
+  Bes3BleMcspTransport,
+  Channel,
+  MessageType,
+  MOBILE_APP_LOW,
+  STARTUP_STAGE_DONE,
+  STATIC_FEATURE_PROPERTIES_RESPONSE,
+  MAX_REASSEMBLED_MESSAGE_BYTES,
+  encodeSegmentationFrame,
+  decodeSegmentationFrames,
+  decodeSegmentationFramesWithRemainder,
+  reassembleSegmentationFrame,
+  wrapMessageBusBodyForUsb,
+  publicFrameLogData,
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = nodeBleMcspExports;
+} else if (typeof window !== 'undefined') {
+  window.Bes3BleMcsp = browserBleMcspExports;
+}

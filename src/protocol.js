@@ -270,9 +270,12 @@ function decodeAssistModeStatistics(payload) {
 // read/RPC response at all (e.g. the bundled multi-field identify block,
 // which has a different shape, or a NotifyMessage/push).
 function parseReadResponseFrame(bytes) {
-  if (!bytes || bytes.length < 2 || bytes[0] !== BLOCK_OP) return null;
-  const len = bytes[1];
+  if (!bytes || bytes.length < 2) return null;
+  const header0 = bytes[0];
+  if ((header0 & 0xf0) !== BLOCK_OP) return null;
+  const len = ((header0 & 0x0f) << 8) | bytes[1];
   const body = bytes.slice(2, 2 + len);
+  if (body.length !== len) return null;
   if (body.length < 5) return null;
 
   const srcHigh = body[0];
