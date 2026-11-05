@@ -4,7 +4,7 @@
 
 const ADDRESS_REGISTRY = {
   "_meta": {
-    "registryVersion": "1.0.0",
+    "registryVersion": "1.1.0",
     "license": "CC-BY-4.0",
     "attribution": "Bosch BES3 address registry — github.com/rweijnen/bosch-bes3-reader",
     "sourceUrl": "https://github.com/rweijnen/bosch-bes3-reader"
@@ -505,9 +505,9 @@ const ADDRESS_REGISTRY = {
       "label": "Abs Released After Assembly",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -518,9 +518,56 @@ const ADDRESS_REGISTRY = {
       "label": "Anti Lock Brake System Feature Properties Release3",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "bikeSpeedProvider",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "signalLampControl",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "errorDetection",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "errorStorage",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "componentNetworkStatus",
+          "kind": "bool"
+        },
+        {
+          "num": 7,
+          "name": "versioning",
+          "kind": "bool"
+        },
+        {
+          "num": 8,
+          "name": "componentLockingSupport",
+          "kind": "bool"
+        },
+        {
+          "num": 9,
+          "name": "antiLockBrakeSystemDefinedAssistanceModeSwitch",
+          "kind": "bool"
+        },
+        {
+          "num": 10,
+          "name": "userDataStorage",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -546,9 +593,9 @@ const ADDRESS_REGISTRY = {
       "label": "Bootloader Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -559,9 +606,21 @@ const ADDRESS_REGISTRY = {
       "label": "Brake Hose Length From Front Anti Lock Brake System To Wheel Caliper",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "checksum",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -572,9 +631,21 @@ const ADDRESS_REGISTRY = {
       "label": "Brake Hose Length From Master Cylinder To Front Anti Lock Brake System",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "checksum",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -585,9 +656,9 @@ const ADDRESS_REGISTRY = {
       "label": "Component Locked",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -665,9 +736,21 @@ const ADDRESS_REGISTRY = {
       "label": "Front Brake Disc Size",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "checksum",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -691,9 +774,21 @@ const ADDRESS_REGISTRY = {
       "label": "Front Wheel Circumference",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "checksum",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -704,9 +799,31 @@ const ADDRESS_REGISTRY = {
       "label": "Front Wheel Speed Sensor Assembly Test Result",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "FAILED",
+          "label": "Failed"
+        },
+        "1": {
+          "name": "PASSED",
+          "label": "Passed"
+        },
+        "2": {
+          "name": "PENDING",
+          "label": "Pending"
+        },
+        "3": {
+          "name": "INCOMPLETE",
+          "label": "Incomplete"
+        },
+        "4": {
+          "name": "NOT_APPLICABLE",
+          "label": "Not applicable"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -718,9 +835,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -731,9 +848,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -744,9 +861,9 @@ const ADDRESS_REGISTRY = {
       "label": "In Software Installation State",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -758,9 +875,9 @@ const ADDRESS_REGISTRY = {
       "label": "Is Sample Software",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -771,9 +888,9 @@ const ADDRESS_REGISTRY = {
       "label": "Is Two Channel System",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -784,9 +901,9 @@ const ADDRESS_REGISTRY = {
       "label": "Manufacturing Date",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -797,9 +914,9 @@ const ADDRESS_REGISTRY = {
       "label": "Number Of Software Updates",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -810,9 +927,9 @@ const ADDRESS_REGISTRY = {
       "label": "Part Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -823,9 +940,9 @@ const ADDRESS_REGISTRY = {
       "label": "Product Code",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -836,9 +953,9 @@ const ADDRESS_REGISTRY = {
       "label": "Product Name",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -849,9 +966,31 @@ const ADDRESS_REGISTRY = {
       "label": "Rear Wheel Speed Sensor Assembly Test Result",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "FAILED",
+          "label": "Failed"
+        },
+        "1": {
+          "name": "PASSED",
+          "label": "Passed"
+        },
+        "2": {
+          "name": "PENDING",
+          "label": "Pending"
+        },
+        "3": {
+          "name": "INCOMPLETE",
+          "label": "Incomplete"
+        },
+        "4": {
+          "name": "NOT_APPLICABLE",
+          "label": "Not applicable"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -876,9 +1015,9 @@ const ADDRESS_REGISTRY = {
       "label": "Serial Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -903,9 +1042,9 @@ const ADDRESS_REGISTRY = {
       "label": "Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -942,9 +1081,9 @@ const ADDRESS_REGISTRY = {
       "label": "Use Inertial Measurement Unit",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -1826,9 +1965,9 @@ const ADDRESS_REGISTRY = {
       "label": "Button Pressed",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -1840,9 +1979,9 @@ const ADDRESS_REGISTRY = {
       "label": "Charger Connected",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -1854,9 +1993,9 @@ const ADDRESS_REGISTRY = {
       "label": "Charging Active",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -1900,9 +2039,9 @@ const ADDRESS_REGISTRY = {
       "label": "Component Locked",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -2003,9 +2142,9 @@ const ADDRESS_REGISTRY = {
       "label": "Enable Button Test Mode",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -2016,9 +2155,9 @@ const ADDRESS_REGISTRY = {
       "label": "Enable Led Test Mode",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -2081,9 +2220,41 @@ const ADDRESS_REGISTRY = {
       "label": "Feature Properties Release1",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "capacityLimitation",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "estimatedChargingTimeCalculation",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "multiBatterySupport",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "componentLockingSupport",
+          "kind": "bool"
+        },
+        {
+          "num": 5,
+          "name": "userDataStorage",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "componentDeactivation",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -2095,9 +2266,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -2121,9 +2292,9 @@ const ADDRESS_REGISTRY = {
       "label": "In Software Installation State",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -2135,9 +2306,9 @@ const ADDRESS_REGISTRY = {
       "label": "Is Sample Software",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -2169,9 +2340,9 @@ const ADDRESS_REGISTRY = {
       "label": "Led Test Pattern On",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -2182,9 +2353,9 @@ const ADDRESS_REGISTRY = {
       "label": "Manufacturing Date",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -2456,12 +2627,39 @@ const ADDRESS_REGISTRY = {
       "label": "Service Charge State",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "SERVICE_CHARGE_NOT_ACTIVE",
+          "label": "Not active"
+        },
+        "1": {
+          "name": "SERVICE_CHARGE_ACTIVE",
+          "label": "Active"
+        },
+        "2": {
+          "name": "SERVICE_CHARGE_SO_C_LOW",
+          "label": "Stopped, SoC low"
+        },
+        "3": {
+          "name": "SERVICE_CHARGE_TIMEOUT",
+          "label": "Timed out"
+        },
+        "4": {
+          "name": "SERVICE_CHARGE_BATTERY_CRITICAL_ERROR",
+          "label": "Battery critical error"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
-      "subscribable": true
+      "subscribable": true,
+      "ui": {
+        "card": "battery",
+        "row": 140,
+        "label": "Service charge state"
+      }
     },
     {
       "component": "Battery",
@@ -3138,9 +3336,9 @@ const ADDRESS_REGISTRY = {
       "label": "Bootloader Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3151,9 +3349,9 @@ const ADDRESS_REGISTRY = {
       "label": "Button Pressed",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3165,9 +3363,9 @@ const ADDRESS_REGISTRY = {
       "label": "Component Deactivation Enabled",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3178,9 +3376,26 @@ const ADDRESS_REGISTRY = {
       "label": "Component Deactivation Proof",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "deactivationState",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "certificateSerialNumber",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "signature",
+          "kind": "string"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3192,9 +3407,9 @@ const ADDRESS_REGISTRY = {
       "label": "Component Locked",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3220,9 +3435,9 @@ const ADDRESS_REGISTRY = {
       "label": "Delivered Ah Over Lifetime",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3233,9 +3448,9 @@ const ADDRESS_REGISTRY = {
       "label": "Delivered Wh Over Lifetime",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3247,9 +3462,9 @@ const ADDRESS_REGISTRY = {
       "label": "Device Certificate",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3260,9 +3475,9 @@ const ADDRESS_REGISTRY = {
       "label": "Duration In Thermal Protection",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3274,9 +3489,9 @@ const ADDRESS_REGISTRY = {
       "label": "Enable Button Test Mode",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3287,9 +3502,9 @@ const ADDRESS_REGISTRY = {
       "label": "Enable Led Test Mode",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3352,9 +3567,41 @@ const ADDRESS_REGISTRY = {
       "label": "Feature Properties Release1",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "capacityLimitation",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "estimatedChargingTimeCalculation",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "multiBatterySupport",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "componentLockingSupport",
+          "kind": "bool"
+        },
+        {
+          "num": 5,
+          "name": "userDataStorage",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "componentDeactivation",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3366,9 +3613,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3379,9 +3626,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3392,9 +3639,9 @@ const ADDRESS_REGISTRY = {
       "label": "In Software Installation State",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3406,9 +3653,9 @@ const ADDRESS_REGISTRY = {
       "label": "Is Sample Software",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3419,9 +3666,11 @@ const ADDRESS_REGISTRY = {
       "label": "Last End Of Charge Voltage",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "unit": "V",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3433,9 +3682,9 @@ const ADDRESS_REGISTRY = {
       "label": "Led Test Pattern On",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3446,9 +3695,9 @@ const ADDRESS_REGISTRY = {
       "label": "Manufacturing Date",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3459,9 +3708,11 @@ const ADDRESS_REGISTRY = {
       "label": "Maximum Charging Current",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "unit": "A",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3473,9 +3724,11 @@ const ADDRESS_REGISTRY = {
       "label": "Maximum Pack Temperature",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "unit": "°C",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3487,9 +3740,11 @@ const ADDRESS_REGISTRY = {
       "label": "Minimum Pack Temperature",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "unit": "°C",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3501,9 +3756,10 @@ const ADDRESS_REGISTRY = {
       "label": "Number Of Full Charge Cycles",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3515,9 +3771,9 @@ const ADDRESS_REGISTRY = {
       "label": "Part Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3529,9 +3785,9 @@ const ADDRESS_REGISTRY = {
       "readable": true,
       "writable": false,
       "subscribable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3542,9 +3798,11 @@ const ADDRESS_REGISTRY = {
       "label": "Present Fet Temperature",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "unit": "°C",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3556,9 +3814,11 @@ const ADDRESS_REGISTRY = {
       "label": "Present Pack Temperature",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "unit": "°C",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3570,9 +3830,9 @@ const ADDRESS_REGISTRY = {
       "label": "Product Code",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3583,9 +3843,9 @@ const ADDRESS_REGISTRY = {
       "label": "Product Name",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3596,9 +3856,10 @@ const ADDRESS_REGISTRY = {
       "label": "Remaining Energy",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3610,9 +3871,10 @@ const ADDRESS_REGISTRY = {
       "label": "Self Discharging Rate",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3623,9 +3885,9 @@ const ADDRESS_REGISTRY = {
       "label": "Serial Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3636,9 +3898,31 @@ const ADDRESS_REGISTRY = {
       "label": "Service Charge State",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "SERVICE_CHARGE_NOT_ACTIVE",
+          "label": "Not active"
+        },
+        "1": {
+          "name": "SERVICE_CHARGE_ACTIVE",
+          "label": "Active"
+        },
+        "2": {
+          "name": "SERVICE_CHARGE_SO_C_LOW",
+          "label": "Stopped, SoC low"
+        },
+        "3": {
+          "name": "SERVICE_CHARGE_TIMEOUT",
+          "label": "Timed out"
+        },
+        "4": {
+          "name": "SERVICE_CHARGE_BATTERY_CRITICAL_ERROR",
+          "label": "Battery critical error"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3650,9 +3934,9 @@ const ADDRESS_REGISTRY = {
       "label": "Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3663,9 +3947,9 @@ const ADDRESS_REGISTRY = {
       "label": "So C Lower Limit",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3677,9 +3961,9 @@ const ADDRESS_REGISTRY = {
       "label": "So C Upper Limit",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3691,9 +3975,9 @@ const ADDRESS_REGISTRY = {
       "label": "State Of Charge",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -3705,9 +3989,9 @@ const ADDRESS_REGISTRY = {
       "label": "State Of Health",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -3835,9 +4119,9 @@ const ADDRESS_REGISTRY = {
       "label": "Data Model Version",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4194,9 +4478,21 @@ const ADDRESS_REGISTRY = {
       "label": "Alarm Feature Enabled Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "alarmFeatureEnabled",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "nonce",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -4208,9 +4504,49 @@ const ADDRESS_REGISTRY = {
       "label": "Alarm Feature Settings",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "localAlarmOnSignificantMovement",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "IMPLEMENTATION_DEFAULT",
+              "label": "Implementation default"
+            },
+            "1": {
+              "name": "ENABLED",
+              "label": "Enabled"
+            },
+            "2": {
+              "name": "DISABLED",
+              "label": "Disabled"
+            }
+          }
+        },
+        {
+          "num": 2,
+          "name": "localAlarmOnMovement",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "IMPLEMENTATION_DEFAULT",
+              "label": "Implementation default"
+            },
+            "1": {
+              "name": "ENABLED",
+              "label": "Enabled"
+            },
+            "2": {
+              "name": "DISABLED",
+              "label": "Disabled"
+            }
+          }
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -4222,9 +4558,27 @@ const ADDRESS_REGISTRY = {
       "label": "Battery Status",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "CHARGE_GOOD",
+          "label": "Good"
+        },
+        "1": {
+          "name": "NEED_CHARGE",
+          "label": "Needs charge"
+        },
+        "2": {
+          "name": "CRITICAL",
+          "label": "Critical"
+        },
+        "3": {
+          "name": "DEFECTIVE",
+          "label": "Defective"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -4236,9 +4590,9 @@ const ADDRESS_REGISTRY = {
       "label": "Battery Voltage",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -4250,9 +4604,9 @@ const ADDRESS_REGISTRY = {
       "label": "Bootloader Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4263,9 +4617,9 @@ const ADDRESS_REGISTRY = {
       "label": "Component Locked",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -4343,9 +4697,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4356,9 +4710,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4369,9 +4723,9 @@ const ADDRESS_REGISTRY = {
       "label": "In Software Installation State",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -4383,9 +4737,9 @@ const ADDRESS_REGISTRY = {
       "label": "Is Sample Software",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4396,9 +4750,16 @@ const ADDRESS_REGISTRY = {
       "label": "Latest Gnss Timestamp",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -4410,9 +4771,9 @@ const ADDRESS_REGISTRY = {
       "label": "Manufacturing Date",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4423,9 +4784,16 @@ const ADDRESS_REGISTRY = {
       "label": "Modem Firmware Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4436,9 +4804,9 @@ const ADDRESS_REGISTRY = {
       "label": "Part Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4475,9 +4843,9 @@ const ADDRESS_REGISTRY = {
       "label": "Product Code",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4488,9 +4856,9 @@ const ADDRESS_REGISTRY = {
       "label": "Product Name",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4527,9 +4895,9 @@ const ADDRESS_REGISTRY = {
       "label": "Serial Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4540,9 +4908,9 @@ const ADDRESS_REGISTRY = {
       "label": "Shipping Mode",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -4554,9 +4922,9 @@ const ADDRESS_REGISTRY = {
       "label": "Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -4567,9 +4935,21 @@ const ADDRESS_REGISTRY = {
       "label": "Transportation Mode Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "transportationMode",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "nonce",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6266,9 +6646,9 @@ const ADDRESS_REGISTRY = {
       "label": "Adding Assist Modes Locked",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -6279,9 +6659,9 @@ const ADDRESS_REGISTRY = {
       "label": "Always Show Bike Speed In Display",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -6433,9 +6813,9 @@ const ADDRESS_REGISTRY = {
       "label": "Battery Key Lock Number",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6506,8 +6886,8 @@ const ADDRESS_REGISTRY = {
           "label": "Unknown"
         }
       },
-      "source": "",
-      "confirmed": false,
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "ui": {
@@ -6524,11 +6904,81 @@ const ADDRESS_REGISTRY = {
       "label": "Bike Category Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "category",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "BIKE_CATEGORY_NOT_CONFIGURED",
+              "label": "Not configured"
+            },
+            "1": {
+              "name": "CITY",
+              "label": "eCity"
+            },
+            "2": {
+              "name": "TREKKING",
+              "label": "eTrekking"
+            },
+            "3": {
+              "name": "M_T_B_TOUR",
+              "label": "eMTB (Tour)"
+            },
+            "4": {
+              "name": "M_T_B_TRAIL",
+              "label": "eMTB (Trail)"
+            },
+            "5": {
+              "name": "ROAD",
+              "label": "eRoad"
+            },
+            "6": {
+              "name": "GRAVEL",
+              "label": "eGravel"
+            },
+            "7": {
+              "name": "KIDS",
+              "label": "eKids"
+            },
+            "8": {
+              "name": "CARGO",
+              "label": "eCargo Long John"
+            },
+            "9": {
+              "name": "FLEET",
+              "label": "eFleet"
+            },
+            "10": {
+              "name": "OTHERS",
+              "label": "Other"
+            },
+            "11": {
+              "name": "E_CARGO_LONG_TAIL",
+              "label": "eCargo Long Tail"
+            }
+          },
+          "label": "Category"
+        },
+        {
+          "num": 2,
+          "name": "checksum",
+          "kind": "uint",
+          "label": "Checksum"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "bike",
+        "row": 70,
+        "label": "Category configuration",
+        "technical": true
+      }
     },
     {
       "component": "DriveUnit",
@@ -6595,12 +7045,39 @@ const ADDRESS_REGISTRY = {
       "label": "Bike Light Configuration",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "LIGHT_ALWAYS_OFF",
+          "label": "Always off"
+        },
+        "1": {
+          "name": "LIGHT_ALWAYS_ON",
+          "label": "Always on"
+        },
+        "2": {
+          "name": "LIGHT_ON_AFTER_STARTUP",
+          "label": "On after startup"
+        },
+        "3": {
+          "name": "LIGHT_OFF_AFTER_STARTUP",
+          "label": "Off after startup"
+        },
+        "4": {
+          "name": "USE_LIGHT_STATUS_AT_SHUTDOWN",
+          "label": "Remember state at shutdown"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
-      "subscribable": true
+      "subscribable": true,
+      "ui": {
+        "card": "bike",
+        "row": 60,
+        "label": "Bike light mode"
+      }
     },
     {
       "component": "DriveUnit",
@@ -6609,9 +7086,48 @@ const ADDRESS_REGISTRY = {
       "label": "Bike Light Configuration Oem",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "bikeLightConfiguration",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "LIGHT_ALWAYS_OFF",
+              "label": "Light always off"
+            },
+            "1": {
+              "name": "LIGHT_ALWAYS_ON",
+              "label": "Light always on"
+            },
+            "2": {
+              "name": "LIGHT_ON_AFTER_STARTUP",
+              "label": "Light on after startup"
+            },
+            "3": {
+              "name": "LIGHT_OFF_AFTER_STARTUP",
+              "label": "Light off after startup"
+            },
+            "4": {
+              "name": "USE_LIGHT_STATUS_AT_SHUTDOWN",
+              "label": "Use light status at shutdown"
+            }
+          }
+        },
+        {
+          "num": 2,
+          "name": "bikeLightAvailableOem",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "bikeLightConfigurable",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -6622,9 +7138,11 @@ const ADDRESS_REGISTRY = {
       "label": "Bike Light Power",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 10,
+      "unit": "W",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6636,9 +7154,21 @@ const ADDRESS_REGISTRY = {
       "label": "Bike Speed",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "validity",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6722,9 +7252,21 @@ const ADDRESS_REGISTRY = {
       "label": "Displayed Bike Speed",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "validity",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6753,9 +7295,36 @@ const ADDRESS_REGISTRY = {
       "label": "Drive Unit Feature Properties Release1",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "walkAssist",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "componentLockingSupport",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "bikeLightSupplier",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "userDataStorage",
+          "kind": "bool"
+        },
+        {
+          "num": 5,
+          "name": "crashDetection",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6767,9 +7336,16 @@ const ADDRESS_REGISTRY = {
       "label": "Drive Unit Feature Properties Release2",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "shiftRecommendation",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6781,9 +7357,21 @@ const ADDRESS_REGISTRY = {
       "label": "Drive Unit Feature Properties Release3",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "serviceCharge",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "regionInformation",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6795,9 +7383,106 @@ const ADDRESS_REGISTRY = {
       "label": "Drive Unit Static Feature Properties",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "powerCycleIssueList",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "inertialMeasurementUnit",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "eshift",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "systemDerating",
+          "kind": "bool"
+        },
+        {
+          "num": 5,
+          "name": "eDriveAutomaticMode",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "trickCheck",
+          "kind": "bool"
+        },
+        {
+          "num": 7,
+          "name": "rangeControl",
+          "kind": "bool"
+        },
+        {
+          "num": 8,
+          "name": "activeAssistModesResetToDefault",
+          "kind": "bool"
+        },
+        {
+          "num": 9,
+          "name": "torqueReductionForRearDerailleur",
+          "kind": "bool"
+        },
+        {
+          "num": 10,
+          "name": "highCurrentModeHmiPort",
+          "kind": "bool"
+        },
+        {
+          "num": 11,
+          "name": "chainStateAvailable",
+          "kind": "bool"
+        },
+        {
+          "num": 12,
+          "name": "eDriveManualPlusMode",
+          "kind": "bool"
+        },
+        {
+          "num": 13,
+          "name": "issueHealing",
+          "kind": "bool"
+        },
+        {
+          "num": 14,
+          "name": "aiTuningDetectionDataCollection",
+          "kind": "bool"
+        },
+        {
+          "num": 15,
+          "name": "oemTorqueLimitationSupported",
+          "kind": "bool"
+        },
+        {
+          "num": 16,
+          "name": "powerSettingInUdam",
+          "kind": "bool"
+        },
+        {
+          "num": 17,
+          "name": "prohibitAutoShift",
+          "kind": "bool"
+        },
+        {
+          "num": 18,
+          "name": "reduceInputCurrent",
+          "kind": "bool"
+        },
+        {
+          "num": 19,
+          "name": "rimMagnetTest",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6861,9 +7546,26 @@ const ADDRESS_REGISTRY = {
       "label": "Extended Bike Speed",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "primary",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "secondary",
+          "kind": "uint"
+        },
+        {
+          "num": 3,
+          "name": "validity",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -6919,9 +7621,21 @@ const ADDRESS_REGISTRY = {
       "label": "Gearshift Application Required",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "configId",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "configVersion",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -6992,9 +7706,9 @@ const ADDRESS_REGISTRY = {
       "label": "High Power Port Active",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -7046,9 +7760,9 @@ const ADDRESS_REGISTRY = {
       "label": "Low Power Port Active",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -7060,9 +7774,9 @@ const ADDRESS_REGISTRY = {
       "label": "Manufacturing Date",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "ui": {
@@ -7114,9 +7828,26 @@ const ADDRESS_REGISTRY = {
       "label": "Maximum Available Motor Power",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "productLine",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "availableAssistModes",
+          "kind": "uint"
+        },
+        {
+          "num": 3,
+          "name": "selectedAssistMode",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -7154,7 +7885,12 @@ const ADDRESS_REGISTRY = {
       "source": "",
       "confirmed": false,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 140,
+        "label": "Max gear ratio"
+      }
     },
     {
       "component": "DriveUnit",
@@ -7184,9 +7920,9 @@ const ADDRESS_REGISTRY = {
       "label": "Motor Cut Off Distance",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7197,9 +7933,21 @@ const ADDRESS_REGISTRY = {
       "label": "Motor Power Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "peakMotorPower",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "continuousRatedMotorPower",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7223,9 +7971,31 @@ const ADDRESS_REGISTRY = {
       "label": "Mounting Angle",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "status",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "UNCONFIGURED",
+              "label": "Unconfigured"
+            },
+            "1": {
+              "name": "CONFIGURED",
+              "label": "Configured"
+            }
+          }
+        },
+        {
+          "num": 2,
+          "name": "mountingAngle",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7236,9 +8006,23 @@ const ADDRESS_REGISTRY = {
       "label": "Multi Purpose Port Status",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "UNUSED",
+          "label": "Unused"
+        },
+        "1": {
+          "name": "THIRD_PARTY",
+          "label": "Third party"
+        },
+        "2": {
+          "name": "LIGHT",
+          "label": "Light"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -7359,9 +8143,9 @@ const ADDRESS_REGISTRY = {
       "label": "Oem Manufacturing Date",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7398,9 +8182,35 @@ const ADDRESS_REGISTRY = {
       "label": "Oem Multi Purpose Port Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "multiPurposePortConfiguration",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "UNUSED",
+              "label": "Unused"
+            },
+            "1": {
+              "name": "THIRD_PARTY",
+              "label": "Third party"
+            },
+            "2": {
+              "name": "LIGHT",
+              "label": "Light"
+            }
+          }
+        },
+        {
+          "num": 2,
+          "name": "multiPurposePortConfigurableByIbd",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7411,9 +8221,31 @@ const ADDRESS_REGISTRY = {
       "label": "Oem Port Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "oemLowPowerPortActive",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "lowPowerPortConfigurableByIbd",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "oemHighPowerPortActive",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "highPowerPortConfigurableByIbd",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7424,11 +8256,94 @@ const ADDRESS_REGISTRY = {
       "label": "Oem Speed Source Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "oemSpeedSource",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "SPEED_SOURCE_NOT_CONFIGURED",
+              "label": "Speed source not configured"
+            },
+            "1": {
+              "name": "RIM_MAGNET",
+              "label": "Rim magnet"
+            },
+            "2": {
+              "name": "REED",
+              "label": "Reed"
+            },
+            "3": {
+              "name": "ABS_FRONT",
+              "label": "Abs front"
+            },
+            "4": {
+              "name": "ABS_REAR",
+              "label": "Abs rear"
+            },
+            "5": {
+              "name": "CADENCE",
+              "label": "Cadence"
+            }
+          },
+          "label": "Speed source"
+        },
+        {
+          "num": 2,
+          "name": "oemSecondSpeedSourceRequired",
+          "kind": "bool",
+          "label": "Second source required"
+        },
+        {
+          "num": 3,
+          "name": "oemSecondSpeedSource",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "SPEED_SOURCE_NOT_CONFIGURED",
+              "label": "Speed source not configured"
+            },
+            "1": {
+              "name": "RIM_MAGNET",
+              "label": "Rim magnet"
+            },
+            "2": {
+              "name": "REED",
+              "label": "Reed"
+            },
+            "3": {
+              "name": "ABS_FRONT",
+              "label": "Abs front"
+            },
+            "4": {
+              "name": "ABS_REAR",
+              "label": "Abs rear"
+            },
+            "5": {
+              "name": "CADENCE",
+              "label": "Cadence"
+            }
+          }
+        },
+        {
+          "num": 4,
+          "name": "speedSourceConfigurableByIbd",
+          "kind": "bool",
+          "label": "Configurable by IBD"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 110,
+        "label": "Speed source (OEM)",
+        "technical": true
+      }
     },
     {
       "component": "DriveUnit",
@@ -7450,11 +8365,45 @@ const ADDRESS_REGISTRY = {
       "label": "Oem Torque Limitation",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "status",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "UNINITIALIZED",
+              "label": "Uninitialized"
+            },
+            "1": {
+              "name": "DISABLED",
+              "label": "Disabled"
+            },
+            "2": {
+              "name": "ENABLED",
+              "label": "Enabled"
+            }
+          },
+          "label": "Status"
+        },
+        {
+          "num": 2,
+          "name": "maximumMotorTorque",
+          "kind": "uint",
+          "label": "Max motor torque"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
-      "dependsOn": null
+      "dependsOn": null,
+      "ui": {
+        "card": "drivetrain",
+        "row": 130,
+        "label": "Torque limitation (OEM)",
+        "technical": true
+      }
     },
     {
       "component": "DriveUnit",
@@ -7565,9 +8514,21 @@ const ADDRESS_REGISTRY = {
       "label": "Product Application Required",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "configId",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "configVersion",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7744,9 +8705,21 @@ const ADDRESS_REGISTRY = {
       "label": "Rear Wheel Circumference User Limits",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "minimumCircumference",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "maximumCircumference",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7770,9 +8743,21 @@ const ADDRESS_REGISTRY = {
       "label": "Regio Speed Application Required",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "configId",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "configVersion",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7838,8 +8823,8 @@ const ADDRESS_REGISTRY = {
           "label": "Unrecognized"
         }
       },
-      "source": "",
-      "confirmed": false,
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "ui": {
@@ -7950,9 +8935,36 @@ const ADDRESS_REGISTRY = {
       "label": "Ride Statistics",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "consumedEnergyMotorSupport",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "consumedEnergyOthers",
+          "kind": "uint"
+        },
+        {
+          "num": 3,
+          "name": "lastResetTimestamp",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "totalDistance",
+          "kind": "uint"
+        },
+        {
+          "num": 5,
+          "name": "totalDistanceInOffMode",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -7963,9 +8975,27 @@ const ADDRESS_REGISTRY = {
       "label": "Rim Magnet Test Status",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "WAITING",
+          "label": "Waiting"
+        },
+        "1": {
+          "name": "RUNNING",
+          "label": "Running"
+        },
+        "2": {
+          "name": "STOPPED",
+          "label": "Stopped"
+        },
+        "3": {
+          "name": "ABORTED",
+          "label": "Aborted"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -8055,9 +9085,9 @@ const ADDRESS_REGISTRY = {
       "label": "Speed Bike Signal Lamp Required",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -8068,9 +9098,9 @@ const ADDRESS_REGISTRY = {
       "label": "Speed Display Tolerance",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -8081,9 +9111,21 @@ const ADDRESS_REGISTRY = {
       "label": "Speed Manipulation Status",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "status",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "nonce",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -8094,9 +9136,35 @@ const ADDRESS_REGISTRY = {
       "label": "Speed Source",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "SPEED_SOURCE_NOT_CONFIGURED",
+          "label": "Speed source not configured"
+        },
+        "1": {
+          "name": "RIM_MAGNET",
+          "label": "Rim magnet"
+        },
+        "2": {
+          "name": "REED",
+          "label": "Reed"
+        },
+        "3": {
+          "name": "ABS_FRONT",
+          "label": "Abs front"
+        },
+        "4": {
+          "name": "ABS_REAR",
+          "label": "Abs rear"
+        },
+        "5": {
+          "name": "CADENCE",
+          "label": "Cadence"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -8254,12 +9322,34 @@ const ADDRESS_REGISTRY = {
       "label": "Walk Assist Configuration",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "enabled",
+          "kind": "bool",
+          "label": "Enabled"
+        },
+        {
+          "num": 2,
+          "name": "maximumSpeed",
+          "kind": "uint",
+          "label": "Max speed",
+          "factor": 100,
+          "unit": "km/h"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
-      "subscribable": true
+      "subscribable": true,
+      "ui": {
+        "card": "drivetrain",
+        "row": 120,
+        "label": "Walk assist",
+        "technical": true
+      }
     },
     {
       "component": "DriveUnit",
@@ -8268,9 +9358,21 @@ const ADDRESS_REGISTRY = {
       "label": "Walk Assist Configuration Oem",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "walkAssistConfiguration",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "walkAssistConfigurable",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -8929,9 +10031,9 @@ const ADDRESS_REGISTRY = {
       "label": "Bootloader Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -8942,9 +10044,26 @@ const ADDRESS_REGISTRY = {
       "label": "Buzzer",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "status",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "frequency",
+          "kind": "uint"
+        },
+        {
+          "num": 3,
+          "name": "dutyCycle",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -8956,9 +10075,9 @@ const ADDRESS_REGISTRY = {
       "label": "Component Locked",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -9050,9 +10169,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9063,9 +10182,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9076,9 +10195,31 @@ const ADDRESS_REGISTRY = {
       "label": "Head Unit Feature Properties Release1",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "pedelecSignalLamp",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "speedSignalLamp",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "speedBikeSpeedVisualization",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "absDamSwitchUserInterface",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -9090,9 +10231,16 @@ const ADDRESS_REGISTRY = {
       "label": "Head Unit Feature Properties Release2",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "keyDevice",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -9104,9 +10252,21 @@ const ADDRESS_REGISTRY = {
       "label": "Head Unit Feature Properties Release3",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "serviceCharge",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "detectionOfAvailableButtons",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -9118,9 +10278,9 @@ const ADDRESS_REGISTRY = {
       "label": "In Software Installation State",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -9132,9 +10292,9 @@ const ADDRESS_REGISTRY = {
       "label": "Is Sample Software",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9145,9 +10305,31 @@ const ADDRESS_REGISTRY = {
       "label": "Lcd Test Mode",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "LCD_TEST_OFF",
+          "label": "Off"
+        },
+        "1": {
+          "name": "LCD_TEST_RED",
+          "label": "Red"
+        },
+        "2": {
+          "name": "LCD_TEST_GREEN",
+          "label": "Green"
+        },
+        "3": {
+          "name": "LCD_TEST_BLUE",
+          "label": "Blue"
+        },
+        "4": {
+          "name": "LCD_TEST_WHITE",
+          "label": "White"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9158,9 +10340,9 @@ const ADDRESS_REGISTRY = {
       "label": "Manufacturing Date",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9171,9 +10353,9 @@ const ADDRESS_REGISTRY = {
       "label": "Part Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9197,9 +10379,9 @@ const ADDRESS_REGISTRY = {
       "label": "Product Code",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9210,9 +10392,9 @@ const ADDRESS_REGISTRY = {
       "label": "Product Name",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9223,9 +10405,9 @@ const ADDRESS_REGISTRY = {
       "label": "Serial Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9250,9 +10432,9 @@ const ADDRESS_REGISTRY = {
       "label": "Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9263,9 +10445,31 @@ const ADDRESS_REGISTRY = {
       "label": "Sounds Volume Level",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "UNKNOWN",
+          "label": "Unknown"
+        },
+        "1": {
+          "name": "OFF",
+          "label": "Off"
+        },
+        "2": {
+          "name": "LOW",
+          "label": "Low"
+        },
+        "3": {
+          "name": "MEDIUM",
+          "label": "Medium"
+        },
+        "4": {
+          "name": "HIGH",
+          "label": "High"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -9277,9 +10481,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ui Priority",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -9373,12 +10577,112 @@ const ADDRESS_REGISTRY = {
       "label": "Shutdown Reason",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "NO_SHUTDOWN_REQUESTED",
+          "label": "No shutdown requested"
+        },
+        "1": {
+          "name": "REMOTE_CONTROL_UPDATE_COMPLETED",
+          "label": "Remote-control update completed"
+        },
+        "2": {
+          "name": "REMOTE_CONTROL_POWER_BUTTON",
+          "label": "Remote-control power button"
+        },
+        "3": {
+          "name": "REMOTE_CONTROL_BLE_SHUTDOWN_REQUEST",
+          "label": "BLE shutdown request"
+        },
+        "4": {
+          "name": "REMOTE_CONTROL_USB_SHUTDOWN_REQUEST",
+          "label": "USB shutdown request"
+        },
+        "5": {
+          "name": "REMOTE_CONTROL_SYSTEM_INACTIVITY",
+          "label": "System inactivity"
+        },
+        "6": {
+          "name": "HEAD_UNIT_DETACH",
+          "label": "Head unit detached"
+        },
+        "7": {
+          "name": "HEAD_UNIT_POWER_BUTTON",
+          "label": "Head-unit power button"
+        },
+        "8": {
+          "name": "BATTERY_POWER_BUTTON",
+          "label": "Battery power button"
+        },
+        "9": {
+          "name": "BATTERY_EMPTY",
+          "label": "Battery empty"
+        },
+        "10": {
+          "name": "BATTERY_REMOVAL",
+          "label": "Battery removed"
+        },
+        "11": {
+          "name": "BATTERY_CHARGE_COMPLETED",
+          "label": "Battery charge completed"
+        },
+        "12": {
+          "name": "CHARGER_DETACH",
+          "label": "Charger detached"
+        },
+        "13": {
+          "name": "BATTERY_SERVICE_CHARGE_COMPLETED",
+          "label": "Service charge completed"
+        },
+        "14": {
+          "name": "REMOTE_CONTROL_UPDATE_FAILED",
+          "label": "Remote-control update failed"
+        },
+        "15": {
+          "name": "DRIVE_UNIT_EMERGENCY_SHUTDOWN",
+          "label": "Drive-unit emergency shutdown"
+        },
+        "16": {
+          "name": "REMOTE_CONTROL_EMERGENCY_SHUTDOWN",
+          "label": "Remote-control emergency shutdown"
+        },
+        "17": {
+          "name": "REMOTE_CONTROL49_DAYS_SHUTDOWN",
+          "label": "49-day periodic shutdown"
+        },
+        "18": {
+          "name": "CONNECT_MODULE_THEFT_EVENT_END",
+          "label": "Theft event ended"
+        },
+        "19": {
+          "name": "BATTERY_EMERGENCY_SHUTDOWN",
+          "label": "Battery emergency shutdown"
+        },
+        "20": {
+          "name": "BATTERY_SERVICE_CHARGE_TIMEOUT",
+          "label": "Service charge timed out"
+        },
+        "21": {
+          "name": "BATTERY_SERVICE_CHARGE_SO_C_LOW",
+          "label": "Service charge stopped, SoC low"
+        },
+        "22": {
+          "name": "REMOTE_CONTROL_RESTART_REQUESTED",
+          "label": "Restart requested"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
-      "subscribable": true
+      "subscribable": true,
+      "ui": {
+        "card": "remote",
+        "row": 100,
+        "label": "Last shutdown reason",
+        "technical": true
+      }
     },
     {
       "component": "RemoteControl",
@@ -11516,9 +12820,10 @@ const ADDRESS_REGISTRY = {
       "label": "Ambient Brightness",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 1000,
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11530,9 +12835,9 @@ const ADDRESS_REGISTRY = {
       "label": "Anti Lock Brake System Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11544,9 +12849,9 @@ const ADDRESS_REGISTRY = {
       "label": "Anti Lock Brake System In Bootloader Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11558,9 +12863,36 @@ const ADDRESS_REGISTRY = {
       "label": "Anti Lock Brake System Uds Identification Data",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "productCode",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "softwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "hardwareSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "bootloaderSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "serialNumber",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -11571,9 +12903,9 @@ const ADDRESS_REGISTRY = {
       "label": "Available Configuration Backup Slots",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -11584,9 +12916,9 @@ const ADDRESS_REGISTRY = {
       "label": "Battery1 Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11598,9 +12930,9 @@ const ADDRESS_REGISTRY = {
       "label": "Battery1 In Bootloader Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11612,9 +12944,36 @@ const ADDRESS_REGISTRY = {
       "label": "Battery1 Uds Identification Data",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "productCode",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "softwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "hardwareSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "bootloaderSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "serialNumber",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -11625,9 +12984,9 @@ const ADDRESS_REGISTRY = {
       "label": "Battery2 Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11639,9 +12998,9 @@ const ADDRESS_REGISTRY = {
       "label": "Battery2 In Bootloader Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11653,9 +13012,36 @@ const ADDRESS_REGISTRY = {
       "label": "Battery2 Uds Identification Data",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "productCode",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "softwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "hardwareSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "bootloaderSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "serialNumber",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -11666,9 +13052,16 @@ const ADDRESS_REGISTRY = {
       "label": "Bike Id",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -11698,9 +13091,21 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Central Battery Service Changed",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "blePeripheralIdentifier",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "bleBatteryService",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11738,9 +13143,21 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Central Configuration Data Changed",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "blePeripheralIdentifier",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "blePeripheralConfigurationData",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11765,9 +13182,21 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Central Connection Data Changed",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "blePeripheralIdentifier",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "blePeripheralConnectionData",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11832,9 +13261,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Central Get Available Database Slots",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -11936,9 +13365,39 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Central Initialization State Changed",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "blePeripheralIdentifier",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "blePeripheralInitializationState",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "WAITING_FOR_DISCOVERY",
+              "label": "Waiting for discovery"
+            },
+            "1": {
+              "name": "WAITING_FOR_INITIALIZATION",
+              "label": "Waiting for initialization"
+            },
+            "2": {
+              "name": "PERIPHERAL_INITIALIZED",
+              "label": "Peripheral initialized"
+            },
+            "3": {
+              "name": "AUTHENTICATION_ERROR",
+              "label": "Authentication error"
+            }
+          }
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11950,9 +13409,21 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Central Rssi Changed",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "blePeripheralIdentifier",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "rssi",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11964,9 +13435,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Central Rssi Polling Enabled",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -11978,9 +13449,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Central Scanning Enabled",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12006,9 +13477,31 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Central Scan Results",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "bookmarkParameter",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "boschPairingFlag",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "name",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "rssi",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12033,9 +13526,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Device Address",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12047,9 +13540,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Enabled",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12061,9 +13554,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Peripheral Database Entry Updated",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12075,9 +13568,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Peripheral Get Available Database Slots",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12101,9 +13594,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Peripheral Pairing Enabled",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12115,9 +13608,9 @@ const ADDRESS_REGISTRY = {
       "label": "Ble Peripheral Rssi Polling Enabled",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12129,9 +13622,46 @@ const ADDRESS_REGISTRY = {
       "label": "Bootloader Error States",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "remoteControlBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "headUnitBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "connectModuleBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "antiLockBrakeSystemBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "driveUnitBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 6,
+          "name": "batteryPack1BootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 7,
+          "name": "batteryPack2BootloaderErrorState",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12143,9 +13673,9 @@ const ADDRESS_REGISTRY = {
       "label": "Bootloader Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12156,9 +13686,56 @@ const ADDRESS_REGISTRY = {
       "label": "Button Event",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "type",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "PRESS",
+              "label": "Press"
+            },
+            "1": {
+              "name": "LONG_PRESS",
+              "label": "Long press"
+            },
+            "2": {
+              "name": "SHORT_RELEASE",
+              "label": "Short release"
+            },
+            "3": {
+              "name": "LONG_RELEASE",
+              "label": "Long release"
+            },
+            "4": {
+              "name": "REPEAT",
+              "label": "Repeat"
+            },
+            "5": {
+              "name": "EXTRA_LONG_PRESS",
+              "label": "Extra long press"
+            },
+            "6": {
+              "name": "EXTRA_LONG_RELEASE",
+              "label": "Extra long release"
+            }
+          }
+        },
+        {
+          "num": 2,
+          "name": "button",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "timestamp",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12170,9 +13747,9 @@ const ADDRESS_REGISTRY = {
       "label": "Button Events Enabled",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12183,9 +13760,26 @@ const ADDRESS_REGISTRY = {
       "label": "Buzzer",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "status",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "frequency",
+          "kind": "uint"
+        },
+        {
+          "num": 3,
+          "name": "dutyCycle",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12222,9 +13816,55 @@ const ADDRESS_REGISTRY = {
       "label": "Component Identifier Read Error Info",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "componentWithError",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "NONE",
+              "label": "None"
+            },
+            "1": {
+              "name": "BRC",
+              "label": "Brc"
+            },
+            "2": {
+              "name": "BBP1",
+              "label": "Bbp1"
+            },
+            "3": {
+              "name": "BBP2",
+              "label": "Bbp2"
+            },
+            "4": {
+              "name": "BDU",
+              "label": "Bdu"
+            },
+            "5": {
+              "name": "BHU",
+              "label": "Bhu"
+            },
+            "6": {
+              "name": "BCM",
+              "label": "Bcm"
+            },
+            "7": {
+              "name": "BAS",
+              "label": "Bas"
+            }
+          }
+        },
+        {
+          "num": 2,
+          "name": "parameterReadErrorState",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12236,9 +13876,9 @@ const ADDRESS_REGISTRY = {
       "label": "Component Locked",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12264,9 +13904,39 @@ const ADDRESS_REGISTRY = {
       "label": "Configuration Container Downloads Finished",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "NEVER_DOWNLOADED_OR_CALLED_CANCEL",
+          "label": "Never downloaded or called cancel"
+        },
+        "1": {
+          "name": "DOWNLOADS_PENDING",
+          "label": "Downloads pending"
+        },
+        "2": {
+          "name": "LAST_DOWNLOAD_SUCCESSFUL",
+          "label": "Last download successful"
+        },
+        "3": {
+          "name": "RESOURCE_INVALID",
+          "label": "Resource invalid"
+        },
+        "4": {
+          "name": "FILESYSTEM_ERROR",
+          "label": "Filesystem error"
+        },
+        "5": {
+          "name": "FILESYSTEM_CORRUPTED",
+          "label": "Filesystem corrupted"
+        },
+        "6": {
+          "name": "LAST_DOWNLOAD_FAILED",
+          "label": "Last download failed"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12278,9 +13948,9 @@ const ADDRESS_REGISTRY = {
       "label": "Connect Module Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12292,9 +13962,9 @@ const ADDRESS_REGISTRY = {
       "label": "Connect Module Available At Some Point",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12306,9 +13976,9 @@ const ADDRESS_REGISTRY = {
       "label": "Connect Module In Bootloader Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12320,9 +13990,36 @@ const ADDRESS_REGISTRY = {
       "label": "Connect Module Uds Identification Data",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "productCode",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "softwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "hardwareSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "bootloaderSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "serialNumber",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12333,9 +14030,9 @@ const ADDRESS_REGISTRY = {
       "label": "Current Gear Cadence Setpoint",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12347,9 +14044,21 @@ const ADDRESS_REGISTRY = {
       "label": "Current Gear Or Ratio",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "gear",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "ratio",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12374,9 +14083,9 @@ const ADDRESS_REGISTRY = {
       "label": "Desired Gear Cadence Setpoint",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12441,9 +14150,9 @@ const ADDRESS_REGISTRY = {
       "label": "Drive Unit Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12455,9 +14164,9 @@ const ADDRESS_REGISTRY = {
       "label": "Drive Unit In Bootloader Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12469,9 +14178,36 @@ const ADDRESS_REGISTRY = {
       "label": "Drive Unit Uds Identification Data",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "productCode",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "softwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "hardwareSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "bootloaderSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "serialNumber",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12560,9 +14296,21 @@ const ADDRESS_REGISTRY = {
       "label": "E Shift Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "can",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "ble",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12574,9 +14322,26 @@ const ADDRESS_REGISTRY = {
       "label": "E Shift Available At Some Point",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "can",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "ble",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "bleCentralPeripheralIdentifier",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12588,9 +14353,41 @@ const ADDRESS_REGISTRY = {
       "label": "E Shift Capabilities For Rider",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "shiftModeSwitchable",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "hideShiftRecommendations",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "cadenceSetPointAvailable",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "autoDownShiftConfigurable",
+          "kind": "bool"
+        },
+        {
+          "num": 5,
+          "name": "multiShiftConfigurable",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "limpHomeConfigurable",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12602,9 +14399,16 @@ const ADDRESS_REGISTRY = {
       "label": "Gear Cadence Limits",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12616,9 +14420,16 @@ const ADDRESS_REGISTRY = {
       "label": "Gear Can Device Information",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12629,9 +14440,16 @@ const ADDRESS_REGISTRY = {
       "label": "Gear Properties",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12655,9 +14473,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12668,9 +14486,9 @@ const ADDRESS_REGISTRY = {
       "label": "Hardware Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12681,9 +14499,9 @@ const ADDRESS_REGISTRY = {
       "label": "Head Unit Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12695,9 +14513,9 @@ const ADDRESS_REGISTRY = {
       "label": "Head Unit Available At Some Point",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12709,9 +14527,9 @@ const ADDRESS_REGISTRY = {
       "label": "Head Unit In Bootloader Available",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12723,9 +14541,36 @@ const ADDRESS_REGISTRY = {
       "label": "Head Unit Uds Identification Data",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "productCode",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "softwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "hardwareSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "bootloaderSoftwareVersion",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "serialNumber",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12762,9 +14607,11 @@ const ADDRESS_REGISTRY = {
       "label": "Internal Battery Temperature",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 100,
+      "unit": "°C",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12775,9 +14622,10 @@ const ADDRESS_REGISTRY = {
       "label": "Internal Battery Voltage",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 1000,
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12788,9 +14636,9 @@ const ADDRESS_REGISTRY = {
       "label": "Is Sample Software",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12801,9 +14649,9 @@ const ADDRESS_REGISTRY = {
       "label": "Key Exchange Pending",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -12835,9 +14683,9 @@ const ADDRESS_REGISTRY = {
       "label": "Last Stored Time Reset Nonce",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12848,9 +14696,31 @@ const ADDRESS_REGISTRY = {
       "label": "Lcd Test Mode",
       "readable": true,
       "writable": true,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "LCD_TEST_OFF",
+          "label": "Off"
+        },
+        "1": {
+          "name": "LCD_TEST_RED",
+          "label": "Red"
+        },
+        "2": {
+          "name": "LCD_TEST_GREEN",
+          "label": "Green"
+        },
+        "3": {
+          "name": "LCD_TEST_BLUE",
+          "label": "Blue"
+        },
+        "4": {
+          "name": "LCD_TEST_WHITE",
+          "label": "White"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12894,9 +14764,9 @@ const ADDRESS_REGISTRY = {
       "label": "Led Test Mode Enabled",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12934,9 +14804,21 @@ const ADDRESS_REGISTRY = {
       "label": "Logger Config",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "loggerType",
+          "kind": "enum"
+        },
+        {
+          "num": 2,
+          "name": "loggerLogLevel",
+          "kind": "enum"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12947,9 +14829,9 @@ const ADDRESS_REGISTRY = {
       "label": "Manufacturing Date",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12960,9 +14842,19 @@ const ADDRESS_REGISTRY = {
       "label": "Maximum Allowed U S B Charging Power",
       "readable": false,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "W0__ZERO_CHARGING",
+          "label": "W0 (zero charging)"
+        },
+        "1": {
+          "name": "W10_2000M_A_5_V",
+          "label": "W10 (2000 mA @ 5 V)"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -12973,9 +14865,9 @@ const ADDRESS_REGISTRY = {
       "label": "Maximum Batteries Available At Some Point",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13000,9 +14892,9 @@ const ADDRESS_REGISTRY = {
       "label": "Part Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -13013,9 +14905,11 @@ const ADDRESS_REGISTRY = {
       "label": "Pcb Temperature",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "normFactor",
+      "factor": 100,
+      "unit": "°C",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -13096,9 +14990,9 @@ const ADDRESS_REGISTRY = {
       "label": "Product Name",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "ui": {
@@ -13125,9 +15019,23 @@ const ADDRESS_REGISTRY = {
       "label": "Refresh Software Installation Component Information Status",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "REFRESH_COMPONENT_INFO_NOT_RECENTLY_UPDATED",
+          "label": "Not recently updated"
+        },
+        "1": {
+          "name": "REFRESH_COMPONENT_INFO_ONGOING",
+          "label": "Ongoing"
+        },
+        "2": {
+          "name": "REFRESH_COMPONENT_INFO_FINISHED",
+          "label": "Finished"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13139,9 +15047,21 @@ const ADDRESS_REGISTRY = {
       "label": "Remaining Brc Battery Charging Time",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "remainingChargingTimeUsb",
+          "kind": "uint"
+        },
+        {
+          "num": 2,
+          "name": "remainingChargingTimeFota",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -13152,9 +15072,51 @@ const ADDRESS_REGISTRY = {
       "label": "Remote Control Feature Properties Release1",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "pedelecSignalLamp",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "speedSignalLamp",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "speedBikeSpeedVisualization",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "speedDisplay",
+          "kind": "bool"
+        },
+        {
+          "num": 5,
+          "name": "componentLocking",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "bleComponentPairing",
+          "kind": "bool"
+        },
+        {
+          "num": 7,
+          "name": "activityTracking",
+          "kind": "bool"
+        },
+        {
+          "num": 8,
+          "name": "userDataStorage",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13166,9 +15128,16 @@ const ADDRESS_REGISTRY = {
       "label": "Remote Control Feature Properties Release2",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "systemLocking",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13180,9 +15149,46 @@ const ADDRESS_REGISTRY = {
       "label": "Remote Control Feature Properties Release3",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "connectModuleAvailability",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "antiLockBrakeSystemAvailability",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "connectModuleUdsIndentification",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "antiLockBrakeSystemUdsIndentification",
+          "kind": "bool"
+        },
+        {
+          "num": 5,
+          "name": "rootCertificateReadout",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "serviceCharge",
+          "kind": "bool"
+        },
+        {
+          "num": 7,
+          "name": "maximumRiderPower",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13194,9 +15200,51 @@ const ADDRESS_REGISTRY = {
       "label": "Remote Control Feature Properties Release4",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "bleCentralRole",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "bleCentralDeviceInformationService",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "bleCentralBatteryService",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "bleCentralBoschDeviceInformationService",
+          "kind": "bool"
+        },
+        {
+          "num": 5,
+          "name": "bleCentralConnectData",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "plusMinusButtonDuringRiding",
+          "kind": "bool"
+        },
+        {
+          "num": 7,
+          "name": "centralInformationVisualization",
+          "kind": "bool"
+        },
+        {
+          "num": 8,
+          "name": "bleCentralScanningAvailable",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13208,9 +15256,181 @@ const ADDRESS_REGISTRY = {
       "label": "Remote Control Static Feature Properties",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "controlMotorSupport",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "snooze",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "heartRate",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "averageAndMaximumHeartRate",
+          "kind": "bool"
+        },
+        {
+          "num": 5,
+          "name": "dualBatteryRouting",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "dualBatterySoftwareUpdate",
+          "kind": "bool"
+        },
+        {
+          "num": 7,
+          "name": "powerCycleIssueList",
+          "kind": "bool"
+        },
+        {
+          "num": 8,
+          "name": "extendedDynamicButtonControl",
+          "kind": "bool"
+        },
+        {
+          "num": 9,
+          "name": "eshift",
+          "kind": "bool"
+        },
+        {
+          "num": 10,
+          "name": "swUpdateFinalBehaviourPersistent",
+          "kind": "bool"
+        },
+        {
+          "num": 11,
+          "name": "displayVariant",
+          "kind": "bool"
+        },
+        {
+          "num": 12,
+          "name": "assistModeUsageAndEnergyShare",
+          "kind": "bool"
+        },
+        {
+          "num": 13,
+          "name": "genericDataPointCcfSupportForHeadUnit",
+          "kind": "bool"
+        },
+        {
+          "num": 14,
+          "name": "trailNavigation",
+          "kind": "bool"
+        },
+        {
+          "num": 15,
+          "name": "customizationOfScreens",
+          "kind": "bool"
+        },
+        {
+          "num": 16,
+          "name": "resetScreenCustomization",
+          "kind": "bool"
+        },
+        {
+          "num": 17,
+          "name": "systemDerating",
+          "kind": "bool"
+        },
+        {
+          "num": 18,
+          "name": "eShiftFineAdjustment",
+          "kind": "bool"
+        },
+        {
+          "num": 19,
+          "name": "bleLargeBinaryTransmissionWhileScanning",
+          "kind": "bool"
+        },
+        {
+          "num": 20,
+          "name": "playSound",
+          "kind": "bool"
+        },
+        {
+          "num": 21,
+          "name": "customizationOfOptions",
+          "kind": "bool"
+        },
+        {
+          "num": 22,
+          "name": "rangeControlState",
+          "kind": "bool"
+        },
+        {
+          "num": 23,
+          "name": "supportShutdownState",
+          "kind": "bool"
+        },
+        {
+          "num": 24,
+          "name": "supportUsbCharging",
+          "kind": "bool"
+        },
+        {
+          "num": 25,
+          "name": "uploadManagerLbtp",
+          "kind": "bool"
+        },
+        {
+          "num": 26,
+          "name": "optimizedInternalBatteryCharging",
+          "kind": "bool"
+        },
+        {
+          "num": 27,
+          "name": "issueHealing",
+          "kind": "bool"
+        },
+        {
+          "num": 28,
+          "name": "xAbs",
+          "kind": "bool"
+        },
+        {
+          "num": 29,
+          "name": "bleConnectionParametersWithSIUnits",
+          "kind": "bool"
+        },
+        {
+          "num": 30,
+          "name": "genericDeviceInformationForEshift",
+          "kind": "bool"
+        },
+        {
+          "num": 31,
+          "name": "multiCentralBonding",
+          "kind": "bool"
+        },
+        {
+          "num": 32,
+          "name": "deviceDatabase",
+          "kind": "bool"
+        },
+        {
+          "num": 33,
+          "name": "stagedStartup",
+          "kind": "bool"
+        },
+        {
+          "num": 34,
+          "name": "featureStreamingAlert",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13248,9 +15468,16 @@ const ADDRESS_REGISTRY = {
       "label": "Root Certificate",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "value",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -13261,9 +15488,9 @@ const ADDRESS_REGISTRY = {
       "label": "Serial Number",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -13294,9 +15521,61 @@ const ADDRESS_REGISTRY = {
       "label": "Shift Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "autoDownShiftEnabled",
+          "kind": "bool"
+        },
+        {
+          "num": 2,
+          "name": "autoDownShiftStartGear",
+          "kind": "uint"
+        },
+        {
+          "num": 3,
+          "name": "limpHomeEnabled",
+          "kind": "bool"
+        },
+        {
+          "num": 4,
+          "name": "limpHomeGear",
+          "kind": "uint"
+        },
+        {
+          "num": 5,
+          "name": "multiShiftEnabled",
+          "kind": "bool"
+        },
+        {
+          "num": 6,
+          "name": "multiShiftMaxSteps",
+          "kind": "uint"
+        },
+        {
+          "num": 7,
+          "name": "multiShiftPeriod",
+          "kind": "uint"
+        },
+        {
+          "num": 8,
+          "name": "multiShiftStepSize",
+          "kind": "uint"
+        },
+        {
+          "num": 9,
+          "name": "autoDownShiftStartRatio",
+          "kind": "uint"
+        },
+        {
+          "num": 10,
+          "name": "limpHomeRatio",
+          "kind": "uint"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13308,9 +15587,46 @@ const ADDRESS_REGISTRY = {
       "label": "Shift Configuration Limits",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "autoDownShiftStartGear",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "limpHomeGear",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "multiShiftMaxSteps",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "multiShiftPeriod",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "multiShiftStepSize",
+          "kind": "submessage"
+        },
+        {
+          "num": 6,
+          "name": "autoDownShiftStartRatio",
+          "kind": "submessage"
+        },
+        {
+          "num": 7,
+          "name": "limpHomeRatio",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13335,9 +15651,9 @@ const ADDRESS_REGISTRY = {
       "label": "Si La Led Enabled",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13349,9 +15665,9 @@ const ADDRESS_REGISTRY = {
       "label": "Software Installation State Preconditions State",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "uint",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13363,9 +15679,9 @@ const ADDRESS_REGISTRY = {
       "label": "Software Installation State Requested",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13377,12 +15693,48 @@ const ADDRESS_REGISTRY = {
       "label": "Software Update Available For Installation",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "SOFTWARE_PACKAGE_NOT_DOWNLOADED",
+          "label": "Package not downloaded"
+        },
+        "1": {
+          "name": "SOFTWARE_PACKAGE_GATHERING_COMPONENT_INFORMATION_ONGOING",
+          "label": "Gathering component information"
+        },
+        "2": {
+          "name": "SOFTWARE_PACKAGE_NOT_READABLE",
+          "label": "Package not readable"
+        },
+        "3": {
+          "name": "SOFTWARE_PACKAGE_INCOMPATIBLE",
+          "label": "Package incompatible"
+        },
+        "4": {
+          "name": "SOFTWARE_PACKAGE_COMPONENTS_ALREADY_UP_TO_DATE",
+          "label": "Components already up to date"
+        },
+        "5": {
+          "name": "SOFTWARE_PACKAGE_DOWNGRADE",
+          "label": "Downgrade refused"
+        },
+        "6": {
+          "name": "SOFTWARE_PACKAGE_UPDATE_AVAILABLE",
+          "label": "Update available"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
-      "subscribable": true
+      "subscribable": true,
+      "ui": {
+        "card": "remote",
+        "row": 90,
+        "label": "Software update state",
+        "technical": true
+      }
     },
     {
       "component": "RemoteControl",
@@ -13391,9 +15743,39 @@ const ADDRESS_REGISTRY = {
       "label": "Software Update Downloads Finished",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "NEVER_DOWNLOADED_OR_CALLED_CANCEL",
+          "label": "Never downloaded or called cancel"
+        },
+        "1": {
+          "name": "DOWNLOADS_PENDING",
+          "label": "Downloads pending"
+        },
+        "2": {
+          "name": "LAST_DOWNLOAD_SUCCESSFUL",
+          "label": "Last download successful"
+        },
+        "3": {
+          "name": "RESOURCE_INVALID",
+          "label": "Resource invalid"
+        },
+        "4": {
+          "name": "FILESYSTEM_ERROR",
+          "label": "Filesystem error"
+        },
+        "5": {
+          "name": "FILESYSTEM_CORRUPTED",
+          "label": "Filesystem corrupted"
+        },
+        "6": {
+          "name": "LAST_DOWNLOAD_FAILED",
+          "label": "Last download failed"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13405,9 +15787,74 @@ const ADDRESS_REGISTRY = {
       "label": "Software Update Status",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "overallState",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "SYSTEM_UPDATE_NOT_RUNNING",
+              "label": "System update not running"
+            },
+            "1": {
+              "name": "SYSTEM_UPDATE_RUNNING",
+              "label": "System update running"
+            },
+            "2": {
+              "name": "SYSTEM_UPDATE_FINISHED_SUCCESSFULLY",
+              "label": "System update finished successfully"
+            },
+            "3": {
+              "name": "SYSTEM_UPDATE_FINISHED_ERROR",
+              "label": "System update finished error"
+            }
+          }
+        },
+        {
+          "num": 2,
+          "name": "overallProgress",
+          "kind": "uint"
+        },
+        {
+          "num": 3,
+          "name": "remoteControlUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "headUnitUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "connectModuleUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 6,
+          "name": "antiLockBrakeSystemUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 7,
+          "name": "driveUnitUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 8,
+          "name": "batteryPack1UpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 9,
+          "name": "batteryPack2UpdateStatus",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13419,9 +15866,9 @@ const ADDRESS_REGISTRY = {
       "label": "Software Version",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "string",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -13432,9 +15879,31 @@ const ADDRESS_REGISTRY = {
       "label": "Sounds Volume Level",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "UNKNOWN",
+          "label": "Unknown"
+        },
+        "1": {
+          "name": "OFF",
+          "label": "Off"
+        },
+        "2": {
+          "name": "LOW",
+          "label": "Low"
+        },
+        "3": {
+          "name": "MEDIUM",
+          "label": "Medium"
+        },
+        "4": {
+          "name": "HIGH",
+          "label": "High"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -13458,9 +15927,43 @@ const ADDRESS_REGISTRY = {
       "label": "Stored Component Unexpected Restart Error Info",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "NONE",
+          "label": "None"
+        },
+        "1": {
+          "name": "BRC",
+          "label": "Brc"
+        },
+        "2": {
+          "name": "BBP1",
+          "label": "Bbp1"
+        },
+        "3": {
+          "name": "BBP2",
+          "label": "Bbp2"
+        },
+        "4": {
+          "name": "BDU",
+          "label": "Bdu"
+        },
+        "5": {
+          "name": "BHU",
+          "label": "Bhu"
+        },
+        "6": {
+          "name": "BCM",
+          "label": "Bcm"
+        },
+        "7": {
+          "name": "BAS",
+          "label": "Bas"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13472,9 +15975,26 @@ const ADDRESS_REGISTRY = {
       "label": "Stored Container Error Info",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "componentWithError",
+          "kind": "enum"
+        },
+        {
+          "num": 2,
+          "name": "kindOfContainer",
+          "kind": "enum"
+        },
+        {
+          "num": 3,
+          "name": "containerFileName",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13499,9 +16019,21 @@ const ADDRESS_REGISTRY = {
       "label": "Stored Update Stuck Error Info",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "componentWithError",
+          "kind": "enum"
+        },
+        {
+          "num": 2,
+          "name": "updateStep",
+          "kind": "enum"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13526,9 +16058,9 @@ const ADDRESS_REGISTRY = {
       "label": "System Locked",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13540,9 +16072,9 @@ const ADDRESS_REGISTRY = {
       "label": "System Lock Feature Enabled",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13554,9 +16086,9 @@ const ADDRESS_REGISTRY = {
       "label": "Third Party Service Mode Active",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "bool",
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13602,8 +16134,8 @@ const ADDRESS_REGISTRY = {
           "label": "Unrecognized"
         }
       },
-      "source": "",
-      "confirmed": false,
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "ui": {
@@ -13671,9 +16203,51 @@ const ADDRESS_REGISTRY = {
       "label": "Update Plan Info",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "updatePlan",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "brc",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "bbp1",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "bbp2",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "bdu",
+          "kind": "submessage"
+        },
+        {
+          "num": 6,
+          "name": "bhu",
+          "kind": "submessage"
+        },
+        {
+          "num": 7,
+          "name": "bcm",
+          "kind": "submessage"
+        },
+        {
+          "num": 8,
+          "name": "bas",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -13685,9 +16259,19 @@ const ADDRESS_REGISTRY = {
       "label": "Upload Readiness",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "READY_FOR_UPLOAD",
+          "label": "Ready for upload"
+        },
+        "1": {
+          "name": "NOT_READY_FOR_UPLOAD",
+          "label": "Not ready for upload"
+        }
+      },
+      "source": "BDT3 16.8.10 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null,
       "subscribable": true
@@ -14189,10 +16773,56 @@ const ADDRESS_REGISTRY = {
       "label": "Bike/system initialization stage reported by mobile app",
       "readable": true,
       "writable": false,
-      "kind": "uint",
-      "source": "Flow decompile",
-      "confirmed": false,
-      "notes": "Flow decompile, confidence: medium — StartupStageEnumType has 12 values (UNINITIALIZED, STAGE1-10, UNRECOGNIZED) but full ordinal list wasn't individually confirmed — kept as raw uint rather than guessed enum",
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "UNINITIALIZED",
+          "label": "Uninitialized"
+        },
+        "1": {
+          "name": "STAGE1",
+          "label": "Stage 1"
+        },
+        "2": {
+          "name": "STAGE2",
+          "label": "Stage 2"
+        },
+        "3": {
+          "name": "STAGE3",
+          "label": "Stage 3"
+        },
+        "4": {
+          "name": "STAGE4",
+          "label": "Stage 4"
+        },
+        "5": {
+          "name": "STAGE5",
+          "label": "Stage 5"
+        },
+        "6": {
+          "name": "STAGE6",
+          "label": "Stage 6"
+        },
+        "7": {
+          "name": "STAGE7",
+          "label": "Stage 7"
+        },
+        "8": {
+          "name": "STAGE8",
+          "label": "Stage 8"
+        },
+        "9": {
+          "name": "STAGE9",
+          "label": "Stage 9"
+        },
+        "10": {
+          "name": "STAGE10",
+          "label": "Stage 10"
+        }
+      },
+      "source": "Flow decompile + BDT3 16.8.10 decompile",
+      "confirmed": true,
+      "notes": "",
       "dependsOn": null
     },
     {
