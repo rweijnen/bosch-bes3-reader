@@ -1133,7 +1133,7 @@
       "kind": "unknown",
       "source": "",
       "confirmed": false,
-      "notes": "",
+      "notes": "BDT3 8.9.5 decompile contains a WakeupReason enum with 13 values (UNKNOWN_REASON, BATTERY_POWER_BUTTON_PRESS, REMOTE_CONTROL_POWER_BUTTON_PRESS, USB_WAKE_UP, HEAD_UNIT_POWER_BUTTON_PRESS, HEAD_UNIT_SOCKET_ATTACH, CONNECT_MODULE_THEFT_DETECTED, CHARGER_ATTACH, REMOTE_CONTROL_CONTROL_SERVICE_CHARGE, CONNECT_MODULE_SERVICE_CHARGE, REMOTE_CONTROL_INTERNAL_RESET, REMOTE_CONTROL_EBIKE_POWER, CAPACITY_TESTER_ATTACH) that plausibly belongs to this point; unconfirmed, the old tool lacks an explicit binding.",
       "dependsOn": null,
       "subscribable": true
     },
@@ -4118,7 +4118,7 @@
       "kind": "string",
       "source": "BDT3 16.8.10 decompile",
       "confirmed": true,
-      "notes": "",
+      "notes": "This point is LocallyProvided - the value is served by the connected diagnostic app itself, not by the bike, so it will never answer on the wire without an app on the other end.",
       "dependsOn": null
     },
     {
@@ -7716,9 +7716,23 @@
       "label": "Hub Configurable Port Status",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "UNUSED",
+          "label": "Unused"
+        },
+        "1": {
+          "name": "HPP",
+          "label": "HPP"
+        },
+        "2": {
+          "name": "LPP",
+          "label": "LPP"
+        }
+      },
+      "source": "BDT3 17.9.2 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -8126,9 +8140,21 @@
       "label": "Oem Hub Configurable Port Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "hubConfigurablePortConfiguration",
+          "kind": "enum"
+        },
+        {
+          "num": 2,
+          "name": "hubConfigurablePortConfigurableByIbd",
+          "kind": "bool"
+        }
+      ],
+      "source": "BDT3 17.9.2 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -8348,9 +8374,26 @@
       "label": "Oem Throttle Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "throttleReady",
+          "kind": "enum"
+        },
+        {
+          "num": 2,
+          "name": "throttleInputConfigurableByIbd",
+          "kind": "bool"
+        },
+        {
+          "num": 3,
+          "name": "throttleInput",
+          "kind": "enum"
+        }
+      ],
+      "source": "BDT3 17.9.2 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -9276,9 +9319,19 @@
       "label": "Throttle Configuration",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "enum",
+      "enumTable": {
+        "0": {
+          "name": "THROTTLE_NOT_EQUIPPED",
+          "label": "Throttle not equipped"
+        },
+        "1": {
+          "name": "THROTTLE_EQUIPPED",
+          "label": "Throttle equipped"
+        }
+      },
+      "source": "BDT3 17.9.2 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -10666,6 +10719,14 @@
         "22": {
           "name": "REMOTE_CONTROL_RESTART_REQUESTED",
           "label": "Restart requested"
+        },
+        "23": {
+          "name": "REMOTE_CONTROL_CORE_COMPONENT_MISSING",
+          "label": "Remote control core component missing"
+        },
+        "24": {
+          "name": "BATTERY_CORE_COMPONENT_MISSING",
+          "label": "Battery core component missing"
         }
       },
       "source": "BDT3 16.8.10 decompile",
@@ -12749,9 +12810,9 @@
       "readable": true,
       "writable": false,
       "kind": "uint32List",
-      "source": "Flow decompile",
+      "source": "Flow decompile + BDT3 17.9.2 decompile",
       "confirmed": true,
-      "notes": "Flow decompile, confidence: high — ArrayOf5AbsModeIconsOrBuilder + AbsModeIconEnumType",
+      "notes": "Flow decompile, confidence: high — ArrayOf5AbsModeIconsOrBuilder + AbsModeIconEnumType Values are AbsModeIconEnumType ordinals (ICON1-4, NO_ICON) per BDT3 17.9.2.",
       "dependsOn": null
     },
     {
@@ -12762,9 +12823,9 @@
       "readable": true,
       "writable": false,
       "kind": "uint32List",
-      "source": "Flow decompile",
+      "source": "Flow decompile + BDT3 17.9.2 decompile",
       "confirmed": false,
-      "notes": "Flow decompile, confidence: medium — AbsModeEnumType; array-wrapper mirrors icon list",
+      "notes": "Flow decompile, confidence: medium — AbsModeEnumType; array-wrapper mirrors icon list Values are AbsModeEnumType ordinals (see X_ABS_CURRENT_ABS_MODE).",
       "dependsOn": null
     },
     {
@@ -12774,12 +12835,38 @@
       "label": "Currently active ABS mode",
       "readable": true,
       "writable": false,
-      "kind": "uint",
-      "source": "Flow decompile",
+      "kind": "enum",
+      "source": "Flow decompile + BDT3 17.9.2 decompile",
       "confirmed": true,
-      "notes": "Flow decompile, confidence: high — AbsModeEnumMessage / AbsModeEnumType; ordinal-to-mode mapping (ABS_MODE1..5) not individually confirmed, kept as raw uint rather than guessed enum",
+      "notes": "Confirmed by BDT3 17.9.2 decompile: AbsModeEnumType (UNINITIALIZED=0, ABS_MODE1-5 = 1-5).",
       "dependsOn": null,
-      "subscribable": true
+      "subscribable": true,
+      "enumTable": {
+        "0": {
+          "name": "UNINITIALIZED",
+          "label": "Uninitialized"
+        },
+        "1": {
+          "name": "ABS_MODE1",
+          "label": "ABS mode1"
+        },
+        "2": {
+          "name": "ABS_MODE2",
+          "label": "ABS mode2"
+        },
+        "3": {
+          "name": "ABS_MODE3",
+          "label": "ABS mode3"
+        },
+        "4": {
+          "name": "ABS_MODE4",
+          "label": "ABS mode4"
+        },
+        "5": {
+          "name": "ABS_MODE5",
+          "label": "ABS mode5"
+        }
+      }
     },
     {
       "component": "RemoteControl",
@@ -15910,9 +15997,46 @@
       "label": "Stored Bootloader Error States",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "remoteControlBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 2,
+          "name": "headUnitBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 3,
+          "name": "connectModuleBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "antiLockBrakeSystemBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "driveUnitBootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 6,
+          "name": "batteryPack1BootloaderErrorState",
+          "kind": "submessage"
+        },
+        {
+          "num": 7,
+          "name": "batteryPack2BootloaderErrorState",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 17.9.2 decompile",
+      "confirmed": true,
       "notes": "",
       "dependsOn": null
     },
@@ -16002,10 +16126,75 @@
       "label": "Stored Software Update Status",
       "readable": true,
       "writable": false,
-      "kind": "unknown",
-      "source": "",
-      "confirmed": false,
-      "notes": "",
+      "kind": "submessage",
+      "fields": [
+        {
+          "num": 1,
+          "name": "overallState",
+          "kind": "enum",
+          "enumTable": {
+            "0": {
+              "name": "SYSTEM_UPDATE_NOT_RUNNING",
+              "label": "System update not running"
+            },
+            "1": {
+              "name": "SYSTEM_UPDATE_RUNNING",
+              "label": "System update running"
+            },
+            "2": {
+              "name": "SYSTEM_UPDATE_FINISHED_SUCCESSFULLY",
+              "label": "System update finished successfully"
+            },
+            "3": {
+              "name": "SYSTEM_UPDATE_FINISHED_ERROR",
+              "label": "System update finished error"
+            }
+          }
+        },
+        {
+          "num": 2,
+          "name": "overallProgress",
+          "kind": "uint"
+        },
+        {
+          "num": 3,
+          "name": "remoteControlUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 4,
+          "name": "headUnitUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 5,
+          "name": "connectModuleUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 6,
+          "name": "antiLockBrakeSystemUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 7,
+          "name": "driveUnitUpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 8,
+          "name": "batteryPack1UpdateStatus",
+          "kind": "submessage"
+        },
+        {
+          "num": 9,
+          "name": "batteryPack2UpdateStatus",
+          "kind": "submessage"
+        }
+      ],
+      "source": "BDT3 17.9.2 decompile",
+      "confirmed": true,
+      "notes": "Retains the last software update result (e.g. overallState=3, progress=92 persisting after a rejected container install).",
       "dependsOn": null
     },
     {
