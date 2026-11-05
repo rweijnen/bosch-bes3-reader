@@ -824,21 +824,28 @@ function decodeSubmessageFields(meta, fields) {
   for (const f of meta.fields || []) {
     const raw = fields[f.num];
     let decoded;
+    let shown;
     if (!raw) {
       decoded = f.kind === 'bool' ? false : undefined;
+      shown = decoded;
     } else if (f.kind === 'bool') {
-      decoded = !!raw.value;
+      decoded = shown = !!raw.value;
     } else if (f.kind === 'string') {
-      decoded = raw.wireType === 2 ? decodeUtf8(raw.value) : undefined;
+      decoded = shown = raw.wireType === 2 ? decodeUtf8(raw.value) : undefined;
     } else if (f.kind === 'enum') {
       const entry = f.enumTable && (f.enumTable[raw.value] || f.enumTable[String(raw.value)]);
       decoded = entry ? entry.name : raw.value;
+      shown = entry ? (entry.label || entry.name) : raw.value;
     } else {
-      // 'uint' or unspecified — bare varint value, no scaling.
+      // 'uint' or unspecified — bare varint value, no scaling unless the field
+      // declares a factor (and optional unit), e.g. maximumSpeed=400 -> "4 km/h".
       decoded = raw.wireType === 0 ? raw.value : undefined;
+      shown = decoded !== undefined && f.factor
+        ? (decoded / f.factor) + (f.unit ? ` ${f.unit}` : '')
+        : decoded;
     }
     value[f.name] = decoded;
-    if (decoded !== undefined) parts.push(`${f.label || f.name}=${decoded}`);
+    if (shown !== undefined) parts.push(`${f.label || f.name}=${shown}`);
   }
   return { label: meta.label, display: parts.length ? parts.join(', ') : '(empty)', value };
 }
