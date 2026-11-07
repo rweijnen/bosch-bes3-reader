@@ -4,6 +4,20 @@
 // the private research notes for provenance). Fields not listed here fall
 // back to the generic best-effort decoder in protocol.js; that fallback is
 // intentionally still labeled as a guess, never presented as confirmed.
+
+// Protobuf wire types
+const WireType = {
+  VARINT: 0,
+  FIXED64: 1,
+  LEN: 2,
+  FIXED32: 5,
+};
+// Byte width of the fixed-width wire types
+const FIXED_WIRE_WIDTH = {
+  [WireType.FIXED64]: 8,
+  [WireType.FIXED32]: 4,
+};
+
 //
 // decode "kind" values:
 //   string          - protobuf field 1, length-delimited UTF-8 string
@@ -485,15 +499,26 @@ function parseFields(bytes) {
     i = afterTag;
     const fieldNum = tagByte >>> 3;
     const wireType = tagByte & 0x7;
-    if (wireType === 0) {
+    if (wireType === WireType.VARINT) {
       const [value, next] = readVarint(bytes, i);
       fields[fieldNum] = { wireType, value };
       i = next;
-    } else if (wireType === 2) {
+    } else if (wireType === WireType.LEN) {
       const [len, next] = readVarint(bytes, i);
       const content = bytes.slice(next, next + len);
       fields[fieldNum] = { wireType, value: content };
       i = next + len;
+    } else if (wireType === WireType.FIXED32 || wireType === WireType.FIXED64) {
+      const width = FIXED_WIRE_WIDTH[wireType];
+      if (i + width > bytes.length) break; // truncated field — stop rather than throw from DataView
+      const u8 =bytes instanceof Uint8Array ? bytes : Uint8Array.from(bytes);
+      const dv = new DataView(u8.buffer, u8.byteOffset + i, width);
+      fields[fieldNum] = {
+        wireType,
+        value: wireType === WireType.FIXED32 ? dv.getUint32(0, true) : Number(dv.getBigUint64(0, true)),
+        float: wireType === WireType.FIXED32 ? dv.getFloat32(0, true) : dv.getFloat64(0, true),
+      };
+      i += width;
     } else {
       break; // unsupported wire type for this protocol — stop rather than misparse
     }
@@ -663,12 +688,12 @@ function decodeTyped(addr, payload) {
 
   switch (meta.kind) {
     case 'string': {
-      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      if (!f1 || f1.wireType !== WireType.LEN) return { label: meta.label, display: '(unexpected encoding)', value: null };
       const str = decodeUtf8(f1.value);
       return { label: meta.label, display: str, value: str };
     }
     case 'normFactor': {
-      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      if (!f1 || f1.wireType !== WireType.VARINT) return { label: meta.label, display: '(unexpected encoding)', value: null };
       const raw = meta.signed ? zigzagDecode(f1.value) : f1.value;
       const real = raw / meta.factor;
       return { label: meta.label, display: meta.unit ? `${real} ${meta.unit}` : String(real), value: real };
@@ -678,11 +703,11 @@ function decodeTyped(addr, payload) {
       return { label: meta.label, display: f1.value ? 'true' : 'false', value: !!f1.value };
     }
     case 'uint': {
-      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      if (!f1 || f1.wireType !== WireType.VARINT) return { label: meta.label, display: '(unexpected encoding)', value: null };
       return { label: meta.label, display: meta.unit ? `${f1.value} ${meta.unit}` : String(f1.value), value: f1.value };
     }
     case 'enum': {
-      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      if (!f1 || f1.wireType !== WireType.VARINT) return { label: meta.label, display: '(unexpected encoding)', value: null };
       const entry = meta.enumTable[f1.value] || meta.enumTable[String(f1.value)];
       return {
         label: meta.label,
@@ -692,10 +717,10 @@ function decodeTyped(addr, payload) {
       };
     }
     case 'uuid': {
-      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      if (!f1 || f1.wireType !== WireType.LEN) return { label: meta.label, display: '(unexpected encoding)', value: null };
       // f1.value is itself a nested message: field 1, length-delimited, 16 raw bytes
       const inner = parseFields(f1.value);
-      const raw = inner[1] && inner[1].wireType === 2 ? inner[1].value : null;
+      const raw = inner[1] && inner[1].wireType === WireType.LEN ? inner[1].value : null;
       if (!raw || raw.length !== 16) return { label: meta.label, display: `hex: ${toHex(f1.value)}`, value: null };
       const hex = toHex(raw).replace(/ /g, '');
       const uuid = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
@@ -707,7 +732,7 @@ function decodeTyped(addr, payload) {
       return { label: meta.label, display: `flag=${flag}, counter=${counter}`, value: { flag, counter } };
     }
     case 'startAssistModeOem': {
-      const posValue = f1 && f1.wireType === 0 ? f1.value : 0;
+      const posValue = f1 && f1.wireType === WireType.VARINT ? f1.value : 0;
       const entry = meta.enumTable[posValue] || meta.enumTable[String(posValue)];
       const position = entry ? entry.name : posValue;
       const positionLabel = entry ? entry.label : `unknown enum value ${posValue}`;
@@ -720,7 +745,7 @@ function decodeTyped(addr, payload) {
       };
     }
     case 'unixTimestamp': {
-      if (!f1 || f1.wireType !== 0) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      if (!f1 || f1.wireType !== WireType.VARINT) return { label: meta.label, display: '(unexpected encoding)', value: null };
       const seconds = zigzagDecode(f1.value); // sint64 — see file header note
       // Bike clock is reported as a plain Unix epoch (UTC instant) — displayed in the
       // viewer's local time zone, not UTC, since that's what a rider actually cares about.
@@ -728,7 +753,7 @@ function decodeTyped(addr, payload) {
       return { label: meta.label, display: local, value: seconds };
     }
     case 'uint32List': {
-      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      if (!f1 || f1.wireType !== WireType.LEN) return { label: meta.label, display: '(unexpected encoding)', value: null };
       // proto3 packed repeated scalar encoding: field 1 is one length-delimited run of
       // concatenated varints, not one wire entry per element.
       const values = [];
@@ -742,13 +767,13 @@ function decodeTyped(addr, payload) {
     }
     case 'serviceDue': {
       let timestamp = 0;
-      if (fields[1] && fields[1].wireType === 2) {
+      if (fields[1] && fields[1].wireType === WireType.LEN) {
         const inner = parseFields(fields[1].value);
         // field 1 of the nested Timestamp submessage is sint64 (zigzag) — same field as
         // unixTimestamp above, see the file header note.
-        timestamp = inner[1] && inner[1].wireType === 0 ? zigzagDecode(inner[1].value) : 0;
+        timestamp = inner[1] && inner[1].wireType === WireType.VARINT ? zigzagDecode(inner[1].value) : 0;
       }
-      const odometer = fields[2] && fields[2].wireType === 0 ? fields[2].value : 0;
+      const odometer = fields[2] && fields[2].wireType === WireType.VARINT ? fields[2].value : 0;
       const display = timestamp
         ? `${new Date(timestamp * 1000).toLocaleString()}, odometer ${odometer} m`
         : `odometer ${odometer} m`;
@@ -758,14 +783,14 @@ function decodeTyped(addr, payload) {
       // DeactivationProof: field1=deactivationState (bool), field2=certificateSerialNumber
       // (nested submessage, not decoded further — no confirmed shape), field3=signature (bytes).
       const deactivated = fields[1] ? !!fields[1].value : false;
-      const sig = fields[3] && fields[3].wireType === 2 ? fields[3].value : null;
+      const sig = fields[3] && fields[3].wireType === WireType.LEN ? fields[3].value : null;
       const display = deactivated
         ? `DEACTIVATED (signed proof, ${sig ? sig.length : 0}-byte signature)`
         : `not deactivated${sig ? ` (${sig.length}-byte signature present)` : ''}`;
       return { label: meta.label, display, value: { deactivated, signatureLength: sig ? sig.length : 0 } };
     }
     case 'certificateBytes': {
-      if (!f1 || f1.wireType !== 2) return { label: meta.label, display: '(unexpected encoding)', value: null };
+      if (!f1 || f1.wireType !== WireType.LEN) return { label: meta.label, display: '(unexpected encoding)', value: null };
       const raw = f1.value;
       const cvc = parseCvcCertificate(raw);
       if (!cvc) {
@@ -793,7 +818,7 @@ function decodeTyped(addr, payload) {
       // 0x00000000 (fully unset) for the off/walk slot, matching proto3 default-omission — and the
       // resulting RGB values (olive-green/sky-blue/purple/red) match what a rider actually sees on
       // the bike, unlike the old alpha-first decode.
-      const bytes = f1 && f1.wireType === 2 ? f1.value : payload;
+      const bytes = f1 && f1.wireType === WireType.LEN ? f1.value : payload;
       const colors = [];
       let i = 0;
       while (i < bytes.length) {
@@ -824,21 +849,43 @@ function decodeSubmessageFields(meta, fields) {
   for (const f of meta.fields || []) {
     const raw = fields[f.num];
     let decoded;
+    let shown;
     if (!raw) {
-      decoded = f.kind === 'bool' ? false : undefined;
+      // proto3 omits zero-valued scalars from the wire, so an absent numeric/bool
+      // field means a real 0/false, not "unknown" (a standing bike's BikeSpeed
+      // sends only validity=true). Show the default; empty strings stay omitted.
+      if (f.kind === 'bool') {
+        decoded = shown = false;
+      } else if (f.kind === 'enum') {
+        const entry = f.enumTable && f.enumTable[0];
+        decoded = entry ? entry.name : 0;
+        shown = entry ? (entry.label || entry.name) : 0;
+      } else if (f.kind === 'uint' || !f.kind) {
+        decoded = 0;
+        shown = f.factor && f.unit ? `0 ${f.unit}` : 0;
+      } else {
+        decoded = shown = undefined;
+      }
     } else if (f.kind === 'bool') {
-      decoded = !!raw.value;
+      decoded = shown = !!raw.value;
     } else if (f.kind === 'string') {
-      decoded = raw.wireType === 2 ? decodeUtf8(raw.value) : undefined;
+      decoded = shown = raw.wireType === WireType.LEN ? decodeUtf8(raw.value) : undefined;
     } else if (f.kind === 'enum') {
       const entry = f.enumTable && (f.enumTable[raw.value] || f.enumTable[String(raw.value)]);
       decoded = entry ? entry.name : raw.value;
+      shown = entry ? (entry.label || entry.name) : raw.value;
     } else {
-      // 'uint' or unspecified — bare varint value, no scaling.
-      decoded = raw.wireType === 0 ? raw.value : undefined;
+      // 'uint' or unspecified — bare numeric value (varint or fixed-width)
+      // no scaling unless the field declares a factor (and
+      // optional unit), e.g. maximumSpeed=400 -> "4 km/h".
+      const numericWire = raw.wireType === WireType.VARINT || raw.wireType === WireType.FIXED32 || raw.wireType === WireType.FIXED64;
+      decoded = numericWire ? raw.value : undefined;
+      shown = decoded !== undefined && f.factor
+        ? (decoded / f.factor) + (f.unit ? ` ${f.unit}` : '')
+        : decoded;
     }
     value[f.name] = decoded;
-    if (decoded !== undefined) parts.push(`${f.label || f.name}=${decoded}`);
+    if (shown !== undefined) parts.push(`${f.label || f.name}=${shown}`);
   }
   return { label: meta.label, display: parts.length ? parts.join(', ') : '(empty)', value };
 }

@@ -201,6 +201,45 @@
   .histogram-change-btn:disabled { color: var(--faint); cursor: default; opacity: 0.7; }
   .histogram-change-btn.secondary { color: var(--faint); }
 
+  /* Live subscriptions card */
+  .live-card { border-color: var(--accent); }
+  .dashboard > .live-card { max-width: 790px; } /* two data-grid boxes (2 × ~387px + gap) */
+  .live-table .live-sep { font: 500 9.5px 'IBM Plex Mono', monospace; color: var(--bad); letter-spacing: 0.06em; border-top: 1px solid var(--border); padding-top: 6px; }
+  .live-note { font: 400 11px 'IBM Plex Mono', monospace; color: var(--faint); line-height: 1.5; margin: 0; }
+  .live-controls { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+  .live-controls input[type="text"] { flex: 1 1 200px; min-width: 160px; box-sizing: border-box; font: 400 12px 'IBM Plex Mono', monospace; background: var(--bg); color: var(--text); border: 1px solid var(--border2); border-radius: 5px; padding: 5px 8px; }
+  .live-controls select { font: 400 11px 'IBM Plex Mono', monospace; background: var(--bg); color: var(--text); border: 1px solid var(--border2); border-radius: 5px; padding: 4px 5px; }
+  .live-btn { font: 500 10.5px 'IBM Plex Sans', sans-serif; color: var(--accent); background: none; border: 1px solid var(--border2); border-radius: 5px; padding: 3px 9px; cursor: pointer; white-space: nowrap; }
+  .live-btn:disabled { color: var(--faint); cursor: default; opacity: 0.7; }
+  .live-btn.live-btn-stop { color: var(--bad); }
+  .live-status { font: 400 10.5px 'IBM Plex Mono', monospace; color: var(--faint); }
+  .live-table-wrap { overflow-x: auto; margin-top: 4px; }
+  .live-table { width: 100%; border-collapse: collapse; font: 400 11px 'IBM Plex Mono', monospace; }
+  .live-table th { text-align: left; font: 500 9.5px 'IBM Plex Mono', monospace; color: var(--faint); letter-spacing: 0.05em; border-bottom: 1px solid var(--border); padding: 3px 8px 4px 0; white-space: nowrap; }
+  .live-table td { border-bottom: 1px dashed var(--border); padding: 4px 8px 4px 0; vertical-align: top; }
+  .live-table tr:last-child td { border-bottom: none; }
+  .live-table .live-v-name { color: var(--text); white-space: nowrap; max-width: 225px; overflow: hidden; text-overflow: ellipsis; }
+  .live-table .live-v-name small { color: var(--faint); font-weight: 400; }
+  .live-table .live-v-value { color: var(--text); white-space: normal; overflow-wrap: anywhere; max-width: 340px; }
+  .live-table .live-v-value.pending { color: var(--faint); font-style: italic; }
+  .live-table .live-v-num { text-align: right; white-space: nowrap; color: var(--muted); }
+  .live-state { font: 500 9.5px 'IBM Plex Sans', sans-serif; letter-spacing: 0.03em; padding: 1px 7px; border-radius: 8px; white-space: nowrap; border: 1px solid var(--border2); color: var(--faint); }
+  .live-state.st-active { color: var(--good); border-color: var(--good); }
+  .live-state.st-subscribing { color: var(--accent); border-color: var(--accent); }
+  .live-state.st-denied, .live-state.st-failed { color: var(--bad); border-color: var(--bad); }
+  .live-remove, .live-retry { background: none; border: none; color: var(--faint); font-size: 14px; line-height: 1; cursor: pointer; padding: 0 2px; }
+  .live-remove:hover { color: var(--bad); }
+  .live-retry:hover { color: var(--accent); }
+  .live-table .live-v-actions { white-space: nowrap; }
+  .live-table .live-v-actions > span { display: inline-flex; gap: 2px; }
+  .live-picker { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .live-picker-head { font: 500 9.5px 'IBM Plex Mono', monospace; color: var(--faint); letter-spacing: 0.05em; margin-bottom: 4px; }
+  .live-candidates { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .live-candidate { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; padding: 2px 0; font: 400 11px 'IBM Plex Mono', monospace; }
+  .live-candidate .live-c-name { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .live-candidate .live-c-name small { color: var(--faint); }
+  .live-candidate .live-c-kind { color: var(--faint); font-size: 10px; white-space: nowrap; }
+
   .assist-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
   .assist-modal-box { background: var(--panel); border: 1px solid var(--border2); border-radius: 10px; padding: 16px 18px; max-width: 380px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
   .assist-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font: 600 13px 'IBM Plex Sans', sans-serif; color: var(--text); }
@@ -447,6 +486,32 @@
           </div>
           <div class="kv-grid" id="remoteGrid"></div>
         </div>
+      </div>
+
+      <div class="card data-card live-card" id="liveCard" style="display:none;">
+        <span class="card-label">LIVE DATA &middot; SUBSCRIPTIONS</span>
+        <p class="live-note">
+          Subscribes to read-only data over the message bus for live updates.
+        </p>
+        <div class="live-controls">
+          <input type="text" id="liveSearch" list="liveDatalist" autocomplete="off"
+                 placeholder="Search a subscribable field by name&hellip;" />
+          <datalist id="liveDatalist"></datalist>
+          <button type="button" class="live-btn" id="liveDefaultsBtn">Show recommended set</button>
+          <button type="button" class="live-btn" id="liveSubscribeShownBtn">Subscribe to results</button>
+          <button type="button" class="live-btn" id="liveAllBtn">Subscribe all (might take a few minutes)</button>
+          <button type="button" class="live-btn live-btn-stop" id="liveStopAllBtn">Stop all</button>
+        </div>
+        <div class="live-status" id="liveStatus" style="margin-top:8px;"></div>
+        <div class="live-table-wrap" id="liveTableWrap" style="display:none;">
+          <table class="live-table">
+            <thead>
+              <tr><th>FIELD</th><th>VALUE</th><th title="NOTIFY frames received">UPD</th><th title="Updates per second (5&nbsp;s window)">HZ</th><th>AGE</th><th>STATE</th><th></th></tr>
+            </thead>
+            <tbody id="liveTBody"></tbody>
+          </table>
+        </div>
+        <div class="live-picker" id="livePicker"></div>
       </div>
 
       <!-- EBIKE CONNECT CLOUD LOOKUPS -->

@@ -4,7 +4,7 @@
   // actually pick up the new build?" question can be answered by looking,
   // not assumed — browser/CDN caching can otherwise make a hard refresh
   // silently keep serving a stale bundle.
-  const APP_VERSION = '2026-08-11.20-timestamp-zigzag-fix';
+  const APP_VERSION = '2026-11-06.1-subscribe-live-data';
 
   // Bump whenever the exported-report JSON schema changes (new/renamed fields the loader
   // depends on). Lets loadReportFile() below tell an old export apart from the current shape
@@ -110,6 +110,17 @@
     writeLabSearch: $('writeLabSearch'),
     writeLabAddressList: $('writeLabAddressList'),
     writeLabDetail: $('writeLabDetail'),
+    liveCard: $('liveCard'),
+    liveSearch: $('liveSearch'),
+    liveDatalist: $('liveDatalist'),
+    liveDefaultsBtn: $('liveDefaultsBtn'),
+    liveSubscribeShownBtn: $('liveSubscribeShownBtn'),
+    liveAllBtn: $('liveAllBtn'),
+    liveStopAllBtn: $('liveStopAllBtn'),
+    liveStatus: $('liveStatus'),
+    liveTableWrap: $('liveTableWrap'),
+    liveTBody: $('liveTBody'),
+    livePicker: $('livePicker'),
     diagnosticsCatalogStatus: $('diagnosticsCatalogStatus'),
     diagnosticsScanBtn: $('diagnosticsScanBtn'),
     diagnosticsResults: $('diagnosticsResults'),
@@ -266,6 +277,8 @@
       els.statusDot.style.animation = 'none';
       els.statusLabel.textContent = 'NOT CONNECTED';
     }
+
+    updateLiveCard();
   }
 
   function setProgress(text) {
@@ -325,6 +338,11 @@
   function handleDisconnect(auto) {
     if (phase !== 'connected' && phase !== 'connecting' && phase !== 'scanning') return;
     stopKeepAlive();
+    // Hide the background "Loading more bike data…" badge: on a disconnect the sweep
+    // loop exits silently, and a counter frozen at its last value reads like a hang.
+    els.sweepProgress.style.display = 'none';
+    clearInterval(sweepWatchdogTimer);
+    sweepWatchdogAddr = null;
     // A read already completed and its results are on screen (phase 'connected').
     // A disconnect now — typically the bike sleeping right after the sweep — must
     // NOT wipe the dashboard back to the start screen. Keep the data, mark the
@@ -399,60 +417,80 @@
   // looked like an unexplained heartbeat in the very first capture).
   const KEEP_ALIVE_ADDR = 8454;
   const KEEP_ALIVE_INTERVAL_MS = 800;
-  let keepAliveTimer = null;
   let keepAliveSeq = 0;
 
-  // Previously fire-and-forget: sent the keep-alive RPC but never checked
-  // for a response, so it could only ever detect an outright USB write
-  // failure (device unplugged), never "the bike silently stopped answering
-  // but our own USB write still succeeds" — exactly the failure mode
-  // suspected after a write got zero response following a long idle gap
-  // (see private research notes). Now waits briefly for the matching
-  // RPC_RESPONSE and logs the outcome, so an idle-period debug log actually
-  // shows whether the bike's session was still alive throughout, not just
-  // whether we tried.
+  // Back off the keep-alive when writes keep failing: 3 in a row suspends it
+  // for 15 s, so USB recovery isn't fighting a queue of doomed keep-alives.
+  let keepAliveFailStreak = 0;
+  let keepAliveSuspendedUntil = 0;
+
+  // Sends the keep-alive RPC and waits briefly for the matching RPC_RESPONSE,
+  // logging the outcome — so an idle-period debug log shows whether the bike's
+  // session was still alive throughout, not just whether we tried. A bike that
+  // silently stopped answering while our USB writes still succeed is exactly the
+  // failure mode a fire-and-forget ping can't see (see private research notes).
   async function sendKeepAlive() {
     if (!transport) return;
     const dlog = window.Bes3DebugLog;
-    // Something else (a sweep read, an assist-mode RPC, a write) is already
-    // waiting on transport.readNextFrame() — don't send our own ping here.
-    // Two concurrent readers pulling from the same frame queue could steal a
-    // response meant for the other one, and it's redundant anyway: any real
-    // command already exchanges data with the bike, which resets its
-    // inactivity timer just as well as a dedicated keep-alive ping would.
-    if (transportBusy) {
+    if (Date.now() < keepAliveSuspendedUntil) return;
+    // Something else (a sweep read, an assist-mode RPC, a write) holds or is
+    // waiting for the transport — don't send our own ping. Two concurrent readers
+    // pulling from the same frame queue could steal each other's responses, and
+    // it's redundant anyway: any real command resets the bike's inactivity timer
+    // just as well as a dedicated keep-alive would.
+    const lock = tryAcquireTransport();
+    if (!lock) {
       if (dlog) dlog.log('keepalive', 'skipped (transport busy with real activity)');
       return;
     }
-    keepAliveSeq = (keepAliveSeq + 1) & 0x0f;
-    const addr = KEEP_ALIVE_ADDR;
     try {
+      keepAliveSeq = (keepAliveSeq + 1) & 0x0f;
+      const addr = KEEP_ALIVE_ADDR;
       await transport.doMcspWrite(buildRpcCallFrame(addr, keepAliveSeq));
       const deadline = Date.now() + 300;
       while (Date.now() < deadline) {
         const raw = await transport.readNextFrame(2, 5);
         if (!raw) continue;
+        if (liveRescueFrame(raw)) continue; // a live NOTIFY / live-ack — not the keep-alive's response
         const parsed = parseReadResponseFrame(raw);
         if (!parsed) continue;
         if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
         if (dlog) dlog.log('keepalive', parsed.ok ? 'ok' : `declined: ${parsed.statusName}`);
+        keepAliveFailStreak = 0;
         return;
       }
       if (dlog) dlog.log('keepalive', 'no response (timeout)');
     } catch (err) {
       if (dlog) dlog.log('keepalive', 'write failed: ' + err.message);
+      keepAliveFailStreak += 1;
+      if (keepAliveFailStreak >= 3) {
+        keepAliveSuspendedUntil = Date.now() + 15000;
+        if (dlog) dlog.log('keepalive', `suspending for 15 s after ${keepAliveFailStreak} consecutive failures`);
+        keepAliveFailStreak = 0;
+      }
+    } finally {
+      releaseTransport(lock);
     }
   }
 
+  // Self-scheduling loop rather than setInterval: the next ping starts 800 ms
+  // after the PREVIOUS one finished, so a slow send (a failing write can block
+  // for seconds) can't pile up overlapping keep-alives. The generation counter
+  // is the off switch — bumping it makes the running loop exit at its next check.
+  let keepAliveGeneration = 0;
   function startKeepAlive() {
     stopKeepAlive();
-    keepAliveTimer = setInterval(() => { sendKeepAlive(); }, KEEP_ALIVE_INTERVAL_MS);
+    const generation = ++keepAliveGeneration;
+    (async function loop() {
+      while (generation === keepAliveGeneration) {
+        await sendKeepAlive();
+        if (generation !== keepAliveGeneration) break;
+        await sleep(KEEP_ALIVE_INTERVAL_MS);
+      }
+    })();
   }
   function stopKeepAlive() {
-    if (keepAliveTimer) {
-      clearInterval(keepAliveTimer);
-      keepAliveTimer = null;
-    }
+    keepAliveGeneration++;
   }
 
   function sleep(ms) {
@@ -477,26 +515,74 @@
     return seqCounter;
   }
 
-  // Set for the duration of any function that polls transport.readNextFrame()
-  // waiting for a specific response — the keep-alive timer checks this
-  // before doing its own read-wait, since two concurrent readers pulling
-  // from the same underlying frame queue could steal a response meant for
-  // the other one (e.g. keep-alive firing mid-sweep). Fire-and-forget
-  // (write only, no wait) whenever something else is already waiting.
+  // Transport lock: held for the duration of any exchange that polls
+  // transport.readNextFrame() — two concurrent readers pulling from the same
+  // underlying frame queue could steal a response meant for the other one.
+  // Never set directly: take it with acquireTransport() (real requests, waits)
+  // or tryAcquireTransport() (background keep-alive / live pump, gives way),
+  // and give it back with releaseTransport(id).
   let transportBusy = false;
+  // Lock ownership: each acquire gets a fresh id and only the current owner's
+  // release clears the flag, so a holder that was taken over (see below) can't
+  // unlock the next owner from its `finally`.
+  let transportLockId = 0;
+  let transportWaiters = 0; // real requesters queued in acquireTransport()
 
-  async function readOne(addr) {
+  // Waits for the transport, then takes it. Used by every request/response exchange
+  // (reads, RPCs, writes, one-shot subscribes). If the holder hasn't let go after
+  // maxWaitMs it's presumed wedged and we take over rather than hang forever.
+  async function acquireTransport(maxWaitMs = 5000) {
+    if (transportBusy) {
+      const deadline = Date.now() + maxWaitMs;
+      transportWaiters += 1;
+      try {
+        while (transportBusy && Date.now() < deadline) await sleep(5);
+      } finally {
+        transportWaiters -= 1;
+      }
+      if (transportBusy && window.Bes3DebugLog) {
+        window.Bes3DebugLog.log('transport', `lock still held after ${maxWaitMs} ms — taking over`);
+      }
+    }
     transportBusy = true;
+    return ++transportLockId;
+  }
+
+  // Non-blocking acquire for background work (keep-alive, live pump): fails if the
+  // lock is held OR a real requester is waiting for it, so background polling
+  // always yields to actual reads/RPCs instead of starving them. Returns 0 on failure.
+  function tryAcquireTransport() {
+    if (transportBusy || transportWaiters > 0) return 0;
+    transportBusy = true;
+    return ++transportLockId;
+  }
+
+  function releaseTransport(id) {
+    if (id && id === transportLockId) transportBusy = false;
+  }
+
+  // Reads one address: drain stale frames, send, wait for the answer (2 attempts).
+  // hardBudgetMs caps the TOTAL time — without it, a stalling field can stack its
+  // bounded steps into 20-40 s and look stuck. We never abandon an in-flight step
+  // (an orphaned read would steal frames from the next field); the deadline is
+  // checked between steps, so worst case overshoots by one bounded step (~4 s).
+  async function readOne(addr, hardBudgetMs = 12000) {
+    const lock = await acquireTransport();
+    const hardStop = Date.now() + hardBudgetMs;
     try {
       for (let attempt = 0; attempt < 2; attempt++) {
+        if (Date.now() >= hardStop) break;
         for (let i = 0; i < 4; i++) {
-          if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
+          const stale = await transport.readNextFrame(1, 2);
+          if (!stale) break; // nothing buffered
+          liveRescueFrame(stale); // normally dropped — keep live NOTIFYs alive during sweeps
         }
         await transport.doMcspWrite(buildReadRequestFrame(addr, nextSeq()));
-        const deadline = Date.now() + 300;
+        const deadline = Math.min(Date.now() + 300, hardStop);
         while (Date.now() < deadline) {
           const raw = await transport.readNextFrame(4, 4);
           if (!raw) continue;
+          if (liveRescueFrame(raw)) continue; // a live NOTIFY / live-ack — not this read's response
           const parsed = parseReadResponseFrame(raw);
           if (!parsed) continue;
           if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
@@ -506,7 +592,7 @@
       }
       return null;
     } finally {
-      transportBusy = false;
+      releaseTransport(lock);
     }
   }
 
@@ -599,22 +685,27 @@
   // also used for the UDAM write below — accepting a stray frame as "success"
   // for a write is worse than for a read.
   async function rpcCallWithArg(addr, argPayload, decodeFn, logLabel) {
-    transportBusy = true;
+    const lock = await acquireTransport();
+    const hardStop = Date.now() + 12000; // same hard per-call budget as readOne — bounded waits must not stack
     try {
       const dlog = window.Bes3DebugLog;
       for (let attempt = 0; attempt < 2; attempt++) {
+        if (Date.now() >= hardStop) break;
         for (let i = 0; i < 4; i++) {
-          if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
+          const stale = await transport.readNextFrame(1, 2);
+          if (!stale) break; // nothing buffered
+          liveRescueFrame(stale); // normally dropped — keep live NOTIFYs alive during RPCs
         }
         const sentSeq = nextSeq();
         const frame = buildRpcCallFrameWithArg(addr, sentSeq, argPayload);
         if (dlog) dlog.log('assist-rpc', `-> addr 0x${addr.toString(16)}${logLabel ? ' ' + logLabel : ''} attempt ${attempt} seq ${sentSeq}`, frame);
         await transport.doMcspWrite(frame);
-        const deadline = Date.now() + 500; // RPC round-trip can be slower than a plain read
+        const deadline = Math.min(Date.now() + 500, hardStop); // RPC round-trip can be slower than a plain read
         while (Date.now() < deadline) {
           const raw = await transport.readNextFrame(4, 4);
           if (!raw) continue;
           if (dlog) dlog.log('assist-rpc', '<- raw frame', raw);
+          if (liveRescueFrame(raw)) continue; // a live NOTIFY / live-ack — not this RPC's response
           const parsed = parseReadResponseFrame(raw);
           if (!parsed) continue;
           if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
@@ -633,7 +724,7 @@
       if (dlog) dlog.log('assist-rpc', `<- timeout, no matching response for addr 0x${addr.toString(16)}`);
       return null;
     } finally {
-      transportBusy = false;
+      releaseTransport(lock);
     }
   }
 
@@ -653,11 +744,13 @@
   // component are declared the same *SubscribableDataPoint way — this is the first one attempted
   // for real, not a generic mechanism proven to work everywhere yet.
   async function subscribeOnce(addr, waitForNotifyMs = 2000) {
-    transportBusy = true;
+    const lock = await acquireTransport();
     const dlog = window.Bes3DebugLog;
     try {
       for (let i = 0; i < 4; i++) {
-        if (!(await transport.readNextFrame(1, 2))) break; // drain stale frames
+        const stale = await transport.readNextFrame(1, 2);
+        if (!stale) break; // nothing buffered
+        liveRescueFrame(stale); // normally dropped — keep live NOTIFYs alive under a one-shot subscribe
       }
       const subSeq = nextSeq();
       const subFrame = buildSubscribeRequestFrame(addr, subSeq);
@@ -669,6 +762,7 @@
       while (Date.now() < ackDeadline) {
         const raw = await transport.readNextFrame(4, 4);
         if (!raw) continue;
+        if (liveRescueFrame(raw)) continue; // a live NOTIFY / live-ack — not this subscribe's ack
         const parsed = parseReadResponseFrame(raw);
         if (parsed && parsed.type === MessageType.SUBSCRIBE_RESPONSE && parsed.seq === subSeq) { ack = parsed; break; }
       }
@@ -680,6 +774,7 @@
       while (Date.now() < notifyDeadline) {
         const raw = await transport.readNextFrame(4, 4);
         if (!raw) continue;
+        if (liveRescueFrame(raw)) continue; // a push for a *live* subscription — route it there
         const n = parseNotifyMessage(raw);
         if (n && n.addr === addr) { notify = n; break; }
       }
@@ -692,12 +787,811 @@
         if (dlog) dlog.log('range-subscribe', `-> UNSUBSCRIBE addr 0x${addr.toString(16)} seq ${unsubSeq}`, unsubFrame);
         await transport.doMcspWrite(unsubFrame);
         for (let i = 0; i < 4; i++) {
-          if (!(await transport.readNextFrame(2, 3))) break; // best-effort drain of the ack, don't block on it
+          const drained = await transport.readNextFrame(2, 3);
+          if (!drained) break; // best-effort drain of the ack, don't block on it
+          liveRescueFrame(drained); // a live NOTIFY caught in the drain — keep it
         }
       } catch (_) { /* best-effort cleanup only */ }
-      transportBusy = false;
+      releaseTransport(lock);
     }
   }
+
+  // ================= Live data: persistent MCSP subscriptions =================
+  //
+  // subscribeOnce() above proves the mechanism for one address; this section turns it
+  // into a real live-data view: SUBSCRIBE many addresses, keep them subscribed, and
+  // decode the NOTIFY frames the bike pushes as values change.
+  //
+  // The lifecycle rules mirror Bosch's own subscription manager in BDT3
+  // (eds-communication-bike3: SubscriptionRetrier + UsbGateway + Bes3CommunicationSetting):
+  //   - subscribe requests are sent ONE at a time from a serial queue, spaced
+  //     BikeDelaySubscriptions (100 ms) apart — BDT3 never blasts a burst;
+  //   - each request must be ACKed within SubscribeTimeout (5 s);
+  //   - only OVERLOADED / NOT_READY / TIMEOUT responses are retried (with a FRESH
+  //     sequence number — the old one was consumed by the failed exchange), at most
+  //     MaxRetryCountPerRequest (4) times; DENIED and friends are final;
+  //   - reconnects renew every subscription (UsbGateway.renewSubscriptions bumps
+  //     brcConnectSequence so stale queued requests retire themselves) — here a
+  //     reconnect is a teardown instead, since this app re-scans from scratch;
+  //   - nowhere in BDT3 is there a hard cap on concurrent subscriptions; load is
+  //     handled by pacing (100 ms) and honouring the bike's own OVERLOADED backpressure.
+
+  const LIVE_DEFAULT_SET = [
+    // [component, name] — real-time ride telemetry the bike is known to push.
+    ['Battery', 'CHARGING_ACTIVE'], ['Battery', 'PRESENT_CELL_VOLTAGE'],
+    ['Battery', 'PRESENT_PACK_TEMPERATURE'], ['Battery', 'CHARGER_CONNECTED'],
+    ['Battery', 'REMAINING_ENERGY'], ['Battery', 'REMAINING_ENERGY_FOR_RIDER'],
+    ['RemoteControl', 'AMBIENT_BRIGHTNESS'],
+    ['DriveUnit', 'DISPLAYED_BIKE_SPEED'], ['DriveUnit', 'PRESENT_PCB_TEMPERATURE'],
+    ['DriveUnit', 'ASSIST_MODE'], ['DriveUnit', 'ASSIST_MODE_COLORS'],
+    ['DriveUnit', 'AVERAGE_RIDER_CADENCE'], ['DriveUnit', 'BIKE_LIGHT'],
+    ['DriveUnit', 'BIKE_LIGHT_CONFIGURATION'], ['DriveUnit', 'BIKE_LIGHT_POWER'],
+    ['DriveUnit', 'ROAD_SLOPE'],
+    ['AntiLockBrakeSystem', 'FRONT_WHEEL_SPEED'], ['AntiLockBrakeSystem', 'REAR_WHEEL_SPEED'],
+  ];
+
+  const liveState = {
+    entries: new Map(),      // addr -> {addr, component, name, label, kind, state, statusName, statusDetail, retries, cancelRequested, display, technical, rawHex, count, lastAt, window: []}
+    queue: [],               // fresh ops: {kind: 'sub'|'unsub', addr} — always processed first
+    deferred: [],            // timed-out subscribes parked here: processed only when `queue`
+                             // is empty, so a newly added field never waits behind the
+                             // 2 s x 4 timeout carousel of dead addresses (minutes in total)
+    paceMs: 100,             // fixed at BDT3's BikeDelaySubscriptions default — one subscribe per 100 ms
+    workerRunning: false,
+    pumpRunning: false,
+    totalNotifies: 0,
+    notifyWindow: [],        // performance.now() stamps (5 s) for the global push rate
+    renderScheduled: false,
+    uiTimer: null,
+    pickerTerm: '',
+    pickerResults: [],       // registry entries currently shown by the picker
+  };
+  // Single in-flight ack wait (subscribe ops are serial, so one slot is enough —
+  // matches SubscriptionRetrier's requestsInFlight handling of one request at a time).
+  let liveAckWaiter = null; // {addr, seq, respType, resolve}
+
+  function liveSubscribableRegistryEntries() {
+    return window.Bes3AddressRegistry.ADDRESS_REGISTRY.addresses.filter((e) => e.subscribable);
+  }
+
+  // Feeds one inbound frame to the live machinery. Returns true only when the frame
+  // was consumed here (a NOTIFY for a subscribed address, or the ack of an in-flight
+  // live subscribe/unsubscribe) — callers use that to decide whether the frame is
+  // still theirs to match. Called from the pump below AND from the frame-dropping
+  // paths of readOne/rpcCallWithArg/subscribeOnce/writeAndReadBack/sendKeepAlive, so live updates keep
+  // flowing even while a sweep or a write is in progress.
+  function liveRescueFrame(raw) {
+    if (!raw) return false;
+    if (liveState.entries.size > 0) {
+      const n = parseNotifyMessage(raw);
+      if (n && liveState.entries.has(n.addr)) {
+        liveHandleNotify(n);
+        return true;
+      }
+    }
+    const parsed = parseReadResponseFrame(raw);
+    if (parsed && liveAckWaiter) {
+      const w = liveAckWaiter;
+      if (parsed.type === w.respType && parsed.seq === w.seq &&
+          parsed.addrHigh === (w.addr >> 8) && parsed.addrLow === (w.addr & 0xff)) {
+        liveAckWaiter = null;
+        w.resolve(parsed);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function liveAwaitAck(addr, seq, respType, timeoutMs) {
+    return new Promise((resolve) => {
+      const self = { addr, seq, respType, resolve };
+      liveAckWaiter = self;
+      // SubscribeTimeout — on expiry the caller treats it as TIMEOUT (retryable),
+      // exactly like SubscriptionRetrier.checkTimeouts re-enqueuing expired requests.
+      // (sleep() is setTimeout-based, so a hidden tab's timer throttling can stretch
+      // this; that only delays a retry, and an ack that does arrive still resolves it.)
+      sleep(timeoutMs).then(() => {
+        if (liveAckWaiter === self) {
+          liveAckWaiter = null;
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  // Fallback for subscribed addresses with no confirmed type (FIELD_TYPES has no entry —
+  // decodeTyped returns null): most unknown-kind scalars push a bare protobuf field-1
+  // varint (tag 0x08), which generic decodeValue would misrender as big-endian hex.
+  // Decoding the varint is still honest about being undecoded — the "(raw)" suffix.
+  function liveDecodeRawFallback(payload) {
+    if (payload && payload.length >= 2 && payload[0] === 0x08) {
+      let v = 0;
+      let shift = 0;
+      for (let i = 1; i < payload.length; i++) {
+        v += (payload[i] & 0x7f) * Math.pow(2, shift);
+        if ((payload[i] & 0x80) === 0) return { display: `${v} (raw)`, value: v };
+        shift += 7;
+      }
+    }
+    return decodeValue(payload);
+  }
+
+  function liveHandleNotify(n) {
+    const entry = liveState.entries.get(n.addr);
+    if (!entry) return;
+    const now = performance.now();
+    // A pushed NOTIFY is hard proof the bike has us subscribed. If the ack was lost
+    // (USB race, timeout) and the entry sits in queued/failed/denied, correct it.
+    if (entry.state !== 'active') {
+      const dlog = window.Bes3DebugLog;
+      if (dlog) dlog.log('live', `push received for ${entry.component}.${entry.name} while state=${entry.state} — marking active`);
+      entry.state = 'active';
+      entry.statusName = '';
+      entry.statusDetail = '';
+      entry.retries = 0;
+    }
+    entry.count += 1;
+    entry.lastAt = Date.now();
+    entry.window.push(now);
+    const cutoff = now - 5000;
+    while (entry.window.length && entry.window[0] < cutoff) entry.window.shift();
+    const decoded = decodeTyped(n.addr, n.payload) || liveDecodeRawFallback(n.payload);
+    entry.display = decoded.display;
+    entry.technical = decoded.technical;
+    entry.rawHex = toHex(n.payload);
+    if (entry.count === 1) {
+      const dlog = window.Bes3DebugLog;
+      if (dlog) dlog.log('live', `first push: ${entry.component}.${entry.name} = ${decoded.display}`);
+    }
+    liveState.totalNotifies += 1;
+    liveState.notifyWindow.push(now);
+    while (liveState.notifyWindow.length && liveState.notifyWindow[0] < cutoff) liveState.notifyWindow.shift();
+    liveRenderSoon();
+  }
+
+  function liveEntryFromRegistry(regEntry) {
+    return {
+      addr: regEntry.address, component: regEntry.component, name: regEntry.name,
+      label: regEntry.label || regEntry.name, kind: regEntry.kind || 'unknown',
+      state: 'queued', statusName: '', statusDetail: '', retries: 0, cancelRequested: false,
+      display: null, technical: null, rawHex: null, count: 0, lastAt: 0, window: [],
+    };
+  }
+
+  function liveKickWorker() {
+    liveWorkerLoop().catch(() => {});
+    livePumpLoop().catch(() => {});
+  }
+
+  // Serial op processor — SubscriptionRetrier.subscriptionLoop's counterpart. Fresh ops
+  // (queue) always preempt deferred ones: a deferred op is taken only when the fresh
+  // queue is empty, so dead-address retry passes never block a newly clicked subscribe.
+  async function liveWorkerLoop() {
+    if (liveState.workerRunning) return;
+    liveState.workerRunning = true;
+    const dlog = window.Bes3DebugLog;
+    try {
+      while (liveState.queue.length > 0 || liveState.deferred.length > 0) {
+        if (!transport || phase !== 'connected' || disconnectedAfterRead) {
+          liveState.queue.length = 0; // stale by definition — the bike-side session is gone
+          liveState.deferred.length = 0;
+          break;
+        }
+        const op = liveState.queue.length > 0 ? liveState.queue.shift() : liveState.deferred.shift();
+        if (op.kind === 'sub') {
+          const entry = liveState.entries.get(op.addr);
+          if (!entry || entry.cancelRequested) continue; // removed before its turn
+          await liveSubscribeOp(entry);
+        } else {
+          await liveUnsubscribeOp(op.addr);
+        }
+        liveRenderSoon();
+        await sleep(liveState.paceMs);
+      }
+    } finally {
+      liveState.workerRunning = false;
+      liveRenderSoon();
+    }
+    if (dlog && liveState.queue.length === 0 && liveState.deferred.length === 0 && liveState.entries.size === 0) {
+      dlog.log('live', 'worker idle (no entries, no queue)');
+    }
+  }
+
+  // Sends one frame under the transport lock: a write overlapping the live pump's
+  // read polls is what caused the intermittent "A transfer error has occurred"
+  // failures. Lock covers the write only — the pump must stay free to read the ack.
+  async function liveWriteFrame(frame) {
+    let lastErr = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (!transport || phase !== 'connected' || disconnectedAfterRead) break;
+      // Background-priority acquire: gives way to real reads/RPCs waiting for the
+      // lock, and fails with an error rather than taking over a held lock.
+      const waitDeadline = Date.now() + 5000;
+      let lock;
+      while (!(lock = tryAcquireTransport())) {
+        if (!transport || phase !== 'connected' || disconnectedAfterRead || Date.now() > waitDeadline) {
+          return { ok: false, err: new Error('timed out waiting for the transport lock') };
+        }
+        await sleep(10);
+      }
+      let retryPause = false;
+      try {
+        await transport.doMcspWrite(frame);
+        return { ok: true };
+      } catch (err) {
+        lastErr = err;
+        retryPause = true; // one retry — transient bridge hiccups recover, dead buses don't
+      } finally {
+        releaseTransport(lock);
+      }
+      if (retryPause) await sleep(150); // outside the lock — don't stall the pump on a retry pause
+    }
+    return { ok: false, err: lastErr };
+  }
+
+  async function liveSubscribeOp(entry) {
+    const dlog = window.Bes3DebugLog;
+    const maxRetries = 4; // MaxRetryCountPerRequest
+    // First attempt gets BDT3's full 5 s budget (the bike can legitimately take
+    // seconds to answer mid-batch); retries use 2 s so dead fields cycle fast.
+    const ackTimeoutMs = entry.retries === 0 ? 5000 : 2000;
+    for (;;) {
+      if (!transport || phase !== 'connected' || disconnectedAfterRead) return;
+      if (liveState.entries.get(entry.addr) !== entry) return; // replaced/removed meanwhile
+      if (entry.cancelRequested) return;
+      // A deferred re-attempt can be obsolete: if pushes arrived meanwhile (self-heal
+      // flipped the entry active via liveHandleNotify), the subscription is already
+      // live — re-sending would be redundant work and UI flicker.
+      if (entry.state === 'active') return;
+      if (entry.retries >= maxRetries) {
+        entry.state = 'failed';
+        entry.statusName = entry.statusName || 'retries exceeded';
+        if (dlog) dlog.log('live', `gave up on ${entry.component}.${entry.name}: ${entry.statusName}`);
+        return;
+      }
+      entry.state = 'subscribing';
+      const seq = nextSeq();
+      // Register the ack waiter BEFORE writing: the bike can answer before the
+      // write call even returns, and the pump drops frames no waiter matches.
+      const ackPromise = liveAwaitAck(entry.addr, seq, MessageType.SUBSCRIBE_RESPONSE, ackTimeoutMs);
+      const writeResult = await liveWriteFrame(buildSubscribeRequestFrame(entry.addr, seq));
+      if (!writeResult.ok) {
+        entry.state = 'failed';
+        entry.statusName = 'USB write failed'; // short badge text; full detail lives in statusDetail
+        entry.statusDetail = writeResult.err ? writeResult.err.message : '';
+        return;
+      }
+      const ack = await ackPromise;
+      if (liveState.entries.get(entry.addr) !== entry) return; // removed while waiting
+      // Pushes arrived while the ack was pending (liveHandleNotify flipped the entry
+      // active) — the subscription is proven live, so a lost/late ack changes nothing.
+      if (entry.state === 'active') return;
+      if (ack && ack.ok) {
+        entry.state = 'active';
+        entry.statusName = '';
+        entry.statusDetail = '';
+        entry.retries = 0;
+        if (dlog) dlog.log('live', `subscribed: ${entry.component}.${entry.name} (addr ${entry.addr}, seq ${seq})`);
+        return;
+      }
+      const statusName = ack ? ack.statusName : 'TIMEOUT';
+      entry.statusName = statusName;
+      if (ack && statusName !== 'OVERLOADED' && statusName !== 'NOT_READY' && statusName !== 'TIMEOUT') {
+        // DENIED / UNSUPPORTED / … are final — BDT3 logs and moves on, and so do we.
+        entry.state = 'denied';
+        if (dlog) dlog.log('live', `subscribe refused: ${entry.component}.${entry.name}: ${statusName}`);
+        return;
+      }
+      entry.retries += 1;
+      if (statusName === 'TIMEOUT') {
+        // No ack at all, park in the DEFERRED lane, processed only when the fresh
+        // queue is empty: dead addresses must not delay newly added fields. The
+        // retry count is kept, so they still give up after maxRetries passes.
+        entry.state = 'queued';
+        entry.statusName = `deferred ${entry.retries}/${maxRetries}`;
+        liveState.deferred.push({ kind: 'sub', addr: entry.addr });
+        if (dlog) dlog.log('live', `deferred ${entry.component}.${entry.name} to the low-priority lane (timeout, retry ${entry.retries}/${maxRetries})`);
+        return;
+      }
+      // OVERLOADED / NOT_READY: the bike ANSWERED and asked for patience — retry in
+      // place with exponential backoff, exactly like BDT3 does.
+      const backoff = 100 * Math.pow(2, entry.retries - 1);
+      if (dlog) dlog.log('live', `retry ${entry.retries}/${maxRetries} for ${entry.component}.${entry.name} (${statusName}) in ${backoff} ms`);
+      await sleep(backoff);
+    }
+  }
+
+  // Unsubscribes are best-effort single attempts (BDT3 drains their acks without
+  // blocking either) — if the bike never answers, its session is over anyway.
+  // Map membership is deliberately NOT touched here: remove/re-add of the same address
+  // queues [unsub, sub] in that order, and the fresh entry must survive its own unsub.
+  async function liveUnsubscribeOp(addr) {
+    if (!transport || phase !== 'connected' || disconnectedAfterRead) return;
+    const seq = nextSeq();
+    // Same waiter-before-write and transport-lock ordering as liveSubscribeOp —
+    // see the race notes there and on liveWriteFrame.
+    const ackPromise = liveAwaitAck(addr, seq, MessageType.UNSUBSCRIBE_RESPONSE, 1000);
+    const writeResult = await liveWriteFrame(buildUnsubscribeRequestFrame(addr, seq));
+    if (writeResult.ok) {
+      try { await ackPromise; } catch (_) { /* best-effort */ }
+    }
+  }
+
+  // The only background frame reader while live entries exist. Request paths (readOne,
+  // RPCs, writes, keep-alive) hold the transport lock for their whole exchange; the
+  // pump takes it with tryAcquireTransport() only for each single poll and yields
+  // whenever a request is waiting, so those requests — including the 800 ms keep-alive,
+  // which matters because pump reads alone don't reset the bike's inactivity timer —
+  // always get through.
+  async function livePumpLoop() {
+    if (liveState.pumpRunning) return;
+    liveState.pumpRunning = true;
+    try {
+      while ((liveState.entries.size > 0 || liveState.queue.length > 0 || liveState.deferred.length > 0) &&
+             transport && phase === 'connected' && !disconnectedAfterRead && !abortRequested) {
+        const lock = tryAcquireTransport();
+        if (!lock) { await sleep(15); continue; }
+        let raw = null;
+        try { raw = await transport.readNextFrame(1, 2); } catch (_) { raw = null; } finally { releaseTransport(lock); }
+        if (!raw) await sleep(8);
+        else liveRescueFrame(raw); // a frame that isn't a live NOTIFY/ack (e.g. a late sweep response) is dropped
+      }
+    } finally {
+      liveState.pumpRunning = false;
+    }
+  }
+
+  // Registers one entry and queues its subscribe — no worker kick, no render, so bulk
+  // adds (subscribe all / subscribe results) can enqueue hundreds and render once.
+  function liveEnqueue(regEntry) {
+    if (!liveControlsEnabled()) return false; // belt-and-braces: buttons are disabled, this catches stray calls
+    if (!regEntry || liveState.entries.has(regEntry.address)) return false;
+    liveState.entries.set(regEntry.address, liveEntryFromRegistry(regEntry));
+    liveState.queue.push({ kind: 'sub', addr: regEntry.address });
+    return true;
+  }
+
+  function liveAddMany(regEntries) {
+    let added = 0;
+    for (const regEntry of regEntries) if (liveEnqueue(regEntry)) added++;
+    if (added) {
+      liveKickWorker();
+      liveRenderSoon();
+      renderLivePicker();
+    }
+    return added;
+  }
+
+  function liveAdd(regEntry) {
+    return liveAddMany([regEntry]) > 0;
+  }
+
+  function liveRemove(addr) {
+    const entry = liveState.entries.get(addr);
+    if (!entry) return;
+    entry.cancelRequested = true;
+    liveState.queue = liveState.queue.filter((op) => !(op.kind === 'sub' && op.addr === addr));
+    liveState.deferred = liveState.deferred.filter((op) => !(op.kind === 'sub' && op.addr === addr));
+    if ((entry.state === 'active' || entry.state === 'subscribing') && transport &&
+        phase === 'connected' && !disconnectedAfterRead) {
+      liveState.queue.push({ kind: 'unsub', addr });
+      liveKickWorker();
+    }
+    liveState.entries.delete(addr);
+    liveRenderSoon();
+    renderLivePicker();
+  }
+
+  function liveStopAll() {
+    const dlog = window.Bes3DebugLog;
+    for (const entry of liveState.entries.values()) {
+      entry.cancelRequested = true;
+      if ((entry.state === 'active' || entry.state === 'subscribing') && transport &&
+          phase === 'connected' && !disconnectedAfterRead) {
+        liveState.queue.push({ kind: 'unsub', addr: entry.addr });
+      }
+    }
+    liveState.deferred.length = 0; // pending re-attempts die with the stop; unsubscribes go via the fresh lane
+    liveState.entries.clear();
+    liveState.totalNotifies = 0;
+    liveState.notifyWindow = [];
+    if (dlog) dlog.log('live', 'stopped all subscriptions');
+    liveKickWorker(); // drains the unsubscribe ops
+    liveRenderSoon();
+    renderLivePicker();
+  }
+
+  // Bike gone / new sweep starting — nothing can be sent, so don't even queue.
+  function liveTeardown() {
+    liveState.queue.length = 0;
+    liveState.deferred.length = 0;
+    liveState.entries.clear();
+    liveState.totalNotifies = 0;
+    liveState.notifyWindow = [];
+    liveRenderSoon();
+    renderLivePicker();
+  }
+
+  // ---------- live UI ----------
+
+  // The card is shown whenever the USB / BLE-full-read dashboard is — including when
+  // there's no live bike behind it (report loaded from file, bike dropped off after a
+  // read, or the initial sweep still running), in which case it's visible but disabled.
+  function liveCardShown() {
+    return phase === 'connected' && (method === 'usb' || method === 'ble-mcsp');
+  }
+
+  // Controls are clickable only with a live bike AND a finished initial read —
+  // subscribing mid-sweep would compete with it for the bus, and there is no bus
+  // at all for a file-loaded report or a bike that dropped off USB.
+  function liveControlsEnabled() {
+    return liveCardShown() && !disconnectedAfterRead && !loadedFromFile && sweepFullyLoaded;
+  }
+
+  // Why the controls are disabled, shown in the status line and the picker head.
+  function liveDisabledHint() {
+    if (loadedFromFile) return 'offline — report loaded from file (connect the bike to subscribe)';
+    if (disconnectedAfterRead) return 'bike disconnected — Read again to subscribe';
+    if (!sweepFullyLoaded) return 'waiting for the initial read to finish';
+    return '';
+  }
+
+  // Called on every phase change. The card stays visible on the dashboard; when the
+  // bike is gone the controls go disabled and any active subscriptions are stopped.
+  // Always re-renders — with no subscriptions there's no teardown, but the buttons'
+  // enabled state and the status hint still depend on the new phase.
+  function updateLiveCard() {
+    els.liveCard.style.display = liveCardShown() ? '' : 'none';
+    if (liveState.entries.size > 0 && !liveControlsEnabled()) {
+      liveTeardown(); // re-renders itself
+    } else {
+      renderLivePicker();
+      liveRenderSoon();
+    }
+  }
+
+  function liveAgeText(ms) {
+    if (ms < 60000) return Math.round(ms / 100) / 10 + ' s';
+    if (ms < 3600000) return Math.floor(ms / 60000) + ' min';
+    return Math.floor(ms / 3600000) + ' h ' + Math.floor((ms % 3600000) / 60000) + ' min';
+  }
+
+  // Rows are persistent and only their cell TEXT is updated on refresh — rebuilding
+  // the table on every push would destroy any text the user has selected, making
+  // values impossible to copy. A structural rebuild happens only when the row set
+  // itself changes: an address joins/leaves, or moves between the live group and the
+  // failed/refused group below the separator.
+  const liveRowEls = new Map(); // addr -> {tr, tdValue, tdCount, tdHz, tdAge, stateSpan, retryBtn}
+  let liveStructureKey = '';
+
+  function liveBuildRow(entry) {
+    const tr = document.createElement('tr');
+
+    const tdName = document.createElement('td');
+    tdName.className = 'live-v-name';
+    tdName.textContent = `${entry.component}.${entry.name} `;
+    tdName.title = `${entry.component}.${entry.name} (${entry.addr}, ${entry.kind})`; // full name on hover — the cell itself ellipsizes
+    const small = document.createElement('small');
+    small.textContent = `${entry.addr} · ${entry.kind}`;
+    tdName.appendChild(small);
+    tr.appendChild(tdName);
+
+    const tdValue = document.createElement('td');
+    tdValue.className = 'live-v-value';
+    tr.appendChild(tdValue);
+
+    const tdCount = document.createElement('td');
+    tdCount.className = 'live-v-num';
+    tr.appendChild(tdCount);
+
+    const tdHz = document.createElement('td');
+    tdHz.className = 'live-v-num';
+    tr.appendChild(tdHz);
+
+    const tdAge = document.createElement('td');
+    tdAge.className = 'live-v-num';
+    tr.appendChild(tdAge);
+
+    const tdState = document.createElement('td');
+    const stateSpan = document.createElement('span');
+    tdState.appendChild(stateSpan);
+    tr.appendChild(tdState);
+
+    const tdX = document.createElement('td');
+    tdX.className = 'live-v-actions'; // keeps ↻ and ✕ on one line however narrow the column
+    const actions = document.createElement('span'); // flex lives here, not on the <td>
+    tdX.appendChild(actions);
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'live-retry';
+    retry.title = 'Retry subscription';
+    retry.textContent = '↻';
+    retry.style.display = 'none'; // shown only for refused/failed rows in the update pass
+    retry.addEventListener('click', () => liveRetry(entry.addr));
+    actions.appendChild(retry);
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'live-remove';
+    x.title = 'Unsubscribe';
+    x.textContent = '✕';
+    x.addEventListener('click', () => liveRemove(entry.addr));
+    actions.appendChild(x);
+    tr.appendChild(tdX);
+
+    return { tr, tdValue, tdCount, tdHz, tdAge, stateSpan, retryBtn: retry };
+  }
+
+  function renderLiveActive() {
+    const entries = Array.from(liveState.entries.values());
+    const byName = (a, b) =>
+      a.component === b.component ? a.name.localeCompare(b.name) : a.component.localeCompare(b.component);
+    // Live subscriptions on top; refused/failed ones below a separator so a long
+    // subscribe-all doesn't bury the working fields among the casualties.
+    const liveGroup = entries.filter((e) => e.state === 'queued' || e.state === 'subscribing' || e.state === 'active').sort(byName);
+    const goneGroup = entries.filter((e) => e.state === 'denied' || e.state === 'failed').sort(byName);
+
+    els.liveTableWrap.style.display = entries.length ? '' : 'none';
+    const structureKey =
+      liveGroup.map((e) => `${e.addr}L`).join(',') + '|' + goneGroup.map((e) => `${e.addr}G`).join(',');
+    if (structureKey !== liveStructureKey) {
+      liveStructureKey = structureKey;
+      liveRowEls.clear();
+      els.liveTBody.innerHTML = '';
+      const addRows = (group) => {
+        for (const entry of group) {
+          const row = liveBuildRow(entry);
+          liveRowEls.set(entry.addr, row);
+          els.liveTBody.appendChild(row.tr);
+        }
+      };
+      addRows(liveGroup);
+      if (goneGroup.length) {
+        const sep = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 7;
+        td.className = 'live-sep';
+        td.textContent = `failed / refused (${goneGroup.length})`;
+        sep.appendChild(td);
+        els.liveTBody.appendChild(sep);
+        addRows(goneGroup);
+      }
+    }
+
+    const now = performance.now();
+    for (const entry of entries) {
+      const row = liveRowEls.get(entry.addr);
+      if (!row) continue;
+
+      if (entry.display != null) {
+        if (row.tdValue.textContent !== entry.display) row.tdValue.textContent = entry.display;
+        row.tdValue.classList.remove('pending');
+      } else {
+        const pending = entry.state === 'active' ? '— waiting for first push' : '—';
+        if (row.tdValue.textContent !== pending) row.tdValue.textContent = pending;
+        row.tdValue.classList.add('pending');
+      }
+      row.tdValue.title = entry.rawHex
+        ? (entry.technical ? entry.technical + '\n' : '') + 'raw: ' + entry.rawHex
+        : (entry.technical || '');
+
+      const countText = String(entry.count);
+      if (row.tdCount.textContent !== countText) row.tdCount.textContent = countText;
+
+      const span0 = entry.window.length > 1 ? entry.window[0] : now;
+      const hzSpan = Math.max((now - span0) / 1000, 0.001);
+      const hzText = entry.window.length > 1 ? (entry.window.length / hzSpan).toFixed(1) : '—';
+      if (row.tdHz.textContent !== hzText) row.tdHz.textContent = hzText;
+
+      const ageText = entry.lastAt ? liveAgeText(Date.now() - entry.lastAt) : '—';
+      if (row.tdAge.textContent !== ageText) row.tdAge.textContent = ageText;
+
+      // State badge: replace the span only when its rendered text actually changes,
+      // so a hover (or a selection crossing it) isn't disturbed by every refresh.
+      const map = {
+        queued: 'queued', subscribing: 'subscribing…', active: 'active',
+        denied: 'refused', failed: 'failed', unsubscribing: 'stopping…',
+      };
+      const clsMap = { subscribing: 'st-subscribing', active: 'st-active', denied: 'st-denied', failed: 'st-failed', unsubscribing: 'st-subscribing' };
+      const baseText = map[entry.state] || entry.state;
+      const badgeText = entry.statusName && entry.state !== 'active' && entry.state !== 'queued'
+        ? `${baseText} · ${entry.statusName}` : baseText;
+      const badgeCls = 'live-state' + (clsMap[entry.state] ? ' ' + clsMap[entry.state] : '');
+      if (row.stateSpan.textContent !== badgeText) row.stateSpan.textContent = badgeText;
+      if (row.stateSpan.className !== badgeCls) row.stateSpan.className = badgeCls;
+      if (row.stateSpan.title !== (entry.statusDetail || '')) row.stateSpan.title = entry.statusDetail || '';
+
+      // Retry arrow appears only where it can do something (refused/failed rows).
+      const showRetry = entry.state === 'denied' || entry.state === 'failed';
+      const retryDisplay = showRetry ? '' : 'none';
+      if (row.retryBtn.style.display !== retryDisplay) row.retryBtn.style.display = retryDisplay;
+    }
+
+    const counts = { active: 0, subscribing: 0, queued: 0, denied: 0, failed: 0 };
+    for (const e of liveState.entries.values()) if (counts[e.state] != null) counts[e.state]++;
+    const wn = liveState.notifyWindow;
+    const wSpan = wn.length > 1 ? (performance.now() - wn[0]) / 1000 : 0;
+    const rate = wSpan >= 0.5 ? (wn.length / wSpan).toFixed(1) + '/s' : '—';
+    const parts = [
+      counts.active && `${counts.active} active`,
+      counts.subscribing && `${counts.subscribing} subscribing`,
+      counts.queued && `${counts.queued} queued`,
+      counts.denied && `${counts.denied} refused`,
+      counts.failed && `${counts.failed} failed`,
+      `${liveState.totalNotifies} pushes · ${rate}`,
+    ].filter(Boolean);
+    els.liveStatus.textContent = parts.join(' · ') ||
+      (liveCardShown() ? liveDisabledHint() : '') ||
+      'no subscriptions — pick fields below';
+  }
+
+  function renderLivePicker() {
+    if (!els.livePicker) return;
+    const term = liveState.pickerTerm.trim().toLowerCase();
+    const pool = liveSubscribableRegistryEntries();
+    let candidates;
+    let totalMatches = 0;
+    if (term) {
+      candidates = pool.filter((e) =>
+        e.name.toLowerCase().includes(term) || e.component.toLowerCase().includes(term) ||
+        (e.label || '').toLowerCase().includes(term) || String(e.address) === term);
+      totalMatches = candidates.length;
+    } else {
+      // Empty search: offer the recommended ride-telemetry set that isn't subscribed yet.
+      const wanted = new Set(LIVE_DEFAULT_SET.map(([c, n]) => `${c}.${n}`));
+      candidates = pool.filter((e) => wanted.has(`${e.component}.${e.name}`) && !liveState.entries.has(e.address));
+    }
+    candidates = candidates.slice(0, 80);
+    liveState.pickerResults = candidates;
+
+    els.livePicker.innerHTML = '';
+    const head = document.createElement('div');
+    head.className = 'live-picker-head';
+    head.textContent = term
+      ? `${totalMatches} subscribable field${totalMatches === 1 ? '' : 's'} matching “${term}”` +
+        (totalMatches > candidates.length ? ` (showing first ${candidates.length})` : '')
+      : `recommended live fields (search above for all ${pool.length})`;
+    const disabledHint = liveCardShown() ? liveDisabledHint() : '';
+    if (disabledHint) head.textContent += ' — ' + disabledHint;
+    els.livePicker.appendChild(head);
+
+    const list = document.createElement('div');
+    list.className = 'live-candidates';
+    if (!candidates.length) {
+      const empty = document.createElement('div');
+      empty.className = 'live-status';
+      empty.textContent = term ? 'no matching subscribable fields' : 'everything in the recommended set is already subscribed';
+      list.appendChild(empty);
+    }
+    for (const regEntry of candidates) {
+      const row = document.createElement('div');
+      row.className = 'live-candidate';
+
+      const name = document.createElement('span');
+      name.className = 'live-c-name';
+      name.textContent = `${regEntry.component}.${regEntry.name} `;
+      const small = document.createElement('small');
+      small.textContent = String(regEntry.address);
+      name.appendChild(small);
+      name.title = regEntry.label || regEntry.name;
+      row.appendChild(name);
+
+      const kind = document.createElement('span');
+      kind.className = 'live-c-kind';
+      kind.textContent = regEntry.kind || 'unknown';
+      row.appendChild(kind);
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'live-btn';
+      btn.textContent = '+ subscribe';
+      btn.disabled = !liveControlsEnabled();
+      btn.addEventListener('click', () => liveAdd(regEntry));
+      row.appendChild(btn);
+
+      list.appendChild(row);
+    }
+    els.livePicker.appendChild(list);
+
+    // Subscribe buttons need liveControlsEnabled (live bike + finished sweep);
+    // Stop-all just needs the card on screen with something to stop.
+    const controlsEnabled = liveControlsEnabled();
+    els.liveSubscribeShownBtn.disabled = !controlsEnabled || !candidates.length;
+    els.liveDefaultsBtn.disabled = !controlsEnabled || !term; // with an empty search the list IS the recommended set
+    els.liveAllBtn.disabled = !controlsEnabled;
+    els.liveStopAllBtn.disabled = !liveCardShown() || liveState.entries.size === 0;
+  }
+
+  function liveRenderSoon() {
+    if (!liveCardShown() && liveState.entries.size === 0) return;
+    if (liveState.renderScheduled) return;
+    liveState.renderScheduled = true;
+    setTimeout(() => {
+      liveState.renderScheduled = false;
+      renderLiveActive();
+    }, 200);
+    if (!liveState.uiTimer && liveState.entries.size > 0) {
+      // Refresh AGE/HZ cells once a second even when no new pushes arrive.
+      liveState.uiTimer = setInterval(() => {
+        if (liveState.entries.size === 0) {
+          clearInterval(liveState.uiTimer);
+          liveState.uiTimer = null;
+          return;
+        }
+        renderLiveActive();
+      }, 1000);
+    }
+  }
+
+  function liveSubscribeShown() {
+    const targets = liveState.pickerResults.filter((e) => !liveState.entries.has(e.address));
+    if (!targets.length) return;
+    const dlog = window.Bes3DebugLog;
+    if (dlog) dlog.log('live', `queueing ${targets.length} subscriptions (paced at ${liveState.paceMs} ms)`);
+    liveAddMany(targets);
+  }
+
+  function liveSubscribeAll() {
+    const pool = liveSubscribableRegistryEntries().filter((e) => !liveState.entries.has(e.address));
+    if (!pool.length) return;
+    const dlog = window.Bes3DebugLog;
+    // Priority order: fields whose initial sweep read came back OK are most likely to
+    // subscribe cleanly, so they go first; denied/timeout/skipped/never-swept fields
+    // queue behind them (each still gets its chance, and silent ones self-defer).
+    const sweepStatus = new Map(lastResults.map((r) => [r.address, r.status]));
+    const okFirst = [];
+    const rest = [];
+    for (const regEntry of pool) {
+      (sweepStatus.get(regEntry.address) === 'ok' ? okFirst : rest).push(regEntry);
+    }
+    if (dlog) dlog.log('live', `queueing ALL subscriptions: ${okFirst.length} sweep-OK first, then ${rest.length} denied/unknown (paced at ${liveState.paceMs} ms)`);
+    liveAddMany(okFirst.concat(rest));
+  }
+
+  // Per-row retry for refused/failed entries: resets the retry budget and re-queues a
+  // single subscribe. Refusals can be state-dependent on the bike side (NOT_READY /
+  // UNSUPPORTED answers observed flipping between sessions for the same address), so
+  // a manual re-attempt after waking the relevant component is worth one click.
+  function liveRetry(addr) {
+    const entry = liveState.entries.get(addr);
+    if (!entry) return;
+    if (entry.state === 'active' || entry.state === 'subscribing' || entry.state === 'queued') return;
+    entry.cancelRequested = false;
+    entry.retries = 0;
+    entry.statusName = '';
+    entry.statusDetail = '';
+    entry.display = null;
+    entry.technical = null;
+    entry.rawHex = null;
+    entry.state = 'queued';
+    liveState.queue.push({ kind: 'sub', addr });
+    liveKickWorker();
+    liveRenderSoon();
+  }
+
+  els.liveSearch.addEventListener('input', () => {
+    liveState.pickerTerm = els.liveSearch.value;
+    renderLivePicker();
+  });
+  els.liveDefaultsBtn.addEventListener('click', () => {
+    liveState.pickerTerm = '';
+    els.liveSearch.value = '';
+    renderLivePicker();
+  });
+  els.liveSubscribeShownBtn.addEventListener('click', liveSubscribeShown);
+  els.liveAllBtn.addEventListener('click', liveSubscribeAll);
+  els.liveStopAllBtn.addEventListener('click', liveStopAll);
+  // datalist for the search box — same affordance as the Write Lab's.
+  function writeLiveDatalist() {
+    if (!els.liveDatalist) return;
+    els.liveDatalist.innerHTML = '';
+    for (const e of liveSubscribableRegistryEntries()) {
+      const opt = document.createElement('option');
+      opt.value = `${e.component}.${e.name}`;
+      els.liveDatalist.appendChild(opt);
+    }
+  }
+  writeLiveDatalist();
+  renderLivePicker(); // initial recommended-set view, before any search input
 
   async function readAllAssistModeStats() {
     assistModeStats = [];
@@ -1182,12 +2076,14 @@
     if (dlog) dlog.log(tag, 'payload before write', payload);
     let ok = false;
     let statusName = null;
-    transportBusy = true;
+    const lock = await acquireTransport();
     try {
       let done = false;
       for (let attempt = 0; attempt < 2 && !done; attempt++) {
         for (let i = 0; i < 4; i++) {
-          if (!(await transport.readNextFrame(1, 2))) break;
+          const stale = await transport.readNextFrame(1, 2);
+          if (!stale) break;
+          liveRescueFrame(stale); // normally dropped — keep live NOTIFYs alive during writes
         }
         const sentSeq = nextSeq();
         const frame = buildWriteFrame(addr, sentSeq, payload);
@@ -1198,6 +2094,7 @@
           const raw = await transport.readNextFrame(4, 4);
           if (!raw) continue;
           if (dlog) dlog.log(tag, '<- raw frame', raw);
+          if (liveRescueFrame(raw)) continue; // a live NOTIFY / live-ack — not this write's response
           const parsed = parseReadResponseFrame(raw);
           if (!parsed) continue;
           if (parsed.addrHigh !== (addr >> 8) || parsed.addrLow !== (addr & 0xff)) continue;
@@ -1219,7 +2116,7 @@
       if (dlog) dlog.log(tag, 'write failed', err.message);
       statusName = 'error';
     } finally {
-      transportBusy = false;
+      releaseTransport(lock);
     }
     let readBack = null;
     try {
@@ -2415,6 +3312,7 @@
     writeLabLastResult = null;
     diagnosticsResultsByComponent = {};
     diagnosticsState = null;
+    liveTeardown(); // a new session invalidates every old subscription (BDT3 renews; we re-scan)
     let device;
     try {
       device = transportKind === 'ble-mcsp'
@@ -2455,13 +3353,26 @@
       await transport.waitForBikeReady();
     }
 
-    // Warm-up: the drive unit needs a beat after init before it answers reliably.
-    els.connectingSub.textContent = 'starting…';
-    for (let i = 0; i < 8; i++) {
-      if (await readOne(6145)) break;
-    }
-
+    // Keep-alive starts BEFORE the warm-up, not after: the drive unit can doze off
+    // while the USB bridge stays up (observed on real hardware), and the one RPC
+    // that resets its inactivity timer must already be flowing for it to come back —
+    // the warm-up itself needs an answering drive unit.
     startKeepAlive();
+
+    // Warm-up: the drive unit needs a beat after init before it answers reliably.
+    // Short per-read budget: 6145 answers in ms when the DU is awake, and a dozing
+    // DU must not burn the full default budget eight times (minutes of a frozen
+    // connecting screen — the "hangs after reconnect" symptom). Progress and an
+    // all-failed outcome are shown on the connecting screen.
+    let warmupOk = false;
+    for (let i = 0; i < 8; i++) {
+      els.connectingSub.textContent = `waking drive unit… (${i + 1}/8)`;
+      if (await readOne(6145, 2500)) { warmupOk = true; break; }
+    }
+    if (!warmupOk) {
+      els.connectingSub.textContent = 'drive unit not answering — wake the bike (press a button on the remote / light), then Read again';
+      setProgress('drive unit not answering — it may have gone to sleep; wake it and read again');
+    }
 
     // Sourced from the address registry, not ALL_ADDRESSES — "priority" (read-first) is now
     // derived from having a `ui` block (i.e. this address feeds a dashboard element) rather than
@@ -2494,24 +3405,51 @@
     // disconnect during phase 'connected' as "keep the dashboard, mark it stale", which is
     // exactly right for a disconnect during this background backfill too.
     let revealed = false;
+    // Consecutive timeouts = the bike stopped answering everything while the USB
+    // device may still be present. A long streak grinds the sweep at ~1 s/field,
+    // which looks like a freeze unless it's said on screen.
+    let noAnswerStreak = 0;
+    let sleepHintShown = false;
+    // A failed warm-up means the same thing from the very first field; shown until
+    // any field answers (the per-field text below would otherwise overwrite the
+    // warm-up's own message after one field).
+    let warmupHint = !warmupOk;
     sweepWatchdogFired = false;
     sweepWatchdogTimer = setInterval(() => {
       if (sweepWatchdogFired || !sweepWatchdogAddr) return;
       const stuckMs = Date.now() - sweepWatchdogStart;
       if (stuckMs < 8000) return;
       sweepWatchdogFired = true;
+      // readOne() has a hard per-field budget — a slow field is skipped automatically
+      // (shown as a timeout), so this warning means "slow transport", not "hang".
+      // Reconnecting is only needed if the progress counter itself stops moving.
       if (window.Bes3DebugLog) {
-        window.Bes3DebugLog.log('sweep', 'possible transport stall', `${sweepWatchdogAddr} — no response after ${stuckMs}ms; a stuck USB transfer can't be cancelled, reconnect if this doesn't clear`);
+        window.Bes3DebugLog.log('sweep', 'slow field', `${sweepWatchdogAddr} — no response after ${stuckMs}ms; it will be skipped (hard per-field budget) once its bounded steps run out`);
       }
-      if (!revealed) els.connectingSub.textContent = `stuck on ${sweepWatchdogAddr} — try reconnecting if this doesn't clear`;
+      // Shown on screen both pre- and post-reveal: during the background "Loading
+      // more…" phase a stalled counter with no explanation looks like a hang.
+      if (!revealed) els.connectingSub.textContent = `slow field: ${sweepWatchdogAddr} — it will be skipped automatically; reconnect only if nothing progresses`;
+      else if (els.sweepProgressText) {
+        els.sweepProgressText.textContent = `slow field: ${sweepWatchdogAddr} — skipping it automatically, continuing…`;
+      }
     }, 1000);
     for (const entry of readable) {
       if (!transport) { clearInterval(sweepWatchdogTimer); return; } // disconnected mid-sweep
       if (abortRequested) { aborted = true; break; }
 
-      const cs = compStats[entry.component] || (compStats[entry.component] = { ok: 0, fails: 0 });
+      const cs = compStats[entry.component] || (compStats[entry.component] = { ok: 0, fails: 0, sleepStreak: 0 });
       if (!CORE_COMPONENTS.has(entry.component) && cs.ok === 0 && cs.fails >= 3) {
         results.push({ ...entry, status: 'skipped', detail: 'component not detected (no route)', decoded: null, typed: null });
+        done++;
+        continue;
+      }
+      // Mid-sweep sleeper: a component that answered fine earlier can doze off (the
+      // remote control does exactly this — its whole address block then burns the
+      // per-field budget at 12-30 s apiece, which reads as "the sweep hangs around
+      // item ~530"). Ten consecutive no-answers from one component skips its
+      // remainder; a single answering field resets the streak.
+      if (cs.sleepStreak >= 10) {
+        results.push({ ...entry, status: 'skipped', detail: 'component stopped answering mid-sweep (went to sleep?)', decoded: null, typed: null });
         done++;
         continue;
       }
@@ -2550,6 +3488,18 @@
       if (status === 'ok') cs.ok++;
       else if (status === 'timeout' ||
                (status === 'declined' && detail === 'NO_ROUTE_FOUND')) cs.fails++;
+      if (status === 'timeout' || status === 'error') {
+        noAnswerStreak += 1;
+        cs.sleepStreak += 1;
+      } else {
+        noAnswerStreak = 0;
+        cs.sleepStreak = 0;
+        warmupHint = false;
+      }
+      if (noAnswerStreak >= 15 && !sleepHintShown) {
+        sleepHintShown = true;
+        if (window.Bes3DebugLog) window.Bes3DebugLog.log('sweep', 'bike not answering', `${noAnswerStreak} consecutive fields with no response, bike may have gone to sleep`);
+      }
 
       let decoded = null;
       let typed = null;
@@ -2591,12 +3541,15 @@
       }
       if (!revealed) {
         els.connectingBar.style.width = Math.round((done / Math.max(1, priorityCount)) * 100) + '%';
-        els.connectingSub.textContent = `${done}/${priorityCount} points`;
+        els.connectingSub.textContent = `${done}/${priorityCount} points` +
+          (sleepHintShown || warmupHint ? ' — bike not answering, it may have gone to sleep (wake it, or reconnect)' : '');
       } else {
         const backTotal = Math.max(1, readable.length - priorityCount);
         const backDone = done - priorityCount;
         els.sweepProgressFill.style.width = Math.round((backDone / backTotal) * 100) + '%';
-        els.sweepProgressText.textContent = `Loading more… ${backDone}/${backTotal}`;
+        els.sweepProgressText.textContent = sleepHintShown || warmupHint
+          ? `Loading more bike data… ${backDone}/${backTotal} — bike not answering, it may have gone to sleep (wake it, or Read again)`
+          : `Loading more bike data… ${backDone}/${backTotal}`;
         if (done % 10 === 0 || done === readable.length) {
           lastResults = results;
           renderDashboard();
@@ -2628,6 +3581,9 @@
     lastResults = results;
     sweepFullyLoaded = true;
     els.sweepProgress.style.display = 'none';
+    // Live-subscription controls were gated on the sweep finishing, flip them on now.
+    renderLivePicker();
+    renderLiveActive();
     const okCount = results.filter((r) => r.status === 'ok').length;
     const noResp = results.filter((r) => r.status === 'timeout' || r.status === 'error').length;
     const skippedCount = results.filter((r) => r.status === 'skipped').length;
