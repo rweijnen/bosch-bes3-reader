@@ -87,6 +87,11 @@ licensing or authorization systems some commercial services touch. Every
 read is the same class of identification data that's visible in your bike's
 own display and app — nothing that isn't already exposed to the bike's owner.
 
+One feature sits alongside the reads: the **Live Data (subscriptions)** card.
+SUBSCRIBE to any of the subscribable fields and the bike pushes value
+updates (NOTIFY frames) until unsubscribed — read-only, torn down on
+disconnect.
+
 The reset action exists because it's exactly what fixed a real
 corrupted-assist-mode fault (crash on opening a mode's settings, no assist
 in any mode) on the maintainer's own bike — and it's the *same* operation
@@ -131,9 +136,10 @@ Refresh the cache with `node tools/build-model-cache.mjs`.
 
 Not every known data-point address responds to the simple read request this
 tool uses — some are callable actions (need an input argument) or
-subscription-only points that use a different request shape not yet
-implemented here. Those are listed separately in the output rather than
-silently skipped. Contributions filling in more of the protocol are welcome.
+subscription-only points that use a different request shape. Subscriptions
+are implemented (the Live Data card); most callable actions are not. Those
+are listed separately in the output rather than silently skipped.
+Contributions filling in more of the protocol are welcome.
 
 ## Background
 

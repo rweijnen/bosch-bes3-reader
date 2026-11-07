@@ -145,6 +145,9 @@ class Bes3BleMcspTransport {
     this._readQueue = []; // reconstructed USB-shaped frames, ready for protocol.js's parseReadResponseFrame
     this._commandsSeen = [];
     this.startupStage = null; // last STARTUP_STAGE value the bike has written to us, or null if never seen
+    // Serializes doMcspWrite across callers (live-subscription worker vs keep-alive
+    // vs sweep reads) — same rationale as the WebUSB transport's _writeChain.
+    this._writeChain = Promise.resolve();
   }
 
   // On Windows, Web Bluetooth's gatt.connect() (and the discovery calls right
@@ -367,6 +370,21 @@ class Bes3BleMcspTransport {
   // already correct (it usually is, for small bodies, but this is explicit
   // rather than relying on that coincidence).
   async doMcspWrite(payload) {
+    // Bounded like the WebUSB transport's write: a wedged BLE transfer must not hold
+    // the serialization chain (and every future write) forever. The timer starts
+    // when this write's turn comes, so queueing time doesn't count against it.
+    const run = this._writeChain.then(() => {
+      let timer;
+      const writeDeadline = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('BLE write timed out — transfer did not complete within 10 s')), 10000);
+      });
+      return Promise.race([this._doMcspWriteLocked(payload), writeDeadline]).finally(() => clearTimeout(timer));
+    });
+    this._writeChain = run.then(() => undefined, () => undefined);
+    return run;
+  }
+
+  async _doMcspWriteLocked(payload) {
     const body = payload.slice(2);
     // Rewrite the fixed USB host address (0x0e10, baked in by protocol.js) to
     // this transport's own BLE identity (MobileAppGatewaysAddresses.E_BIKE =
